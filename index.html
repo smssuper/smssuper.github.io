@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Hero SMS - Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 15px; color: #333; }
+        .header { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 10px 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 14px; font-weight: bold; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .menu-icon { cursor: pointer; font-size: 18px; color: #555; }
+        .balance { background: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 15px; font-size: 12px; }
+        .lock-icon { color: #e74c3c; }
+
+        .card { background: #fff; padding: 15px; margin-top: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .email-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; text-align: center; font-weight: bold; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
+        .btn { border: none; padding: 12px; border-radius: 5px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; width: 100%; box-sizing: border-box; font-size: 14px; }
+        .btn-orange { background-color: #f39c12; } .btn-blue { background-color: #3498db; } .btn-green { background-color: #2ecc71; } .btn-purple { background-color: #8e44ad; }
+        .row-buttons { display: flex; gap: 10px; margin-top: 10px; }
+
+        /* KOTAK ORDER AKTIF (Animasi & Desain) */
+        .card-active {
+            background-color: #f2fcf6;
+            border-left: 4px solid #2ecc71;
+            border-radius: 4px;
+            display: none; /* Otomatis tersembunyi jika tidak ada pesanan */
+            padding: 15px;
+            margin-top: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .order-header { display: flex; justify-content: space-between; font-size: 11px; color: #333; }
+        .phone-number { text-align: center; font-size: 26px; font-weight: normal; margin: 15px 0; color: #111; letter-spacing: 1px;}
+
+        /* Animasi 3 Garis Biru */
+        .loading-bars { display: flex; justify-content: center; gap: 4px; margin-bottom: 20px; }
+        .bar { width: 4px; height: 16px; background-color: #5dade2; border-radius: 2px; animation: bounce 1s infinite ease-in-out; }
+        .bar:nth-child(2) { animation-delay: 0.2s; } .bar:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 100% { transform: scaleY(0.5); } 50% { transform: scaleY(1); } }
+
+        /* 4 Tombol Aksi */
+        .action-buttons-group { display: flex; border: 1px solid #e0e0e0; border-radius: 4px; overflow: hidden; background: #fafafa; }
+        .action-buttons-group button { flex: 1; background: transparent; border: none; border-right: 1px solid #e0e0e0; padding: 12px 0; font-size: 10px; font-weight: bold; color: #555; cursor: pointer; text-transform: uppercase; transition: 0.1s; }
+        .action-buttons-group button:last-child { border-right: none; }
+        .action-buttons-group button:active { background: #e0e0e0; }
+        .action-buttons-group button.active-text { color: #333; }
+
+        .otp-box { display: none; text-align: center; font-size: 24px; font-weight: bold; color: #2ecc71; margin-bottom: 15px; letter-spacing: 2px; }
+
+        /* List Beli Layanan */
+        .list-header { font-size: 11px; color: #888; margin-top: 20px; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; }
+        .list-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .list-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; cursor: pointer; transition: 0.2s;}
+        .list-item:hover { background-color: #f9f9f9; }
+        .price { color: #e74c3c; font-weight: bold; } .stock { color: #999; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-left"><i class="fas fa-bars menu-icon"></i><span>Hero SMS <i class="fas fa-chevron-down" style="font-size: 10px;"></i></span></div>
+        <div style="color: #aaa;">UBAYD</div>
+        <div class="header-right"><span class="balance" id="balanceDisplay">$ 0.00</span><i class="fas fa-lock lock-icon"></i></div>
+    </div>
+
+    <div class="card">
+        <input type="text" class="email-input" value="buat5@gmail.com" id="emailField">
+        <button class="btn btn-orange" onclick="copyEmail()"><i class="far fa-copy"></i> Copy Email</button>
+        <div class="row-buttons">
+            <button class="btn btn-blue" onclick="acakNama()"><i class="far fa-user"></i> Acak Nama</button>
+            <button class="btn btn-green" onclick="acakNomorLokal()"><i class="fas fa-phone-alt"></i> Acak Nomor</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="text-align:center; font-size:10px; color:#aaa; margin-bottom:10px;">LINK SHOPEE AKTIF</div>
+        <button class="btn btn-purple">UBAYD</button>
+    </div>
+
+    <div class="card-active" id="orderCard">
+        <div class="order-header">
+            <span id="orderIdText">#------- - $0.00</span>
+            <span id="orderClock">00:00</span>
+        </div>
+
+        <div class="phone-number" id="phoneDisplay">Mencari...</div>
+
+        <div class="loading-bars" id="otpLoading">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+
+        <div id="otpResult" class="otp-box">OTP: 123456</div>
+
+        <div class="action-buttons-group">
+            <button class="active-text" onclick="tombolAksi('DONE')">DONE</button>
+            <button onclick="tombolAksi('RESEND')">RESEND</button>
+            <button onclick="tombolAksi('CANCEL')">CANCEL</button>
+            <button onclick="tombolAksi('REPLACE')">REPLACE</button>
+        </div>
+    </div>
+
+    <div class="list-header">PESAN NOMOR BARU</div>
+    <div class="list-card">
+        
+        <div class="list-item" onclick="beliNomorAPI('ka', '6', '0.065')">
+            <span>Shopee Indonesia</span>
+            <div><span class="price">$0.065</span> <span class="stock">Tersedia</span></div>
+        </div>
+        
+    </div>
+
+    <script>
+        const BASE_URL = "https://herosms-proxy.you-zainul.workers.dev/";
+        let currentId = null;
+        let pollTimer = null;
+        let currentService = null;
+        let currentCountry = null;
+        let currentPrice = null;
+
+        // FUNGSI LOKAL (TIDAK MEMOTONG SALDO)
+        function copyEmail() { document.getElementById('emailField').select(); document.execCommand('copy'); alert("Email disalin!"); }
+        function acakNama() { 
+            const n1 = ["Budi", "Siti", "Agus", "Dewi", "Rudi", "Ayu"];
+            const n2 = ["Santoso", "Wijaya", "Kusuma", "Setiawan", "Lestari"];
+            alert("Nama Acak: " + n1[Math.floor(Math.random()*n1.length)] + " " + n2[Math.floor(Math.random()*n2.length)]); 
+        }
+        function acakNomorLokal() { 
+            const pref = ["0812", "0813", "0821", "0852", "0896", "0857"];
+            alert("Nomor Acak: " + pref[Math.floor(Math.random()*pref.length)] + Math.floor(10000000 + Math.random() * 90000000)); 
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('orderClock').innerText = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        }
+
+        // 1. FUNGSI BELI NOMOR KE SERVER
+        async function beliNomorAPI(service, country, price) {
+            // Simpan data layanan untuk tombol Replace
+            currentService = service;
+            currentCountry = country;
+            currentPrice = price;
+
+            // Tampilkan kotak order
+            document.getElementById('orderCard').style.display = 'block';
+            document.getElementById('phoneDisplay').innerText = "Mencari Nomor...";
+            document.getElementById('otpLoading').style.display = 'flex';
+            document.getElementById('otpResult').style.display = 'none';
+
+            try {
+                const resp = await fetch(`${BASE_URL}?action=getNumber&service=${service}&country=${country}`);
+                const text = await resp.text();
+                
+                if (text.includes("ACCESS_NUMBER")) {
+                    // Sukses dapat nomor
+                    const parts = text.split(":");
+                    currentId = parts[1];
+                    document.getElementById('phoneDisplay').innerText = parts[2];
+                    document.getElementById('orderIdText').innerText = `#${currentId} - $${price}`;
+                    updateClock();
+                    startPolling();
+                } else { 
+                    // Gagal (Misal: Stok Kosong / SERVICE_NOT_AVAILABLE)
+                    alert("Pesan dari Server: " + text); 
+                    document.getElementById('orderCard').style.display = 'none';
+                }
+            } catch (e) { 
+                alert("Koneksi gagal ke server perantara (Proxy)."); 
+                document.getElementById('orderCard').style.display = 'none';
+            }
+        }
+
+        // 2. FUNGSI CEK OTP BERKALA
+        function startPolling() {
+            if(pollTimer) clearInterval(pollTimer);
+            
+            pollTimer = setInterval(async () => {
+                if(!currentId) return;
+
+                const resp = await fetch(`${BASE_URL}?action=getStatus&id=${currentId}`);
+                const text = await resp.text();
+                
+                if (text.includes("STATUS_OK")) {
+                    clearInterval(pollTimer);
+                    document.getElementById('otpLoading').style.display = 'none';
+                    document.getElementById('otpResult').innerText = text.split(":")[1]; // Hanya tampilkan angkanya
+                    document.getElementById('otpResult').style.display = 'block';
+                    
+                    // Otomatis salin OTP ke memori HP
+                    navigator.clipboard.writeText(text.split(":")[1]);
+                } else if (text === "STATUS_CANCEL") {
+                    clearInterval(pollTimer);
+                    alert("Pesanan ini telah dibatalkan oleh server.");
+                    document.getElementById('orderCard').style.display = 'none';
+                    currentId = null;
+                }
+            }, 5000); // Mengecek setiap 5 detik
+        }
+
+        // 3. FUNGSI 4 TOMBOL
+        async function tombolAksi(tipe) {
+            if(!currentId) { alert("Tidak ada pesanan aktif."); return; }
+            
+            if (tipe === 'DONE') {
+                await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=6`);
+                clearInterval(pollTimer);
+                document.getElementById('orderCard').style.display = 'none';
+                currentId = null;
+                setTimeout(getBalance, 2000); // Update saldo
+            } 
+            else if (tipe === 'CANCEL') {
+                await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=8`);
+                clearInterval(pollTimer);
+                document.getElementById('orderCard').style.display = 'none';
+                currentId = null;
+                setTimeout(getBalance, 2000); // Update saldo
+            } 
+            else if (tipe === 'RESEND') {
+                await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=3`);
+                document.getElementById('otpLoading').style.display = 'flex';
+                document.getElementById('otpResult').style.display = 'none';
+                startPolling(); // Cari OTP lagi
+            } 
+            else if (tipe === 'REPLACE') {
+                // Batalkan yang ini
+                await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=8`);
+                clearInterval(pollTimer);
+                currentId = null;
+                // Beli ulang layanan yang sama
+                beliNomorAPI(currentService, currentCountry, currentPrice);
+            }
+        }
+
+        // 4. FUNGSI CEK SALDO AWAL
+        async function getBalance() {
+            try {
+                const resp = await fetch(`${BASE_URL}?action=getBalance`);
+                const text = await resp.text();
+                if(text.includes("ACCESS_BALANCE")) {
+                    document.getElementById('balanceDisplay').innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4);
+                }
+            } catch(e) {}
+        }
+        
+        // Panggil otomatis saat web terbuka
+        getBalance();
+    </script>
+</body>
+</html>
