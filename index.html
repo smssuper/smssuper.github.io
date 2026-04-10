@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero SMS Dashboard Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-body: #f4f7fa;
+            --white: #ffffff;
+            --primary: #8e44ad;
+            --secondary: #3498db;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --text: #34495e;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
+        
+        /* Header Glassmorphism */
+        .header { 
+            display: flex; align-items: center; justify-content: space-between; 
+            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+            padding: 12px 20px; position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 1px 10px rgba(0,0,0,0.05); 
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .menu-icon { cursor: pointer; font-size: 20px; color: var(--dark); transition: 0.3s; }
+        .menu-icon:hover { color: var(--secondary); }
+        .app-logo { font-weight: 700; font-size: 15px; letter-spacing: 0.5px; color: var(--dark); }
+        .balance { background: #e8f5e9; color: #2e7d32; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+        .lock-icon { color: var(--danger); font-size: 14px; }
+
+        /* Sidebar Modern */
+        #sidebar { position: fixed; top: 0; left: -280px; width: 270px; height: 100%; background: var(--white); box-shadow: 5px 0 25px rgba(0,0,0,0.1); transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000; padding: 30px 20px; box-sizing: border-box; }
+        #sidebar.active { left: 0; }
+        .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .sidebar-item { padding: 14px 15px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--text); display: flex; align-items: center; gap: 12px; margin-bottom: 5px; transition: 0.2s; }
+        .sidebar-item:hover { background: #f0f3f6; color: var(--secondary); }
+        .sidebar-item i { width: 20px; text-align: center; }
+
+        /* Container */
+        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
+
+        /* Cards */
+        .card { background: var(--white); padding: 20px; margin-bottom: 15px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.7); }
+        .email-display { width: 100%; padding: 16px; border: 2px solid #edf2f7; border-radius: 12px; text-align: center; font-weight: 700; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; background: #f8fafc; color: var(--dark); letter-spacing: 0.5px; }
+        
+        /* Buttons Area */
+        .btn { border: none; padding: 14px; border-radius: 12px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; width: 100%; box-sizing: border-box; font-size: 13px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .btn:active { transform: scale(0.97); }
+        .btn-orange { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .btn-yellow { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #2c3e50; }
+        .btn-blue { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .btn-purple { background: linear-gradient(135deg, #8e44ad, #7d3c98); }
+        .btn-dark { background: #5d6d7e; }
+        
+        .row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+        /* Active Order Card */
+        .card-active { background: #f0fff4; border-left: 5px solid var(--success); display: none; }
+        .order-meta { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #718096; margin-bottom: 10px; }
+        .phone-row { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 10px 0; }
+        .number-txt { font-size: 24px; font-weight: 700; color: var(--dark); letter-spacing: 1px; }
+        .copy-icon-mini { color: var(--secondary); cursor: pointer; font-size: 18px; }
+
+        /* Loader OTP */
+        .loading-dots { display: flex; justify-content: center; gap: 5px; margin: 15px 0; }
+        .dot { width: 6px; height: 18px; background: #aed6f1; border-radius: 3px; animation: wave 1s infinite ease-in-out; }
+        .dot:nth-child(2) { animation-delay: 0.1s; }
+        .dot:nth-child(3) { animation-delay: 0.2s; }
+        @keyframes wave { 0%, 100% { transform: scaleY(0.5); } 50% { transform: scaleY(1.2); background: var(--secondary); } }
+
+        .otp-display { display: none; text-align: center; font-size: 28px; font-weight: 800; color: var(--success); margin: 15px 0; letter-spacing: 4px; border: 2px dashed var(--success); padding: 10px; border-radius: 12px; }
+
+        /* Segmented Buttons */
+        .btn-group { display: flex; border-radius: 10px; overflow: hidden; margin-top: 15px; border: 1px solid #e2e8f0; }
+        .btn-group button { flex: 1; padding: 12px 5px; border: none; background: #f8fafc; font-size: 10px; font-weight: 800; color: #64748b; cursor: pointer; border-right: 1px solid #e2e8f0; text-transform: uppercase; }
+        .btn-group button:last-child { border-right: none; }
+        .btn-group button:hover { background: #edf2f7; color: var(--dark); }
+
+        /* List Menu */
+        .list-title { font-size: 11px; font-weight: 800; color: #a0aec0; margin: 20px 0 10px 5px; text-transform: uppercase; }
+        .service-list { background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+        .service-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+        .service-item:hover { background: #f8fafc; }
+        .service-name { font-size: 14px; font-weight: 600; }
+        .price-tag { color: var(--danger); font-weight: 800; font-size: 14px; }
+
+        /* Modal CRUD Link & Password Editor */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: var(--white); width: 100%; max-width: 400px; border-radius: 20px; padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); position: relative; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; text-align: center; color: var(--dark); }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 800; color: var(--gray); text-transform: uppercase; margin-bottom: 6px; }
+        .input-group input, .input-group select { width: 100%; padding: 12px 15px; border: 2px solid #edf2f7; border-radius: 12px; box-sizing: border-box; outline: none; font-size: 14px; font-family: inherit; }
+        .input-group input:focus { border-color: var(--secondary); }
+
+        /* BUKA LINK Overlay */
+        #linkModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #ffd3e0 0%, #e1bee7 100%); z-index: 3000; display: none; flex-direction: column; overflow-y: auto; }
+        .lm-header { display: flex; justify-content: space-between; padding: 20px; align-items: center; }
+        .lm-body { background: var(--white); flex: 1; border-radius: 30px 30px 0 0; padding: 30px 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); }
+        .lm-card { display: flex; align-items: center; border-radius: 14px; padding: 12px; margin-bottom: 12px; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .lm-copy-box { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.1); border-radius: 10px; cursor: pointer; }
+        .lm-info { flex: 1; padding: 0 15px; }
+        .lm-name { font-weight: 700; font-size: 14px; }
+        .lm-badge { font-size: 9px; font-weight: 800; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; margin-top: 4px; display: inline-block; }
+        
+        .flash-success { animation: flash 0.5s ease; }
+        @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        * { -webkit-tap-highlight-color: transparent; outline: none; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <span class="app-logo">HERO SMS PRO</span>
+            <i class="fas fa-times menu-icon" onclick="toggleMenu()"></i>
+        </div>
+        <div class="sidebar-item" onclick="triggerImport()"><i class="fas fa-file-import"></i> Import Gmail (.txt)</div>
+        <div class="sidebar-item" onclick="openPassModal()"><i class="fas fa-key"></i> Edit Password</div>
+        <div class="sidebar-item" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Refresh Halaman</div>
+    </div>
+
+    <div class="header">
+        <div class="header-left">
+            <i class="fas fa-bars menu-icon" onclick="toggleMenu()"></i>
+            <span class="app-logo">Hero SMS <i class="fas fa-chevron-down" style="font-size: 10px; opacity: 0.5;"></i></span>
+        </div>
+        <div class="header-right">
+            <div class="balance"><i class="fas fa-wallet"></i> <span id="balanceDisplay">$ 0.0000</span> <i class="fas fa-lock lock-icon"></i></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <input type="text" class="email-display" value="Gmail Kosong..." id="emailField" readonly>
+            <div class="row-grid" style="margin-top: 0;">
+                <button class="btn btn-orange" onclick="copyEmail()"><i class="far fa-copy"></i> Copy Email</button>
+                <button class="btn btn-yellow" onclick="copyPassword()"><i class="fas fa-key"></i> Copy Pass</button>
+            </div>
+            <div class="row-grid">
+                <button class="btn btn-blue" onclick="acakNama()"><i class="far fa-user"></i> Acak Nama</button>
+                <button class="btn btn-green" onclick="acakNomorLokal()"><i class="fas fa-phone-alt"></i> Acak Nomor</button>
+            </div>
+        </div>
+
+        <div class="card" style="padding: 10px;">
+            <div class="row-grid" style="margin-top: 0;">
+                <button class="btn btn-purple" onclick="bukaModalLink()">BUKA LINK</button>
+                <button class="btn btn-dark" onclick="window.location.href='https://smssuper.github.io/not.html'">NOT</button>
+            </div>
+        </div>
+
+        <div class="card card-active" id="orderCard">
+            <div class="order-meta">
+                <span id="orderIdText">#------- - $0.00</span>
+                <span id="orderClock" style="color:var(--danger)">15:00</span>
+            </div>
+            <div class="phone-row">
+                <span class="number-txt" id="phoneDisplay">Mencari...</span>
+                <i class="far fa-copy copy-icon-mini" id="copyPhoneIcon" onclick="salinNomorTlp()"></i>
+            </div>
+            <div class="loading-dots" id="otpLoading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            <div id="otpResult" class="otp-display">000000</div>
+            <div class="btn-group">
+                <button onclick="tombolAksi('DONE')">Done</button>
+                <button onclick="tombolAksi('RESEND')">Resend</button>
+                <button onclick="tombolAksi('CANCEL')">Cancel</button>
+                <button onclick="tombolAksi('REPLACE')">Replace</button>
+            </div>
+        </div>
+
+        <div class="list-title">Pesan Nomor Baru</div>
+        <div class="service-list">
+            <div class="service-item" onclick="beliNomorAPI('ka', '6', '0.065')">
+                <span class="service-name">Shopee Indonesia</span>
+                <span class="price-tag">$0.065</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="passModal">
+        <div class="modal-content">
+            <h3 class="modal-title">Edit Password</h3>
+            <div class="input-group">
+                <label>Password Baru</label>
+                <input type="text" id="newPassInput" placeholder="Masukkan password...">
+            </div>
+            <div class="row-grid">
+                <button class="btn btn-dark" onclick="closePassModal()">Batal</button>
+                <button class="btn btn-blue" onclick="savePassword()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="linkModal">
+        <div class="lm-header">
+            <i class="fas fa-home" style="font-size: 24px; color: var(--danger); cursor:pointer;" onclick="tutupModalLink()"></i>
+            <button class="btn btn-blue" style="width: auto; padding: 10px 20px; border-radius: 20px;" onclick="bukaFormLink(null)"><i class="fas fa-plus"></i> Tambah Link</button>
+        </div>
+        <div class="lm-body">
+            <h3 class="modal-title" style="margin-bottom: 30px;">LINK SHOPEE</h3>
+            <div id="dynamicLinkContainer"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="formModal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="formModalTitle">Tambah Link</h3>
+            <input type="hidden" id="formLinkId">
+            <div class="input-group"><label>Nama</label><input type="text" id="formInputNama"></div>
+            <div class="input-group"><label>Teks/URL</label><input type="text" id="formInputUrl"></div>
+            <div class="input-group"><label>Harga</label><input type="text" id="formInputHarga"></div>
+            <div class="input-group"><label>Warna</label>
+                <select id="formInputWarna">
+                    <option value="bg-red">Merah</option><option value="bg-blue">Biru</option><option value="bg-purple">Ungu</option>
+                    <option value="bg-orange">Oranye</option><option value="bg-green">Hijau</option><option value="bg-teal">Teal</option>
+                </select>
+            </div>
+            <div class="row-grid">
+                <button class="btn btn-dark" onclick="tutupFormLink()">Batal</button>
+                <button class="btn btn-blue" onclick="simpanDataLink()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="handleFile(this)">
+
+    <script>
+        const BASE_URL = "https://herosms-proxy.you-zainul.workers.dev/";
+        let currentId = null, pollTimer = null, countdownTimer = null, timeLeft = 900; 
+        let currentService = null, currentCountry = null, currentPrice = null, emailQueue = [];
+
+        function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
+        function triggerImport() { document.getElementById('fileInput').click(); toggleMenu(); }
+
+        /* PASSWORD MODAL LOGIC */
+        function openPassModal() {
+            document.getElementById('newPassInput').value = localStorage.getItem('userPassword') || "";
+            document.getElementById('passModal').style.display = 'flex';
+            toggleMenu();
+        }
+        function closePassModal() { document.getElementById('passModal').style.display = 'none'; }
+        function savePassword() {
+            const val = document.getElementById('newPassInput').value;
+            localStorage.setItem('userPassword', val);
+            closePassModal();
+        }
+        function copyPassword() {
+            const pass = localStorage.getItem('userPassword') || "Belum diatur";
+            navigator.clipboard.writeText(pass);
+            animateBtn(document.querySelector('.btn-yellow'));
+        }
+
+        /* UI ANIMATION */
+        function animateBtn(btn) {
+            btn.classList.add('flash-success');
+            setTimeout(() => btn.classList.remove('flash-success'), 500);
+        }
+
+        /* DASHBOARD LOGIC */
+        function handleFile(input) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                emailQueue = e.target.result.split('\n').map(email => email.trim()).filter(email => email !== "");
+                updateEmailField();
+            };
+            reader.readAsText(file);
+        }
+        function updateEmailField() {
+            document.getElementById('emailField').value = emailQueue.length > 0 ? emailQueue[0] : "Gmail Kosong...";
+        }
+        function copyEmail() {
+            const field = document.getElementById('emailField');
+            if (field.value === "Gmail Kosong...") return;
+            navigator.clipboard.writeText(field.value);
+            emailQueue.shift(); updateEmailField();
+            animateBtn(document.querySelector('.btn-orange'));
+        }
+
+        function acakNama() { 
+            const n1 = ["Budi","Siti","Agus","Dewi","Rudi","Ayu","Bambang","Lestari","Saputra","Indah"];
+            const n2 = ["Santoso","Wijaya","Kusuma","Setiawan","Lestari","Hidayat","Pratama","Sari"];
+            const res = n1[Math.floor(Math.random()*n1.length)] + " " + n2[Math.floor(Math.random()*n2.length)];
+            navigator.clipboard.writeText(res); animateBtn(document.querySelector('.btn-blue'));
+        }
+        function acakNomorLokal() { 
+            const pref = ["0812","0813","0821","0852","0896","0857","0819","0853"];
+            const res = pref[Math.floor(Math.random()*pref.length)] + Math.floor(10000000 + Math.random() * 90000000);
+            navigator.clipboard.writeText(res); animateBtn(document.querySelector('.btn-green'));
+        }
+
+        function salinNomorTlp() {
+            const text = document.getElementById('phoneDisplay').innerText;
+            if(text === "Mencari...") return;
+            navigator.clipboard.writeText(text);
+            const icon = document.getElementById('copyPhoneIcon');
+            icon.className = "fas fa-check"; icon.style.color = "#2ecc71";
+            setTimeout(() => { icon.className = "far fa-copy"; icon.style.color = "#3498db"; }, 1500);
+        }
+
+        /* API LOGIC */
+        function startCountdown() {
+            if (countdownTimer) clearInterval(countdownTimer);
+            timeLeft = 900; 
+            countdownTimer = setInterval(() => {
+                if (timeLeft <= 0) { clearInterval(countdownTimer); return; }
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+                document.getElementById('orderClock').innerText = m.toString().padStart(2, '0') + ":" + s.toString().padStart(2, '0');
+            }, 1000);
+        }
+
+        async function beliNomorAPI(service, country, price) {
+            currentService = service; currentCountry = country; currentPrice = price;
+            document.getElementById('orderCard').style.display = 'block';
+            document.getElementById('phoneDisplay').innerText = "Mencari...";
+            document.getElementById('copyPhoneIcon').style.display = 'none';
+            document.getElementById('otpLoading').style.display = 'flex';
+            document.getElementById('otpResult').style.display = 'none';
+            try {
+                const resp = await fetch(`${BASE_URL}?action=getNumber&service=${service}&country=${country}`);
+                const text = await resp.text();
+                if (text.includes("ACCESS_NUMBER")) {
+                    const parts = text.split(":"); currentId = parts[1];
+                    document.getElementById('phoneDisplay').innerText = parts[2];
+                    document.getElementById('copyPhoneIcon').style.display = 'inline-block';
+                    document.getElementById('orderIdText').innerText = `#${currentId} - $${price}`;
+                    startCountdown(); startPolling();   
+                } else { document.getElementById('orderCard').style.display = 'none'; }
+            } catch (e) { document.getElementById('orderCard').style.display = 'none'; }
+        }
+
+        function startPolling() {
+            if(pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(async () => {
+                if(!currentId) return;
+                const resp = await fetch(`${BASE_URL}?action=getStatus&id=${currentId}`);
+                const text = await resp.text();
+                if (text.includes("STATUS_OK")) {
+                    clearInterval(pollTimer);
+                    document.getElementById('otpLoading').style.display = 'none';
+                    document.getElementById('otpResult').innerText = text.split(":")[1]; 
+                    document.getElementById('otpResult').style.display = 'block';
+                    navigator.clipboard.writeText(text.split(":")[1]);
+                } else if (text === "STATUS_CANCEL") {
+                    clearInterval(pollTimer); clearInterval(countdownTimer);
+                    document.getElementById('orderCard').style.display = 'none'; currentId = null;
+                }
+            }, 5000); 
+        }
+
+        async function tombolAksi(tipe) {
+            if(!currentId) return;
+            if (tipe === 'DONE' || tipe === 'CANCEL') {
+                const status = tipe === 'DONE' ? 6 : 8;
+                await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=${status}`);
+                clearInterval(pollTimer); clearInterval(countdownTimer);
+                document.getElementById('orderCard').style.display = 'none'; currentId = null;
+                setTimeout(getBalance, 2000); 
+            } else if (tipe === 'RESEND') {
+                await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=3`);
+                document.getElementById('otpLoading').style.display = 'flex';
+                document.getElementById('otpResult').style.display = 'none';
+                startPolling(); 
+            } else if (tipe === 'REPLACE') {
+                await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=8`);
+                clearInterval(pollTimer); clearInterval(countdownTimer);
+                currentId = null; beliNomorAPI(currentService, currentCountry, currentPrice);
+            }
+        }
+
+        async function getBalance() {
+            try {
+                const resp = await fetch(`${BASE_URL}?action=getBalance`);
+                const text = await resp.text();
+                if(text.includes("ACCESS_BALANCE")) {
+                    document.getElementById('balanceDisplay').innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4);
+                }
+            } catch(e) {}
+        }
+        getBalance();
+
+        /* LINK MANAGEMENT */
+        let dataLinks = [];
+        const defaultLinks = [{ id: 1, name: "Link video tiktok", url: "Link TikTok", price: "Rp 1.000", color: "bg-red" }];
+
+        function bukaModalLink() { document.getElementById('linkModal').style.display = 'flex'; loadDataLinks(); }
+        function tutupModalLink() { document.getElementById('linkModal').style.display = 'none'; }
+        function loadDataLinks() {
+            const savedData = localStorage.getItem('shopeeLinksData');
+            dataLinks = savedData ? JSON.parse(savedData) : defaultLinks;
+            renderDataLinks();
+        }
+        function renderDataLinks() {
+            const container = document.getElementById('dynamicLinkContainer');
+            container.innerHTML = ''; 
+            dataLinks.forEach(link => {
+                const card = document.createElement('div');
+                card.className = `lm-card ${link.color}`;
+                card.innerHTML = `<div class="lm-copy-box" id="copyicon-${link.id}" onclick="salinTeksLink('${link.id}', '${link.url}')"><i class="far fa-copy"></i></div><div class="lm-info" onclick="salinTeksLink('${link.id}', '${link.url}')"><div class="lm-name">${link.name}</div><div class="lm-badge">STAR | ${link.price}</div></div><div class="lm-actions"><i class="fas fa-edit" onclick="bukaFormLink(${link.id})"></i><i class="fas fa-trash" style="margin-left:10px" onclick="hapusDataLink(${link.id})"></i></div>`;
+                container.appendChild(card);
+            });
+        }
+        function salinTeksLink(id, teks) {
+            navigator.clipboard.writeText(teks);
+            const iconElement = document.getElementById(`copyicon-${id}`);
+            iconElement.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => { iconElement.innerHTML = '<i class="far fa-copy"></i>'; }, 1000);
+        }
+        function bukaFormLink(id) {
+            document.getElementById('formModal').style.display = 'flex';
+            if (id) {
+                const link = dataLinks.find(l => l.id === id);
+                document.getElementById('formLinkId').value = link.id;
+                document.getElementById('formInputNama').value = link.name;
+                document.getElementById('formInputUrl').value = link.url;
+                document.getElementById('formInputHarga').value = link.price;
+                document.getElementById('formInputWarna').value = link.color;
+            } else {
+                document.getElementById('formLinkId').value = ''; document.getElementById('formInputNama').value = '';
+                document.getElementById('formInputUrl').value = ''; document.getElementById('formInputHarga').value = '';
+                document.getElementById('formInputWarna').value = 'bg-red';
+            }
+        }
+        function tutupFormLink() { document.getElementById('formModal').style.display = 'none'; }
+        function simpanDataLink() {
+            const id = document.getElementById('formLinkId').value;
+            const newData = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('formInputNama').value || "Tanpa Nama",
+                url: document.getElementById('formInputUrl').value || "#",
+                price: document.getElementById('formInputHarga').value || "Rp 0",
+                color: document.getElementById('formInputWarna').value
+            };
+            if (id) { const idx = dataLinks.findIndex(l => l.id === parseInt(id)); dataLinks[idx] = newData; } 
+            else { dataLinks.push(newData); }
+            localStorage.setItem('shopeeLinksData', JSON.stringify(dataLinks)); renderDataLinks(); tutupFormLink();
+        }
+        function hapusDataLink(id) {
+            if (confirm("Hapus link ini?")) { dataLinks = dataLinks.filter(l => l.id !== id); localStorage.setItem('shopeeLinksData', JSON.stringify(dataLinks)); renderDataLinks(); }
+        }
+    </script>
+</body>
+</html>
