@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KELAS DIGITAL - Link Shopee</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(to bottom, #ffdde1, #ee9ca7);
+            --primary-blue: #3498db;
+            --red-card: #f25c74;
+            --green-card: #2ecc71;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .mobile-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Header */
+        header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .home-btn { color: #e74c3c; font-size: 24px; cursor: pointer; }
+
+        .header-right { display: flex; align-items: center; gap: 15px; }
+
+        .add-btn {
+            background-color: var(--primary-blue);
+            color: white; border: none; padding: 8px 18px;
+            border-radius: 25px; font-size: 14px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .login-btn { cursor: pointer; transition: transform 0.2s; }
+        .login-btn:active { transform: scale(0.9); }
+
+        /* Main Content Area */
+        .content {
+            background-color: var(--white);
+            border-top-left-radius: 35px; border-top-right-radius: 35px;
+            min-height: calc(100vh - 90px); padding: 30px 20px; margin-top: 10px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+        }
+
+        .title {
+            text-align: center; color: #2c3e50; font-weight: 600;
+            letter-spacing: 1px; margin-bottom: 30px; font-size: 18px;
+            text-transform: uppercase;
+        }
+
+        /* Card Styles */
+        .list-container { display: flex; flex-direction: column; gap: 18px; }
+
+        .card {
+            display: flex; align-items: center; padding: 18px;
+            border-radius: 20px; color: white; box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .card.red { background-color: var(--red-card); }
+        .card.green { background-color: var(--green-card); }
+
+        .copy-icon-wrapper {
+            background: rgba(255, 255, 255, 0.25); width: 45px; height: 45px;
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 12px; margin-right: 15px; cursor: pointer;
+        }
+
+        .card-info { flex-grow: 1; }
+        .card-name { font-size: 16px; font-weight: 600; margin-bottom: 5px; }
+        .badges { display: flex; gap: 6px; }
+        .badge {
+            background: rgba(255, 255, 255, 0.3); font-size: 10px;
+            padding: 3px 12px; border-radius: 12px; text-transform: uppercase;
+        }
+
+        .actions { display: flex; gap: 10px; }
+        .action-btn {
+            width: 38px; height: 38px; border-radius: 50%; border: none;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; color: white; background: rgba(255, 255, 255, 0.3);
+            transition: 0.2s;
+        }
+        .action-btn:hover { background: rgba(255, 255, 255, 0.5); }
+    </style>
+</head>
+<body>
+
+<div class="mobile-container">
+    <header>
+        <div class="home-btn" onclick="location.reload()">
+            <i class="fa-solid fa-house"></i>
+        </div>
+        <div class="header-right">
+            <button class="add-btn" id="btnTambah">
+                <i class="fa-solid fa-plus"></i> Tambah
+            </button>
+            <div class="login-btn" id="loginBtn">
+                <i class="fa-solid fa-circle-user" id="userIcon" style="font-size: 32px; color: #3498db;"></i>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <h2 class="title">LINK SHOPEE</h2>
+        <div class="list-container" id="listContainer">
+            </div>
+    </main>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCs_6pMgYBCy8YvyQ1Z2E1fY_CkBI6RBzM",
+        authDomain: "copylink-facac.firebaseapp.com",
+        projectId: "copylink-facac",
+        storageBucket: "copylink-facac.firebasestorage.app",
+        messagingSenderId: "850739817033",
+        appId: "1:850739817033:web:52fee7ffb6d313cd692d98"
+    };
+
+    // Inisialisasi
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    let currentUser = null;
+
+    // --- LOGIKA LOGIN ---
+    const loginBtn = document.getElementById('loginBtn');
+    const userIcon = document.getElementById('userIcon');
+
+    loginBtn.addEventListener('click', () => {
+        if (!currentUser) {
+            signInWithPopup(auth, provider).catch(err => console.error("Login Error:", err));
+        } else {
+            Swal.fire({
+                title: 'Profil Pengguna',
+                text: `Anda login sebagai ${currentUser.displayName}`,
+                imageUrl: currentUser.photoURL,
+                imageWidth: 60,
+                imageHeight: 60,
+                imageAlt: 'Foto Profil',
+                showCancelButton: true,
+                confirmButtonText: 'Logout',
+                confirmButtonColor: '#e74c3c'
+            }).then((res) => { if(res.isConfirmed) signOut(auth); });
+        }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        if (user) {
+            userIcon.style.color = "#2ecc71"; // Hijau jika aktif
+            console.log("Logged in as:", user.email);
+        } else {
+            userIcon.style.color = "#3498db"; // Biru jika anonim
+        }
+    });
+
+    // --- LOGIKA DATA (FIRESTORE) ---
+    const listContainer = document.getElementById('listContainer');
+
+    // READ: Tampilkan data secara real-time
+    const q = query(collection(db, "shopee_links"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+        listContainer.innerHTML = '';
+        snapshot.forEach((doc) => {
+            renderCard(doc.id, doc.data());
+        });
+    });
+
+    function renderCard(id, data) {
+        const card = document.createElement('div');
+        card.className = `card ${data.color}`;
+        card.innerHTML = `
+            <div class="copy-icon-wrapper" onclick="window.copyText('${data.name}')">
+                <i class="fa-regular fa-copy"></i>
+            </div>
+            <div class="card-info">
+                <div class="card-name">${data.name}</div>
+                <div class="badges">
+                    <span class="badge">STAR</span>
+                    <span class="badge">${data.star || 100}</span>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="action-btn" onclick="window.editItem('${id}', '${data.name}')">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button class="action-btn" onclick="window.deleteItem('${id}')">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        `;
+        listContainer.appendChild(card);
+    }
+
+    // CREATE: Tambah Data Baru
+    document.getElementById('btnTambah').onclick = async () => {
+        if (!currentUser) return Swal.fire('Akses Ditolak', 'Silakan Login terlebih dahulu.', 'warning');
+
+        const { value: formValues } = await Swal.fire({
+            title: 'Tambah Link Baru',
+            html: `
+                <input id="swal-name" class="swal2-input" placeholder="Nama Link">
+                <select id="swal-color" class="swal2-input">
+                    <option value="red">Kartu Merah</option>
+                    <option value="green">Kartu Hijau</option>
+                </select>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            preConfirm: () => [
+                document.getElementById('swal-name').value,
+                document.getElementById('swal-color').value
+            ]
+        });
+
+        if (formValues && formValues[0]) {
+            await addDoc(collection(db, "shopee_links"), {
+                name: formValues[0],
+                color: formValues[1],
+                star: 100,
+                createdAt: new Date(),
+                userId: currentUser.uid
+            });
+        }
+    };
+
+    // UPDATE: Edit Nama Link
+    window.editItem = async (id, oldName) => {
+        if (!currentUser) return Swal.fire('Akses Ditolak', '', 'warning');
+        const { value: newName } = await Swal.fire({
+            title: 'Edit Nama',
+            input: 'text',
+            inputValue: oldName,
+            showCancelButton: true
+        });
+        if (newName && newName !== oldName) {
+            await updateDoc(doc(db, "shopee_links", id), { name: newName });
+        }
+    };
+
+    // DELETE: Hapus Link
+    window.deleteItem = async (id) => {
+        if (!currentUser) return Swal.fire('Akses Ditolak', '', 'warning');
+        const res = await Swal.fire({
+            title: 'Hapus Data?',
+            text: "Data akan dihapus permanen dari database.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74c3c',
+            confirmButtonText: 'Ya, Hapus!'
+        });
+        if (res.isConfirmed) await deleteDoc(doc(db, "shopee_links", id));
+    };
+
+    // COPY: Salin Teks
+    window.copyText = (text) => {
+        navigator.clipboard.writeText(text);
+        Swal.fire({
+            icon: 'success',
+            title: 'Tersalin!',
+            text: text,
+            timer: 1000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    };
+</script>
+
+</body>
+</html>
