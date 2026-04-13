@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muzans Notes Pro - Daily Reset</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+            --dark-color: #1e293b;
+            --bg-color: #f1f5f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #334155;
+            --text-muted: #64748b;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); margin: 0; padding-bottom: 100px; color: var(--text-main); }
+
+        /* Header Premium */
+        header {
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); border-bottom: 1px solid rgba(255,255,255,0.3);
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        .home-link { color: var(--primary-color); font-size: 22px; text-decoration: none; transition: 0.2s; }
+        .nav-tabs { display: flex; gap: 5px; background: #e2e8f0; padding: 4px; border-radius: 50px; }
+        .tab-btn { border: none; background: transparent; padding: 6px 16px; border-radius: 50px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.3s; font-size: 13px; }
+        .tab-btn.active { background: var(--white); color: var(--primary-color); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+        .container { max-width: 850px; margin: 20px auto; padding: 0 12px; }
+        
+        /* Barisan Kontrol Responsif */
+        .controls-row { 
+            display: flex; align-items: center; gap: 6px; margin-bottom: 18px; 
+            background: var(--white); padding: 10px; border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+        }
+        
+        .category-selector-btn {
+            background: var(--bg-color); border: 1.5px solid var(--border-color);
+            padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700;
+            color: var(--text-main); cursor: pointer; display: flex; align-items: center;
+            gap: 6px; flex: 0.8; justify-content: space-between; transition: 0.2s;
+        }
+
+        .date-input-filter { 
+            padding: 8px 6px; border-radius: 10px; border: 1.5px solid var(--border-color); 
+            font-size: 12px; font-weight: 600; outline: none; background: var(--bg-color); 
+            color: var(--text-main); font-family: 'Inter', sans-serif; flex: 1.2;
+        }
+        
+        .btn-ctrl { border: none; padding: 8px 10px; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 700; transition: 0.2s; }
+        .btn-all { background: #e2e8f0; color: var(--text-main); flex: 0.5; }
+        .btn-copy-main { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; flex: 0.6; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25); }
+
+        .count-display {
+            background: linear-gradient(135deg, #1e293b, #0f172a); color: white; 
+            padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 800; 
+            display: flex; align-items: center; gap: 5px; flex: 0.5; justify-content: center;
+        }
+
+        /* Kartu Catatan Tradisional (Screenshot Style) */
+        .card { 
+            background: var(--white); padding: 14px 16px; border-radius: 16px; 
+            box-shadow: 0 4px 12px rgba(149, 157, 165, 0.08); border: 1px solid rgba(226, 232, 240, 0.8);
+            display: flex; align-items: center; position: relative; gap: 14px; transition: 0.2s;
+            cursor: pointer; margin-bottom: 10px;
+        }
+        .card.status-gagal { background-color: #fff1f2 !important; border-color: #ffe4e6; }
+        .card.status-selesai { background-color: #f0fdf4 !important; border-color: #dcfce7; }
+
+        .card-title { 
+            font-weight: 800; font-size: 14px; color: var(--dark-color); min-width: 45px; max-width: 65px;
+            text-align: left; border-right: 2px dashed #cbd5e1; padding-right: 12px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .card-preview { flex: 1; font-size: 14px; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        
+        .note-date { background: var(--bg-color); padding: 4px 8px; border-radius: 6px; font-size: 11px; color: var(--text-muted); font-weight: 700; }
+
+        /* Tombol Aksi Berjajar Horizontal */
+        .card-actions { display: flex; flex-direction: row; align-items: center; gap: 6px; }
+
+        .btn-icon { width: 32px; height: 32px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; transition: 0.2s; }
+        .btn-icon-edit-date { background: var(--primary-color); }
+        .btn-icon-gagal { background: var(--danger-color); }
+        .btn-icon-selesai { background: var(--secondary-color); }
+
+        /* MODAL RESPOSIF: Tidak mepet layar */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(4px); }
+        .modal-content { 
+            background: white; padding: 24px; border-radius: 28px; 
+            width: calc(100% - 60px); max-width: 380px; 
+            position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.25); 
+            animation: modalFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
+        }
+        @keyframes modalFadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hp-list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #ffffff; padding: 12px 16px; border-radius: 14px;
+            border: 1.5px solid var(--border-color); margin-bottom: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .hp-list-item.selected { 
+            border-color: var(--primary-color); 
+            background: #eff6ff; 
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            position: relative;
+        }
+        .hp-list-item.selected::after {
+            content: "\f058"; font-family: "Font Awesome 6 Free"; font-weight: 900;
+            position: absolute; left: -8px; top: -8px; color: var(--primary-color);
+            background: white; border-radius: 50%; font-size: 18px; line-height: 1;
+        }
+        
+        .hp-name { font-weight: 700; font-size: 14px; color: var(--dark-color); }
+        .hp-actions { display: flex; gap: 6px; }
+        .btn-hp-small { width: 30px; height: 30px; border-radius: 8px; border: none; color: white; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+
+        .form-control { width: 100%; padding: 14px; border: 1.5px solid var(--border-color); border-radius: 12px; font-size: 14px; outline: none; margin-bottom: 12px; background: #f8fafc; box-sizing: border-box; transition: 0.2s; }
+        .form-control:focus { border-color: var(--primary-color); background: white; }
+        
+        .fab { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-color), #2563eb); color: white; border-radius: 20px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); cursor: pointer; border: none; z-index: 1500; }
+        
+        /* Tombol Pilihan Copy */
+        .btn-copy-choice {
+            width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 15px;
+            border: 1.5px solid var(--border-color); background: #f8fafc;
+            color: var(--text-main); font-weight: 700; font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; gap: 12px; transition: 0.2s;
+        }
+        .btn-copy-choice:active { background: #f0f7ff; border-color: var(--primary-color); transform: scale(0.98); }
+        .btn-copy-choice i { font-size: 18px; color: var(--primary-color); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="https://smssuper.github.io/" class="home-link"><i class="fas fa-home"></i></a>
+    <div class="nav-tabs">
+        <button id="tab-pub" class="tab-btn active"><i class="fas fa-users"></i></button>
+        <button id="tab-priv" class="tab-btn hidden"><i class="fas fa-lock"></i></button>
+    </div>
+    <div style="position: relative;">
+        <button class="tab-btn" id="user-menu-btn"><i class="fas fa-user-circle" style="font-size: 20px;"></i></button>
+        <div id="login-popup" class="hidden" style="position: absolute; top: 50px; right: 0; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 240px; z-index: 1100; border: 1px solid var(--border-color);">
+            <div id="login-fields">
+                <input type="email" id="login-email" class="form-control" placeholder="Email">
+                <input type="password" id="login-pass" class="form-control" placeholder="Password">
+                <button class="btn-ctrl" style="background:var(--secondary-color); color:white; width:100%; padding: 12px; font-size: 14px;" id="btn-login-exec">Login</button>
+            </div>
+            <div id="logout-field" class="hidden">
+                <button class="btn-ctrl" style="background:var(--danger-color); color:white; width: 100%; padding: 12px; font-size: 14px;" id="btn-logout-exec">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="controls-row">
+        <div class="category-selector-btn" id="open-category-modal">
+            <span id="current-hp-label">Memuat...</span>
+            <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+        </div>
+        
+        <input type="date" id="filter-date" class="date-input-filter">
+        <button class="btn-ctrl btn-all" id="btn-clear-date">Semua</button>
+        <button class="btn-ctrl btn-copy-main" id="btn-copy-filtered"><i class="fas fa-copy"></i> Copy</button>
+        <div class="count-display"><i class="fas fa-list"></i> <span id="note-count">0</span></div>
+    </div>
+    <div id="notes-grid" class="notes-grid"></div>
+</div>
+
+<div id="copy-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin:0; color: var(--dark-color);">Pilih Data Copy</h3>
+            <button onclick="closeModal('copy-modal')" style="border:none; background:none; cursor:pointer; font-size: 20px; color: var(--text-muted);"><i class="fas fa-times"></i></button>
+        </div>
+        <button class="btn-copy-choice" id="copy-only-titles"><i class="fas fa-heading"></i> Salin Judul Saja</button>
+        <button class="btn-copy-choice" id="copy-only-contents"><i class="fas fa-align-left"></i> Salin Catatan Saja</button>
+        <button class="btn-ctrl" style="background:#e2e8f0; width:100%; padding:12px; margin-top:10px;" onclick="closeModal('copy-modal')">Batal</button>
+    </div>
+</div>
+
+<div id="hp-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin:0; color: var(--dark-color);">Pilihan Kategori</h3>
+            <button onclick="closeModal('hp-modal')" style="border:none; background:none; cursor:pointer; font-size: 20px; color: var(--text-muted);"><i class="fas fa-times"></i></button>
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <input type="text" id="new-hp-input" class="form-control" style="margin-bottom:0;" placeholder="Tambah Kategori">
+            <button type="button" class="btn-ctrl" style="background:var(--primary-color); color:white; width: 48px; border-radius: 12px;" id="btn-save-hp-action"><i class="fas fa-plus"></i></button>
+        </div>
+        <div id="hp-list-items" style="max-height: 350px; overflow-y: auto; padding: 5px;"></div>
+    </div>
+</div>
+
+<div id="form-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="form-modal-title" style="margin-top:0; margin-bottom: 18px;">Catatan</h3>
+        <input type="text" id="node-title" class="form-control" placeholder="Judul / Nomor (ex: 37)">
+        <textarea id="node-content" class="form-control" placeholder="Isi rincian catatan..."></textarea>
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-ctrl" style="background:#e2e8f0; color:var(--text-main); flex:1; padding: 12px;" id="btn-cancel-form">Batal</button>
+            <button type="button" class="btn-ctrl" style="background:var(--primary-color); color:white; flex:2; padding: 12px;" id="btn-save-note">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<div id="detail-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span id="view-tag" class="note-date"></span>
+            <button onclick="closeModal('detail-modal')" style="border:none; background:none; cursor:pointer; font-size: 18px; color: var(--text-muted);"><i class="fas fa-times"></i></button>
+        </div>
+        <h3 id="view-title-text" style="margin-top: 0; margin-bottom: 12px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 10px;"></h3>
+        <div id="view-content" class="view-area"></div>
+        <div style="display: flex; gap: 8px; margin-top: 20px;">
+            <button class="btn-ctrl" style="background:var(--primary-color); color:white; flex:1; padding: 12px;" id="btn-edit-note">Edit</button>
+            <button class="btn-ctrl" style="background:#f59e0b; color:white; flex:1; padding: 12px;" id="btn-copy-note">Salin</button>
+            <button class="btn-ctrl" style="background:var(--danger-color); color:white; padding: 12px;" id="btn-delete-note"><i class="fas fa-trash"></i></button>
+        </div>
+    </div>
+</div>
+
+<button class="fab" id="btn-add-note"><i class="fas fa-plus"></i></button>
+<input type="date" id="global-date-picker" style="position:fixed; top:-100px; opacity:0;">
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getDatabase, ref, push, update, onValue, remove, query, orderByChild, off, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDIFk2xefmnxU4SLanbvwfmxINSYnobd8c",
+      authDomain: "catatan-85af5.firebaseapp.com",
+      databaseURL: "https://catatan-85af5-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "catatan-85af5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = null, currentTab = 'public', selectedNoteKey = null, isEditing = false, currentNoteData = null, displayedNotes = [], isFirstLoad = true, phoneCategories = [], selectedHp = '', editingHpIndex = -1;
+
+    function getLocalYYYYMMDD(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+
+    async function execCopy(text) {
+        if (!text) return;
+        try {
+            if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); } 
+            else { const textArea = document.createElement("textarea"); textArea.value = text; textArea.style = "position:fixed;left:-9999px;top:0"; document.body.appendChild(textArea); textArea.focus(); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea); }
+            showToast("Berhasil disalin!"); closeModal('copy-modal');
+        } catch (err) { alert("Gagal menyalin."); }
+    }
+
+    function showToast(msg) { const t = document.createElement('div'); t.innerText = msg; t.style = "position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:10px 20px;border-radius:50px;font-size:12px;z-index:9999;"; document.body.appendChild(t); setTimeout(() => t.remove(), 2000); }
+
+    function syncCategories() {
+        onValue(ref(db, 'notes/xurel/config/categories'), (snapshot) => {
+            const data = snapshot.val();
+            phoneCategories = data ? (Array.isArray(data) ? data : Object.values(data)) : ['Vivo', 'Realme', 'Samsung'];
+            if(!selectedHp && phoneCategories.length > 0) selectedHp = phoneCategories[0];
+            updateCategoryUI(); renderHpList(); initSync();
+        });
+    }
+
+    function renderHpList() {
+        const list = document.getElementById('hp-list-items'); if(!list) return; list.innerHTML = '';
+        phoneCategories.forEach((hp, index) => {
+            const item = document.createElement('div'); item.className = `hp-list-item ${selectedHp === hp ? 'selected' : ''}`;
+            item.onclick = () => { selectedHp = hp; updateCategoryUI(); closeModal('hp-modal'); initSync(); };
+            item.innerHTML = `<span class="hp-name">${hp}</span><div class="hp-actions"><button class="btn-hp-small" style="background:#f59e0b" onclick="event.stopPropagation(); startEditHp(${index})"><i class="fas fa-edit"></i></button><button class="btn-hp-small" style="background:var(--danger-color)" onclick="event.stopPropagation(); deleteHp(${index})"><i class="fas fa-trash"></i></button></div>`;
+            list.appendChild(item);
+        });
+    }
+
+    function updateCategoryUI() { const label = document.getElementById('current-hp-label'); if(label) label.innerText = selectedHp || 'Pilih Kategori'; }
+
+    window.startEditHp = (i) => { editingHpIndex = i; document.getElementById('new-hp-input').value = phoneCategories[i]; const btn = document.getElementById('btn-save-hp-action'); btn.innerHTML = '<i class="fas fa-save"></i>'; btn.style.background = 'var(--primary-color)'; };
+
+    window.deleteHp = (i) => { if(confirm(`Hapus "${phoneCategories[i]}"?`)) { phoneCategories.splice(i, 1); if(selectedHp === phoneCategories[i]) selectedHp = phoneCategories[0] || ''; saveCategoriesToFirebase(); } };
+
+    document.getElementById('btn-save-hp-action').onclick = () => {
+        const val = document.getElementById('new-hp-input').value.trim(); if(!val) return;
+        if(editingHpIndex > -1) { phoneCategories[editingHpIndex] = val; editingHpIndex = -1; document.getElementById('btn-save-hp-action').innerHTML = '<i class="fas fa-plus"></i>'; } 
+        else { if(!phoneCategories.includes(val)) phoneCategories.push(val); }
+        document.getElementById('new-hp-input').value = ''; saveCategoriesToFirebase();
+    };
+
+    function saveCategoriesToFirebase() { set(ref(db, 'notes/xurel/config/categories'), phoneCategories).catch(err => alert("Gagal: " + err.message)); }
+
+    document.getElementById('open-category-modal').onclick = () => { renderHpList(); document.getElementById('hp-modal').style.display = 'flex'; };
+
+    document.getElementById('btn-copy-filtered').onclick = () => { if (displayedNotes.length > 0) document.getElementById('copy-modal').style.display = 'flex'; };
+    document.getElementById('copy-only-titles').onclick = () => execCopy(displayedNotes.map(n => n.title || '').filter(t => t).join('\n'));
+    document.getElementById('copy-only-contents').onclick = () => execCopy(displayedNotes.map(n => n.content || '').join('\n'));
+
+    document.getElementById('user-menu-btn').onclick = () => document.getElementById('login-popup').classList.toggle('hidden');
+    document.getElementById('btn-login-exec').onclick = () => { signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value).then(()=>document.getElementById('login-popup').classList.add('hidden')); };
+    document.getElementById('btn-logout-exec').onclick = () => { signOut(auth).then(() => window.location.reload()); };
+    document.getElementById('tab-pub').onclick = () => { currentTab = 'public'; initSync(); };
+    document.getElementById('tab-priv').onclick = () => { if(currentUser) { currentTab = 'private'; initSync(); } };
+    document.getElementById('btn-add-note').onclick = openAddModal;
+    document.getElementById('btn-cancel-form').onclick = () => closeModal('form-modal');
+    document.getElementById('btn-save-note').onclick = handleSave;
+    document.getElementById('filter-date').onchange = initSync;
+    document.getElementById('btn-clear-date').onclick = () => { document.getElementById('filter-date').value = ""; initSync(); };
+    document.getElementById('btn-copy-note').onclick = () => execCopy(currentNoteData.content || "");
+    document.getElementById('btn-edit-note').onclick = editFromDetail;
+    document.getElementById('btn-delete-note').onclick = confirmDelete;
+
+    onAuthStateChanged(auth, (user) => { currentUser = user; document.getElementById('tab-priv').classList.toggle('hidden', !user); syncCategories(); });
+
+    function getDbPath() { return (currentTab === 'private' && currentUser) ? `notes/xurel/users/${currentUser.uid}` : 'notes/xurel/public'; }
+
+    window.updateNoteStatus = function(e, key, s) { e.stopPropagation(); update(ref(db, `${getDbPath()}/${key}`), { status: s }); };
+
+    window.editNoteDate = function(e, key, ts) {
+        e.stopPropagation(); const p = document.getElementById('global-date-picker'); p.value = getLocalYYYYMMDD(ts);
+        p.onchange = () => { const parts = p.value.split('-'); update(ref(db, `${getDbPath()}/${key}`), { timestamp: new Date(parts[0], parts[1]-1, parts[2], 12,0,0).getTime() }); };
+        p.showPicker ? p.showPicker() : p.click();
+    };
+
+    function initSync() {
+        if(!selectedHp) return; const grid = document.getElementById('notes-grid'); const countSpan = document.getElementById('note-count'); const f = document.getElementById('filter-date');
+        if (isFirstLoad) { f.value = getLocalYYYYMMDD(Date.now()); isFirstLoad = false; }
+        off(ref(db, getDbPath()));
+        onValue(query(ref(db, getDbPath()), orderByChild('timestamp')), (snap) => {
+            grid.innerHTML = ''; let items = []; snap.forEach(c => { items.push({ key: c.key, ...c.val() }); });
+            items = items.filter(d => (f.value === "" || getLocalYYYYMMDD(d.timestamp) === f.value) && d.phone === selectedHp);
+            items.reverse(); displayedNotes = items; countSpan.innerText = items.length;
+            if (items.length === 0) { grid.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);font-size:13px;">Belum ada catatan untuk <b>${selectedHp}</b></div>`; return; }
+            items.forEach((d) => {
+                const card = document.createElement('div'); card.className = `card ${d.status==='gagal'?'status-gagal':(d.status==='selesai'?'status-selesai':'')}`;
+                card.onclick = () => openDetailModal(d.key, d);
+                card.innerHTML = `<div class="card-title">${d.title||'?'}</div><div class="card-preview">${d.content}</div><div class="card-right"><div class="note-date">${String(new Date(d.timestamp).getDate()).padStart(2,'0')}/${String(new Date(d.timestamp).getMonth()+1).padStart(2,'0')}</div><div class="card-actions"><button class="btn-icon btn-icon-edit-date" onclick="editNoteDate(event,'${d.key}',${d.timestamp})"><i class="fas fa-calendar-alt"></i></button><button class="btn-icon btn-icon-gagal" onclick="updateNoteStatus(event,'${d.key}','gagal')"><i class="fas fa-times"></i></button><button class="btn-icon btn-icon-selesai" onclick="updateNoteStatus(event,'${d.key}','selesai')"><i class="fas fa-check"></i></button></div></div>`;
+                grid.appendChild(card);
+            });
+        });
+    }
+
+    function handleSave() {
+        const t = document.getElementById('node-title').value.trim(), c = document.getElementById('node-content').value; if(!c.trim()) return;
+        const data = { title: t, content: c, timestamp: Date.now(), phone: selectedHp };
+        if(isEditing && selectedNoteKey) { update(ref(db, `${getDbPath()}/${selectedNoteKey}`), data).then(() => closeModal('form-modal')); } 
+        else { data.status = 'default'; push(ref(db, getDbPath()), data).then(() => closeModal('form-modal')); }
+    }
+
+    function confirmDelete() { if(selectedNoteKey && confirm("Hapus catatan ini?")) remove(ref(db, `${getDbPath()}/${selectedNoteKey}`)).then(() => closeModal('detail-modal')); }
+    window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; if(id==='form-modal') { isEditing = false; selectedNoteKey = null; } };
+    function openAddModal() { isEditing = false; selectedNoteKey = null; document.getElementById('node-title').value = ""; document.getElementById('node-content').value = ""; document.getElementById('form-modal-title').innerText = "Catatan Baru"; document.getElementById('form-modal').style.display = 'flex'; }
+    function openDetailModal(key, data) { selectedNoteKey = key; currentNoteData = data; document.getElementById('view-tag').innerText = `${String(new Date(data.timestamp).getDate()).padStart(2,'0')}/${String(new Date(data.timestamp).getMonth()+1).padStart(2,'0')}`; document.getElementById('view-title-text').innerText = data.title; document.getElementById('view-content').innerText = data.content; document.getElementById('detail-modal').style.display = 'flex'; }
+    function editFromDetail() { document.getElementById('node-title').value = currentNoteData.title || ""; document.getElementById('node-content').value = currentNoteData.content || ""; closeModal('detail-modal'); isEditing = true; document.getElementById('form-modal-title').innerText = "Edit Catatan"; document.getElementById('form-modal').style.display = 'flex'; }
+    window.onclick = (e) => { if(e.target.classList.contains('modal-overlay')) closeModal(e.target.id); };
+</script>
+</body>
+</html>
