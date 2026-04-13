@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero SMS Dashboard Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-body: #f4f7fa; --white: #ffffff; --primary: #8e44ad; --secondary: #3498db;
+            --success: #2ecc71; --warning: #f39c12; --danger: #e74c3c; --dark: #2c3e50;
+            --gray: #95a5a6; --text: #34495e; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+            --indigo: #6610f2;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
+        
+        /* HEADER */
+        .header { display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); padding: 12px 20px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 1px 10px rgba(0,0,0,0.05); }
+        .app-logo { font-weight: 700; font-size: 15px; color: var(--dark); }
+        .balance { background: #e8f5e9; color: #2e7d32; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+        
+        /* SIDEBAR */
+        #sidebar { position: fixed; top: 0; left: -280px; width: 270px; height: 100%; background: var(--white); box-shadow: 5px 0 25px rgba(0,0,0,0.1); transition: 0.4s; z-index: 2000; padding: 30px 20px; box-sizing: border-box; }
+        #sidebar.active { left: 0; }
+        .sidebar-item { padding: 14px 15px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 5px; transition: 0.2s; }
+        .sidebar-item:hover { background: #f0f3f6; color: var(--secondary); }
+
+        /* CONTAINER */
+        .container { padding: 15px; max-width: 500px; margin: 0 auto; transition: 0.4s; }
+        .card { background: var(--white); padding: 20px; margin-bottom: 15px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.7); }
+        .email-display { width: 100%; padding: 16px; border: 2px solid #edf2f7; border-radius: 12px; text-align: center; font-weight: 700; box-sizing: border-box; margin-bottom: 15px; font-size: 14px; background: #f8fafc; color: var(--dark); }
+        
+        /* BUTTONS */
+        .btn { border: none; padding: 14px; border-radius: 12px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; width: 100%; font-size: 13px; transition: 0.3s; }
+        .btn:active { transform: scale(0.97); }
+        .btn-orange { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .btn-yellow { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #2c3e50; }
+        .btn-blue { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .btn-purple { background: linear-gradient(135deg, #8e44ad, #7d3c98); }
+        .btn-indigo { background: linear-gradient(135deg, var(--indigo), #4b0082); }
+        .btn-dark { background: #5d6d7e; }
+        .row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+        /* MODAL & INPUTS (PERBAIKAN GAMBAR LOGIN) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: var(--white); width: 100%; max-width: 400px; border-radius: 20px; padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 800; color: var(--gray); text-transform: uppercase; margin-bottom: 6px; }
+        .input-group input, .input-group select { width: 100%; padding: 12px 15px; border: 2px solid #edf2f7; border-radius: 12px; box-sizing: border-box; font-size: 14px; outline: none; }
+
+        /* --- TAMPILAN KARTU WARNA-WARNI (KEMBALI SEPERTI AWAL) --- */
+        #linkModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #ffd3e0 0%, #e1bee7 100%); z-index: 3000; display: none; flex-direction: column; overflow-y: auto; }
+        
+        .lm-card { 
+            display: flex; align-items: center; border-radius: 14px; padding: 12px; margin-bottom: 12px; 
+            color: white !important; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: none;
+        }
+        .bg-red { background: #f25c78 !important; }
+        .bg-blue { background: #4a90e2 !important; }
+        .bg-purple { background: #8c5cd3 !important; }
+        .bg-orange { background: #f5b041 !important; }
+        .bg-green { background: #2ecc71 !important; }
+        .bg-teal { background: #00d2d3 !important; }
+
+        .btn-copy-card {
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
+            background: rgba(0, 0, 0, 0.15); border-radius: 10px; cursor: pointer; font-size: 18px; flex-shrink: 0;
+            color: white !important;
+        }
+        .btn-action-circle {
+            width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; 
+            background: rgba(255, 255, 255, 0.3); border-radius: 50%; cursor: pointer; font-size: 14px;
+            color: white !important;
+        }
+        .badge-star { font-size: 9px; background: rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 10px; display: inline-block; margin-top: 5px; font-weight: 800; color: white; }
+        .badge-price { font-size: 10px; background: rgba(0,0,0,0.15); padding: 3px 8px; border-radius: 10px; display: inline-block; margin-top: 5px; margin-left: 5px; font-weight: 700; color: white; }
+
+        .flash-success { animation: flash 0.5s ease; }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        * { -webkit-tap-highlight-color: transparent; outline: none; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+            <span class="app-logo">HERO SMS PRO</span>
+            <i class="fas fa-times" onclick="toggleMenu()"></i>
+        </div>
+        <div id="auth-section">
+            <div class="sidebar-item" id="btn-login" onclick="openLoginModal()"><i class="fas fa-sign-in-alt"></i> Login Admin</div>
+            <div class="sidebar-item" id="btn-logout" style="display:none; color:var(--danger)" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Keluar</div>
+        </div>
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <div class="sidebar-item" onclick="triggerImport()"><i class="fas fa-envelope"></i> Import Gmail (.txt)</div>
+        <div class="sidebar-item" onclick="triggerImportLinks()"><i class="fas fa-link"></i> Import Link Acak (.txt)</div>
+        <div class="sidebar-item" onclick="openPassModal()"><i class="fas fa-key"></i> Edit Password</div>
+        <div class="sidebar-item" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Refresh Halaman</div>
+        <div class="sidebar-item" onclick="hapusTotalStorage()" style="color: var(--danger);"><i class="fas fa-dumpster"></i> Bersihkan Storage</div>
+    </div>
+
+    <div class="header" style="position: relative;">
+        <div style="display:flex; align-items:center; gap:12px">
+            <i class="fas fa-bars menu-icon" onclick="toggleMenu()" style="cursor:pointer; font-size: 18px;"></i>
+            <span class="app-logo">Hero SMS</span>
+        </div>
+        <div style="position: absolute; left: 50%; transform: translateX(-50%); cursor: pointer; border-radius: 50%; background: #edf2f7; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;" onclick="window.location.href='https://smssuper.github.io/filtercopy.html'">
+            <i class="far fa-copy" style="font-size: 13px; color: var(--secondary);"></i>
+        </div>
+        <div class="balance"><i class="fas fa-wallet"></i> <span id="balanceDisplay">$ 0.0000</span> <i class="fas fa-lock lock-icon"></i></div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <div class="card">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="font-size: 10px; color: var(--gray); font-weight: 800;" id="linkCounter">Link Tersedia: 0</span>
+                <span style="font-size: 10px; color: var(--gray); font-weight: 800;" id="emailCounter">Sisa Gmail: 0</span>
+            </div>
+            <input type="text" class="email-display" value="Gmail Kosong..." id="emailField" readonly>
+            <div class="row-grid" style="margin-top:0">
+                <button class="btn btn-orange" onclick="copyEmail()"><i class="far fa-copy"></i> Copy Email</button>
+                <button class="btn btn-yellow" onclick="copyPassword()"><i class="fas fa-key"></i> Copy Pass</button>
+            </div>
+            <div class="row-grid">
+                <button class="btn btn-blue" onclick="acakNama()"><i class="far fa-user"></i> Acak Nama</button>
+                <button class="btn btn-green" onclick="acakNomorLokal()"><i class="fas fa-phone-alt"></i> Acak Nomor</button>
+            </div>
+            <div style="margin-top: 10px;">
+                <button class="btn btn-indigo" onclick="acakLink()"><i class="fas fa-random"></i> Acak Link</button>
+            </div>
+        </div>
+
+        <div class="card" style="padding:10px">
+            <div class="row-grid" style="margin-top:0">
+                <button class="btn btn-purple" onclick="bukaModalLink()">BUKA LINK</button>
+                <button class="btn btn-dark" onclick="window.location.href='https://smssuper.github.io/not.html'">NOT</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-content">
+            <h3 style="text-align:center; margin:0 0 20px 0">Login Admin</h3>
+            <div class="input-group"><label>Email</label><input type="email" id="loginEmail" placeholder="admin@mail.com"></div>
+            <div class="input-group"><label>Password</label><input type="password" id="loginPass" placeholder="******"></div>
+            <div class="row-grid"><button class="btn btn-dark" onclick="closeLoginModal()">Batal</button><button class="btn btn-blue" id="btnLoginExec">Masuk</button></div>
+        </div>
+    </div>
+
+    <div id="linkModal">
+        <div style="display:flex; justify-content:space-between; padding:20px; align-items:center">
+            <i class="fas fa-home" style="font-size:24px; color:var(--danger); cursor:pointer" onclick="tutupModalLink()"></i>
+            <button class="btn btn-blue" style="width:auto; padding:10px 20px; border-radius:20px" onclick="bukaFormLink(null)"><i class="fas fa-plus"></i> Tambah</button>
+        </div>
+        <div style="background:var(--white); flex:1; border-radius:30px 30px 0 0; padding:30px 20px; box-shadow:0 -10px 30px rgba(0,0,0,0.05)">
+            <h3 style="text-align:center; margin-bottom:30px; color: var(--dark);">LINK SHOPEE</h3>
+            <div id="dynamicLinkContainer"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="formModal">
+        <div class="modal-content">
+            <h3 id="formModalTitle" style="text-align:center; margin:0 0 20px 0">Tambah Link</h3>
+            <input type="hidden" id="formLinkId">
+            <div class="input-group"><label>Nama</label><input type="text" id="formInputNama"></div>
+            <div class="input-group"><label>URL</label><input type="text" id="formInputUrl"></div>
+            <div class="input-group"><label>Harga</label><input type="text" id="formInputHarga"></div>
+            <div class="input-group"><label>Warna</label>
+                <select id="formInputWarna">
+                    <option value="bg-red">Merah</option><option value="bg-blue">Biru</option><option value="bg-purple">Ungu</option>
+                    <option value="bg-orange">Oranye</option><option value="bg-green">Hijau</option><option value="bg-teal">Teal</option>
+                </select>
+            </div>
+            <div class="row-grid"><button class="btn btn-dark" onclick="tutupFormLink()">Batal</button><button class="btn btn-blue" onclick="simpanDataLink()">Simpan</button></div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="handleFile(this)">
+    <input type="file" id="linkFileInput" accept=".txt" style="display:none" onchange="handleLinkFile(this)">
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-1_1_Mb28fyzxA3EmxaAYNZOxx1zm5HQ",
+            authDomain: "smssuper-85754.firebaseapp.com",
+            projectId: "smssuper-85754",
+            storageBucket: "smssuper-85754.firebasestorage.app",
+            messagingSenderId: "516953018540",
+            appId: "1:516953018540:web:729bc35237405193744f09"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let emailQueue = JSON.parse(localStorage.getItem('savedEmailQueue')) || [];
+        let masterLinks = JSON.parse(localStorage.getItem('masterLinkPool')) || [];
+
+        function updateUI() { 
+            document.getElementById('emailField').value = emailQueue.length > 0 ? emailQueue[0] : "Gmail Kosong..."; 
+            document.getElementById('emailCounter').innerText = "Sisa Gmail: " + emailQueue.length;
+            document.getElementById('linkCounter').innerText = "Link Tersedia: " + masterLinks.length;
+            localStorage.setItem('savedEmailQueue', JSON.stringify(emailQueue));
+            localStorage.setItem('masterLinkPool', JSON.stringify(masterLinks));
+        }
+        updateUI();
+
+        window.toggleMenu = () => document.getElementById('sidebar').classList.toggle('active');
+        window.openLoginModal = () => { document.getElementById('loginModal').style.display = 'flex'; toggleMenu(); };
+        window.closeLoginModal = () => document.getElementById('loginModal').style.display = 'none';
+
+        onAuthStateChanged(auth, (user) => {
+            const container = document.getElementById('mainContainer');
+            if (user) { 
+                document.getElementById('btn-login').style.display = 'none'; 
+                document.getElementById('btn-logout').style.display = 'flex'; 
+                container.style.opacity = '1'; container.style.pointerEvents = 'auto';
+            } else { 
+                document.getElementById('btn-login').style.display = 'flex'; 
+                document.getElementById('btn-logout').style.display = 'none'; 
+                container.style.opacity = '0.3'; container.style.pointerEvents = 'none';
+            }
+        });
+
+        document.getElementById('btnLoginExec').addEventListener('click', async () => {
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+            try { await signInWithEmailAndPassword(auth, email, pass); closeLoginModal(); } 
+            catch (e) { alert("Akses Ditolak!"); }
+        });
+
+        window.handleLogout = () => { signOut(auth); localStorage.clear(); location.reload(); };
+
+        window.triggerImport = () => document.getElementById('fileInput').click();
+        window.handleFile = (input) => {
+            const reader = new FileReader();
+            reader.onload = (e) => { emailQueue = e.target.result.split('\n').map(em => em.trim()).filter(em => em !== ""); updateUI(); };
+            reader.readAsText(input.files[0]);
+        };
+
+        window.triggerImportLinks = () => document.getElementById('linkFileInput').click();
+        window.handleLinkFile = (input) => {
+            const reader = new FileReader();
+            reader.onload = (e) => { masterLinks = e.target.result.split('\n').map(l => l.trim()).filter(l => l !== ""); updateUI(); };
+            reader.readAsText(input.files[0]);
+        };
+
+        window.acakLink = () => {
+            if (masterLinks.length === 0) return;
+            const res = masterLinks[Math.floor(Math.random() * masterLinks.length)];
+            navigator.clipboard.writeText(res);
+            const btn = document.querySelector('.btn-indigo');
+            btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 500);
+        };
+
+        window.copyEmail = () => {
+            if (emailQueue.length === 0) return;
+            navigator.clipboard.writeText(emailQueue[0]); emailQueue.shift(); updateUI();
+            const btn = document.querySelector('.btn-orange');
+            btn.classList.add('flash-success'); setTimeout(() => btn.classList.remove('flash-success'), 500);
+        };
+
+        const linksCol = collection(db, "links");
+        window.bukaModalLink = () => {
+            document.getElementById('linkModal').style.display = 'flex';
+            onSnapshot(query(linksCol, orderBy("createdAt", "desc")), (snapshot) => {
+                const container = document.getElementById('dynamicLinkContainer');
+                container.innerHTML = '';
+                snapshot.forEach((docSnap) => {
+                    const link = docSnap.data(); const id = docSnap.id;
+                    const card = document.createElement('div');
+                    card.className = `lm-card ${link.color || 'bg-blue'}`;
+                    card.innerHTML = `
+                        <div class="btn-copy-card" onclick="salinTeksLink('${id}', '${link.url}')" id="copyicon-${id}"><i class="far fa-copy"></i></div>
+                        <div style="flex:1; padding:0 15px; cursor:pointer" onclick="salinTeksLink('${id}', '${link.url}')">
+                            <div style="font-weight:700; font-size:14px;">${link.name || "Tanpa Nama"}</div>
+                            <div><span class="badge-star">STAR</span><span class="badge-price">${link.price || "Rp 0"}</span></div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <div class="btn-action-circle" onclick="bukaFormLink('${id}')"><i class="fas fa-edit"></i></div>
+                            <div class="btn-action-circle" onclick="hapusDataLink('${id}')"><i class="fas fa-trash"></i></div>
+                        </div>`;
+                    container.appendChild(card);
+                });
+            });
+        };
+
+        window.tutupModalLink = () => document.getElementById('linkModal').style.display = 'none';
+        window.salinTeksLink = (id, teks) => { 
+            navigator.clipboard.writeText(teks);
+            const icon = document.getElementById(`copyicon-${id}`); icon.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => icon.innerHTML = '<i class="far fa-copy"></i>', 1000);
+        };
+        window.bukaFormLink = async (id) => { 
+            document.getElementById('formModal').style.display = 'flex';
+            if(id) { document.getElementById('formLinkId').value = id; document.getElementById('formModalTitle').innerText = 'Edit Link'; }
+            else { document.getElementById('formLinkId').value = ''; document.getElementById('formModalTitle').innerText = 'Tambah Link'; }
+        };
+        window.tutupFormLink = () => document.getElementById('formModal').style.display = 'none';
+        window.simpanDataLink = async () => {
+            const id = document.getElementById('formLinkId').value;
+            const data = { name: document.getElementById('formInputNama').value, url: document.getElementById('formInputUrl').value, price: document.getElementById('formInputHarga').value, color: document.getElementById('formInputWarna').value, createdAt: Date.now() };
+            if(id) await updateDoc(doc(db, "links", id), data); else await addDoc(linksCol, data);
+            tutupFormLink();
+        };
+        window.hapusDataLink = async (id) => { await deleteDoc(doc(db, "links", id)); };
+        window.openPassModal = () => { document.getElementById('passModal').style.display = 'flex'; };
+        window.closePassModal = () => { document.getElementById('passModal').style.display = 'none'; };
+        window.savePassword = () => { localStorage.setItem('userPassword', document.getElementById('newPassInput').value); closePassModal(); };
+        window.hapusTotalStorage = () => { localStorage.clear(); location.reload(); };
+        window.copyPassword = () => { navigator.clipboard.writeText(localStorage.getItem('userPassword') || "Belum diatur"); };
+        window.acakNama = () => { const n = ["Budi","Agus","Siti","Dewi"]; navigator.clipboard.writeText(n[Math.floor(Math.random()*n.length)]+" Wijaya"); };
+        window.acakNomorLokal = () => { navigator.clipboard.writeText("08"+Math.floor(Math.random()*10000000000)); };
+    </script>
+</body>
+</html>
