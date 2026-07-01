@@ -72,7 +72,7 @@
         .ic-dark { background: linear-gradient(135deg, #576574, #2c3e50); }
         .ic-gray { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
 
-        /* ORDER CARD (PERBAIKAN: FIXED DI BAWAH AGAR TIDAK GESER) */
+        /* ORDER CARD FIXED BOTTOM */
         .card-active { 
             background: #e3f2fd; border-left: 5px solid var(--secondary); border-radius: 20px; 
             padding: 20px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.25); 
@@ -130,6 +130,13 @@
         
         .flash-success { animation: flash 0.5s ease; }
         @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        /* TABEL SUKSES */
+        .success-table-container { margin-top: 25px; display: none; }
+        .success-table { width: 100%; border-collapse: collapse; text-align: left; background: white; border-radius: 16px; overflow: hidden; border: 1px solid #edf2f7; }
+        .success-table th { background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: var(--gray); font-weight: 800; border-bottom: 1px solid #edf2f7; }
+        .success-table td { padding: 12px; font-size: 13px; font-weight: 700; color: var(--dark); border-bottom: 1px solid #edf2f7; }
+        .success-table tr:last-child td { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -233,6 +240,26 @@
                         <button style="width:100%; background:var(--secondary); color:white; border:none; padding:16px; border-radius:14px; font-weight:800; font-size:14px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
                             <i class="fas fa-shopping-cart" style="margin-right:8px;"></i> PESAN SEKARANG
                         </button>
+                        
+                        <!-- TABEL NOMOR SUKSES -->
+                        <div id="successTableContainer" class="success-table-container">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <h4 style="font-size: 13px; color: var(--dark); margin:0;">Riwayat Sukses</h4>
+                                <span style="font-size:10px; color:var(--danger); font-weight:800; cursor:pointer;" onclick="clearSuccessHistory()"><i class="fas fa-trash-alt"></i> HAPUS</span>
+                            </div>
+                            <table class="success-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 15%;">No</th>
+                                        <th>Nomor HP</th>
+                                        <th style="width: 25%;">Ket</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="successTableBody">
+                                    <!-- Baris data sukses akan muncul di sini -->
+                                </tbody>
+                            </table>
+                        </div>
 
                     </div>
                 </div>
@@ -337,9 +364,10 @@
 
         let emailQueue = JSON.parse(localStorage.getItem('savedEmailQueue')) || [];
         let emailHistory = JSON.parse(localStorage.getItem('savedEmailHistory')) || []; 
+        let successNumbers = JSON.parse(localStorage.getItem('successNumbers')) || []; // Variabel untuk menyimpan nomor sukses
         let masterLinks = [];
         let masterLinkIds = [];
-        let isDraggingLinks = false; // Penanda saat sedang menggeser item
+        let isDraggingLinks = false;
 
         function updateUI() { 
             const eField = document.getElementById('emailField');
@@ -353,6 +381,38 @@
             if(emailQueue.length <= 1) btnNext.classList.add('disabled'); else btnNext.classList.remove('disabled');
         }
         updateUI();
+
+        // FUNGSI RENDER TABEL NOMOR SUKSES
+        function renderSuccessTable() {
+            const container = document.getElementById('successTableContainer');
+            const tbody = document.getElementById('successTableBody');
+            
+            if (successNumbers.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            tbody.innerHTML = '';
+            
+            successNumbers.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color: var(--gray); font-weight: 800;">${index + 1}</td>
+                    <td>${item.phone}</td>
+                    <td style="color: var(--success);"><i class="fas fa-check-circle" style="margin-right: 4px;"></i> Sukses</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        window.clearSuccessHistory = () => {
+            successNumbers = [];
+            localStorage.removeItem('successNumbers');
+            renderSuccessTable();
+        };
+
+        renderSuccessTable(); // Panggil saat memuat halaman
 
         onSnapshot(collection(db, "random_links"), (snapshot) => {
             masterLinks = snapshot.docs.map(doc => doc.data().url);
@@ -385,7 +445,6 @@
                 card.className = `lm-card ${link.color || 'bg-blue'}`;
                 card.setAttribute('data-id', link.id);
                 
-                // PERBAIKAN 1: Buka link saat di klik nama menggunakan window.open
                 card.innerHTML = `
                     <div class="drag-handle">
                         <i class="fas fa-grip-lines"></i>
@@ -494,7 +553,7 @@
         let currentService, currentCountry, currentProvider, currentServerType;
         let cancelTimerInterval = null; 
 
-        // PERBAIKAN 3: FUNGSI SIMPAN & RESTORE STATE ORDER LOCAL STORAGE
+        // FUNGSI SIMPAN & RESTORE STATE ORDER LOCAL STORAGE
         function saveOrderState(id, phone, server, service, country, provider, displayName, duration, cancelCd) {
             const orderData = {
                 id, phone, server, service, country, provider, displayName,
@@ -830,6 +889,16 @@
             if (!actionSuccess) {
                 btnDone.disabled = false; btnCancel.disabled = false; btnReplace.disabled = false;
                 return; 
+            }
+            
+            // SIMPAN NOMOR KE TABEL JIKA DONE
+            if (tipe === 'DONE') {
+                const savedPhone = document.getElementById('phoneDisplay').innerText;
+                if (savedPhone && savedPhone !== "Mencari..." && !savedPhone.includes("Dibatalkan")) {
+                    successNumbers.push({ phone: savedPhone });
+                    localStorage.setItem('successNumbers', JSON.stringify(successNumbers));
+                    renderSuccessTable(); // Render ulang tabel
+                }
             }
             
             clearInterval(pollTimer); clearInterval(countdownTimer);
