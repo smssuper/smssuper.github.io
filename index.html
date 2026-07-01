@@ -90,11 +90,11 @@
         }
         .otp-display:active { transform: scale(0.95); }
         
-        /* PERBAIKAN: Menjadi 4 kolom untuk menambahkan tombol RELOAD */
-        .btn-action-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
-        .btn-order { border: none; padding: 12px 5px; border-radius: 12px; background: white; font-size: 11px; font-weight: 800; color: var(--dark); cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; }
+        /* PERBAIKAN GRID TOMBOL: 2x2 Agar Muat di Semua Layar HP */
+        .btn-action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-order { border: none; padding: 14px 5px; border-radius: 12px; background: white; font-size: 12px; font-weight: 800; color: var(--dark); cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: 0.2s; }
         .btn-order:active { transform: scale(0.95); background: #f8fafc; }
-        .btn-order:disabled { cursor: not-allowed; background: #e2e8f0; color: #a0aec0; }
+        .btn-order:disabled { cursor: not-allowed; background: #e2e8f0 !important; color: #a0aec0 !important; box-shadow: none; }
 
         .loading-dots { display: flex; justify-content: center; gap: 5px; margin: 15px 0; }
         .dot { width: 6px; height: 18px; background: #aed6f1; border-radius: 3px; animation: wave 1s infinite ease-in-out; }
@@ -302,8 +302,8 @@
         <div id="otpResult" class="otp-display" onclick="salinOTP()" title="Klik untuk menyalin">000000</div>
         
         <div class="btn-action-row">
-            <button class="btn-order" id="btnActionDone" onclick="tombolAksi('DONE')">DONE</button>
-            <button class="btn-order" id="btnActionReload" onclick="tombolAksi('RELOAD')">RELOAD</button>
+            <button class="btn-order" style="background:#e8f5e9; color:#2e7d32;" id="btnActionDone" onclick="tombolAksi('DONE')">DONE</button>
+            <button class="btn-order" style="background:#e3f2fd; color:#1565c0;" id="btnActionReload" onclick="tombolAksi('RELOAD')"><i class="fas fa-sync-alt"></i> RELOAD</button>
             <button class="btn-order" id="btnActionCancel" onclick="tombolAksi('CANCEL')">CANCEL</button>
             <button class="btn-order" id="btnActionReplace" onclick="tombolAksi('REPLACE')">REPLACE</button>
         </div>
@@ -824,25 +824,23 @@
             // FUNGSI RELOAD (MINTA OTP KEDUA)
             if (tipe === 'RELOAD') {
                 btnReload.disabled = true;
-                btnReload.innerText = "...";
+                btnReload.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 
                 document.getElementById('otpResult').style.display = 'none';
                 document.getElementById('otpLoading').style.display = 'flex';
                 
                 if (currentServerType === 'server1') {
                     try { await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=3`); } catch(e){}
-                } else if (currentServerType === 'nixpoin') {
-                    // API Nixpoin biasanya otomatis jika kita terus melakukan polling
                 }
                 
                 startPolling(); // Mulai ulang proses pencarian OTP
                 
                 setTimeout(() => {
                     btnReload.disabled = false;
-                    btnReload.innerText = "RELOAD";
-                }, 2000);
+                    btnReload.innerHTML = '<i class="fas fa-sync-alt"></i> RELOAD';
+                }, 2500);
                 
-                return; // Jangan lanjutkan ke proses hapus state di bawah
+                return; // Jangan lanjutkan ke proses hapus di bawah
             }
 
             btnDone.disabled = true; btnReload.disabled = true; btnCancel.disabled = true; btnReplace.disabled = true;
@@ -1013,7 +1011,7 @@
         onSnapshot(doc(db, "app_state", "active_order"), (docSnap) => {
             if (docSnap.exists()) {
                 const order = docSnap.data();
-                if (currentId === order.id) return; // Mencegah perangkat yang sama mereset timer
+                if (currentId === order.id) return; 
                 
                 const elapsed = Math.floor((Date.now() - order.timestamp) / 1000);
                 const remDuration = order.duration - elapsed;
@@ -1045,7 +1043,6 @@
                     clearOrderState(); 
                 }
             } else {
-                // Jika order dihapus (dari perangkat lain karena di-klik DONE/CANCEL), tutup card
                 if (currentId) {
                     clearInterval(pollTimer); clearInterval(countdownTimer);
                     if(cancelTimerInterval) clearInterval(cancelTimerInterval);
