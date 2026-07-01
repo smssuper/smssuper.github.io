@@ -90,7 +90,8 @@
         }
         .otp-display:active { transform: scale(0.95); }
         
-        .btn-action-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 15px; }
+        /* PERBAIKAN: Menjadi 4 kolom untuk menambahkan tombol RELOAD */
+        .btn-action-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
         .btn-order { border: none; padding: 12px 5px; border-radius: 12px; background: white; font-size: 11px; font-weight: 800; color: var(--dark); cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; }
         .btn-order:active { transform: scale(0.95); background: #f8fafc; }
         .btn-order:disabled { cursor: not-allowed; background: #e2e8f0; color: #a0aec0; }
@@ -241,7 +242,6 @@
                             <i class="fas fa-shopping-cart" style="margin-right:8px;"></i> PESAN SEKARANG
                         </button>
                         
-                        <!-- TABEL NOMOR SUKSES -->
                         <div id="successTableContainer" class="success-table-container">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                                 <h4 style="font-size: 13px; color: var(--dark); margin:0;">Riwayat Sukses</h4>
@@ -256,8 +256,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="successTableBody">
-                                    <!-- Baris data sukses akan otomatis dirender dari Firebase di sini -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
 
@@ -287,7 +286,6 @@
         </div>
     </div>
 
-    <!-- ORDER CARD FIXED BOTTOM -->
     <div class="card-active" id="orderCard">
         <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#5d6d7e; margin-bottom: 10px;">
             <span id="orderIdText">#-------</span><span id="orderClock" style="color:var(--danger); font-size: 13px;">15:00</span>
@@ -305,6 +303,7 @@
         
         <div class="btn-action-row">
             <button class="btn-order" id="btnActionDone" onclick="tombolAksi('DONE')">DONE</button>
+            <button class="btn-order" id="btnActionReload" onclick="tombolAksi('RELOAD')">RELOAD</button>
             <button class="btn-order" id="btnActionCancel" onclick="tombolAksi('CANCEL')">CANCEL</button>
             <button class="btn-order" id="btnActionReplace" onclick="tombolAksi('REPLACE')">REPLACE</button>
         </div>
@@ -564,7 +563,7 @@
                 timestamp: Date.now(),
                 duration, cancelCd
             };
-            localStorage.setItem('activeSMSOrder', JSON.stringify(orderData)); // Tetap simpan lokal sebagai cadangan
+            localStorage.setItem('activeSMSOrder', JSON.stringify(orderData)); 
             try {
                 await setDoc(doc(db, "app_state", "active_order"), orderData);
             } catch(e) {}
@@ -689,6 +688,7 @@
             
             if (cancelTimerInterval) clearInterval(cancelTimerInterval);
             document.getElementById('btnActionDone').disabled = false;
+            document.getElementById('btnActionReload').disabled = false;
             document.getElementById('btnActionCancel').disabled = false; document.getElementById('btnActionCancel').innerText = "CANCEL";
             document.getElementById('btnActionReplace').disabled = false; document.getElementById('btnActionReplace').innerText = "REPLACE";
 
@@ -706,7 +706,6 @@
                         document.getElementById('phoneDisplay').innerText = parts[2];
                         document.getElementById('copyPhoneIcon').style.display = 'inline-block';
                         
-                        // Simpan Status di Firebase
                         saveOrderState(currentId, parts[2], currentServerType, s, c, providerSelected, document.getElementById('orderIdText').innerText, 900, 0);
 
                         startPolling(); startCountdown(900); 
@@ -735,7 +734,6 @@
                         document.getElementById('copyPhoneIcon').style.display = 'inline-block';
                         if(data.newBalance) { document.getElementById('balanceDisplay').innerText = "Rp " + data.newBalance; }
                         
-                        // Simpan Status di Firebase
                         saveOrderState(currentId, data.phoneNumber, currentServerType, s, c, providerSelected, document.getElementById('orderIdText').innerText, 1200, 180);
 
                         startPolling(); startCountdown(1200); 
@@ -819,9 +817,35 @@
             if(!currentId) return;
 
             const btnDone = document.getElementById('btnActionDone');
+            const btnReload = document.getElementById('btnActionReload');
             const btnCancel = document.getElementById('btnActionCancel');
             const btnReplace = document.getElementById('btnActionReplace');
-            btnDone.disabled = true; btnCancel.disabled = true; btnReplace.disabled = true;
+            
+            // FUNGSI RELOAD (MINTA OTP KEDUA)
+            if (tipe === 'RELOAD') {
+                btnReload.disabled = true;
+                btnReload.innerText = "...";
+                
+                document.getElementById('otpResult').style.display = 'none';
+                document.getElementById('otpLoading').style.display = 'flex';
+                
+                if (currentServerType === 'server1') {
+                    try { await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=3`); } catch(e){}
+                } else if (currentServerType === 'nixpoin') {
+                    // API Nixpoin biasanya otomatis jika kita terus melakukan polling
+                }
+                
+                startPolling(); // Mulai ulang proses pencarian OTP
+                
+                setTimeout(() => {
+                    btnReload.disabled = false;
+                    btnReload.innerText = "RELOAD";
+                }, 2000);
+                
+                return; // Jangan lanjutkan ke proses hapus state di bawah
+            }
+
+            btnDone.disabled = true; btnReload.disabled = true; btnCancel.disabled = true; btnReplace.disabled = true;
 
             const savedService = currentService; const savedCountry = currentCountry; 
             const savedProvider = currentProvider; const savedServer = currentServerType;
@@ -860,7 +884,7 @@
             }
             
             if (!actionSuccess) {
-                btnDone.disabled = false; btnCancel.disabled = false; btnReplace.disabled = false;
+                btnDone.disabled = false; btnReload.disabled = false; btnCancel.disabled = false; btnReplace.disabled = false;
                 return; 
             }
             
@@ -1010,6 +1034,7 @@
                     document.getElementById('otpResult').style.display = 'none';
 
                     document.getElementById('btnActionDone').disabled = false;
+                    document.getElementById('btnActionReload').disabled = false;
                     document.getElementById('btnActionCancel').disabled = false;
                     document.getElementById('btnActionReplace').disabled = false;
 
