@@ -256,7 +256,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="successTableBody">
-                                    <!-- Baris data sukses akan muncul di sini -->
+                                    <!-- Baris data sukses akan otomatis dirender dari Firebase di sini -->
                                 </tbody>
                             </table>
                         </div>
@@ -347,7 +347,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAYUvnhcCbtvBwoh9AxPviXlcAOQRx_aB0",
@@ -364,7 +364,7 @@
 
         let emailQueue = JSON.parse(localStorage.getItem('savedEmailQueue')) || [];
         let emailHistory = JSON.parse(localStorage.getItem('savedEmailHistory')) || []; 
-        let successNumbers = JSON.parse(localStorage.getItem('successNumbers')) || []; // Variabel untuk menyimpan nomor sukses
+        let successNumberIds = []; 
         let masterLinks = [];
         let masterLinkIds = [];
         let isDraggingLinks = false;
@@ -382,37 +382,45 @@
         }
         updateUI();
 
-        // FUNGSI RENDER TABEL NOMOR SUKSES
-        function renderSuccessTable() {
+        // LOGIKA PENARIKAN RIWAYAT NOMOR SUKSES DARI FIREBASE
+        const successCol = collection(db, "success_numbers");
+        const qSuccess = query(successCol, orderBy("createdAt", "asc"));
+        onSnapshot(qSuccess, (snapshot) => {
             const container = document.getElementById('successTableContainer');
             const tbody = document.getElementById('successTableBody');
-            
-            if (successNumbers.length === 0) {
+
+            if (snapshot.empty) {
                 container.style.display = 'none';
+                successNumberIds = [];
                 return;
             }
-            
+
             container.style.display = 'block';
             tbody.innerHTML = '';
-            
-            successNumbers.forEach((item, index) => {
+            successNumberIds = [];
+
+            let index = 1;
+            snapshot.forEach((docSnap) => {
+                const item = docSnap.data();
+                successNumberIds.push(docSnap.id);
+                
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="color: var(--gray); font-weight: 800;">${index + 1}</td>
+                    <td style="color: var(--gray); font-weight: 800;">${index}</td>
                     <td>${item.phone}</td>
                     <td style="color: var(--success);"><i class="fas fa-check-circle" style="margin-right: 4px;"></i> Sukses</td>
                 `;
                 tbody.appendChild(tr);
+                index++;
             });
-        }
+        });
         
-        window.clearSuccessHistory = () => {
-            successNumbers = [];
-            localStorage.removeItem('successNumbers');
-            renderSuccessTable();
+        window.clearSuccessHistory = async () => {
+            if(!confirm("Yakin ingin menghapus semua riwayat sukses?")) return;
+            for(const id of successNumberIds) {
+                await deleteDoc(doc(db, "success_numbers", id));
+            }
         };
-
-        renderSuccessTable(); // Panggil saat memuat halaman
 
         onSnapshot(collection(db, "random_links"), (snapshot) => {
             masterLinks = snapshot.docs.map(doc => doc.data().url);
@@ -420,7 +428,6 @@
             document.getElementById('linkCounter').innerText = "Link: " + masterLinks.length;
         });
 
-        // LOGIKA PENARIKAN DAN PENYORTIRAN DATA LINK
         const linksCol = collection(db, "links");
         onSnapshot(query(linksCol), (snapshot) => {
             if (isDraggingLinks) return; 
@@ -432,7 +439,6 @@
                 localLinks.push({ id: docSnap.id, ...docSnap.data() });
             });
 
-            // Urutkan berdasarkan index dari atas ke bawah
             localLinks.sort((a, b) => {
                 let valA = a.orderIndex !== undefined ? a.orderIndex : (a.createdAt || 0);
                 let valB = b.orderIndex !== undefined ? b.orderIndex : (b.createdAt || 0);
@@ -462,7 +468,6 @@
             });
         });
 
-        // INISIALISASI FITUR DRAG AND DROP MANUAL
         const sortContainer = document.getElementById('dynamicLinkContainer');
         new Sortable(sortContainer, {
             handle: '.drag-handle',
@@ -483,7 +488,6 @@
                 setTimeout(() => { isDraggingLinks = false; }, 500); 
             }
         });
-
 
         window.scrollToSlide = (index) => {
             const slider = document.getElementById('mainSlider');
@@ -553,55 +557,24 @@
         let currentService, currentCountry, currentProvider, currentServerType;
         let cancelTimerInterval = null; 
 
-        // FUNGSI SIMPAN & RESTORE STATE ORDER LOCAL STORAGE
-        function saveOrderState(id, phone, server, service, country, provider, displayName, duration, cancelCd) {
+        // FUNGSI SIMPAN & HAPUS STATE ORDER KE FIREBASE (SINKRONISASI LINTAS PERANGKAT)
+        async function saveOrderState(id, phone, server, service, country, provider, displayName, duration, cancelCd) {
             const orderData = {
                 id, phone, server, service, country, provider, displayName,
                 timestamp: Date.now(),
                 duration, cancelCd
             };
-            localStorage.setItem('activeSMSOrder', JSON.stringify(orderData));
+            localStorage.setItem('activeSMSOrder', JSON.stringify(orderData)); // Tetap simpan lokal sebagai cadangan
+            try {
+                await setDoc(doc(db, "app_state", "active_order"), orderData);
+            } catch(e) {}
         }
 
-        function clearOrderState() {
+        async function clearOrderState() {
             localStorage.removeItem('activeSMSOrder');
-        }
-
-        function checkSavedOrder() {
-            const saved = localStorage.getItem('activeSMSOrder');
-            if (saved) {
-                try {
-                    const order = JSON.parse(saved);
-                    const elapsed = Math.floor((Date.now() - order.timestamp) / 1000);
-                    const remDuration = order.duration - elapsed;
-                    const remCancel = order.cancelCd - elapsed;
-
-                    if (remDuration > 0) {
-                        currentId = order.id;
-                        currentServerType = order.server;
-                        currentService = order.service;
-                        currentCountry = order.country;
-                        currentProvider = order.provider;
-
-                        document.getElementById('orderIdText').innerText = order.displayName;
-                        document.getElementById('phoneDisplay').innerText = order.phone;
-                        document.getElementById('copyPhoneIcon').style.display = 'inline-block';
-                        document.getElementById('orderCard').style.display = 'block';
-                        document.getElementById('otpLoading').style.display = 'flex';
-                        document.getElementById('otpResult').style.display = 'none';
-
-                        document.getElementById('btnActionDone').disabled = false;
-                        document.getElementById('btnActionCancel').disabled = false;
-                        document.getElementById('btnActionReplace').disabled = false;
-
-                        startPolling();
-                        startCountdown(remDuration);
-                        startCancelCountdown(remCancel > 0 ? remCancel : 0);
-                    } else {
-                        clearOrderState(); // Kadaluarsa
-                    }
-                } catch (e) { clearOrderState(); }
-            }
+            try {
+                await deleteDoc(doc(db, "app_state", "active_order"));
+            } catch(e) {}
         }
 
         async function fetchCorrectShopeeCode() {
@@ -733,7 +706,7 @@
                         document.getElementById('phoneDisplay').innerText = parts[2];
                         document.getElementById('copyPhoneIcon').style.display = 'inline-block';
                         
-                        // Simpan Status di Local Storage
+                        // Simpan Status di Firebase
                         saveOrderState(currentId, parts[2], currentServerType, s, c, providerSelected, document.getElementById('orderIdText').innerText, 900, 0);
 
                         startPolling(); startCountdown(900); 
@@ -762,7 +735,7 @@
                         document.getElementById('copyPhoneIcon').style.display = 'inline-block';
                         if(data.newBalance) { document.getElementById('balanceDisplay').innerText = "Rp " + data.newBalance; }
                         
-                        // Simpan Status di Local Storage
+                        // Simpan Status di Firebase
                         saveOrderState(currentId, data.phoneNumber, currentServerType, s, c, providerSelected, document.getElementById('orderIdText').innerText, 1200, 180);
 
                         startPolling(); startCountdown(1200); 
@@ -891,20 +864,25 @@
                 return; 
             }
             
-            // SIMPAN NOMOR KE TABEL JIKA DONE
+            // SIMPAN NOMOR KE FIREBASE JIKA DONE
             if (tipe === 'DONE') {
                 const savedPhone = document.getElementById('phoneDisplay').innerText;
                 if (savedPhone && savedPhone !== "Mencari..." && !savedPhone.includes("Dibatalkan")) {
-                    successNumbers.push({ phone: savedPhone });
-                    localStorage.setItem('successNumbers', JSON.stringify(successNumbers));
-                    renderSuccessTable(); // Render ulang tabel
+                    try {
+                        await addDoc(collection(db, "success_numbers"), {
+                            phone: savedPhone,
+                            createdAt: Date.now()
+                        });
+                    } catch(e) {
+                        console.error("Gagal simpan nomor ke Firebase:", e);
+                    }
                 }
             }
             
             clearInterval(pollTimer); clearInterval(countdownTimer);
             if(cancelTimerInterval) clearInterval(cancelTimerInterval);
             
-            // Hapus Status dari Local Storage setelah action success
+            // Hapus Status dari Firebase setelah action success
             clearOrderState(); 
             
             document.getElementById('orderCard').style.display = 'none';
@@ -938,7 +916,7 @@
             else { 
                 data.color = colors[Math.floor(Math.random() * colors.length)]; 
                 data.createdAt = Date.now(); 
-                data.orderIndex = Date.now(); // Agar link baru masuk ke paling bawah
+                data.orderIndex = Date.now(); 
                 await addDoc(linksCol, data); 
             }
             tutupFormLink();
@@ -1007,8 +985,50 @@
             else { document.getElementById('btn-login').style.display='flex'; document.getElementById('btn-logout').style.display='none'; cont.style.opacity='0.3'; cont.style.pointerEvents='none'; }
         });
 
-        // CEK ORDER SAAT HALAMAN DIMUAT
-        checkSavedOrder();
+        // SINKRONISASI ORDER LINTAS PERANGKAT (FIREBASE)
+        onSnapshot(doc(db, "app_state", "active_order"), (docSnap) => {
+            if (docSnap.exists()) {
+                const order = docSnap.data();
+                if (currentId === order.id) return; // Mencegah perangkat yang sama mereset timer
+                
+                const elapsed = Math.floor((Date.now() - order.timestamp) / 1000);
+                const remDuration = order.duration - elapsed;
+                const remCancel = order.cancelCd - elapsed;
+
+                if (remDuration > 0) {
+                    currentId = order.id;
+                    currentServerType = order.server;
+                    currentService = order.service;
+                    currentCountry = order.country;
+                    currentProvider = order.provider;
+
+                    document.getElementById('orderIdText').innerText = order.displayName;
+                    document.getElementById('phoneDisplay').innerText = order.phone;
+                    document.getElementById('copyPhoneIcon').style.display = 'inline-block';
+                    document.getElementById('orderCard').style.display = 'block';
+                    document.getElementById('otpLoading').style.display = 'flex';
+                    document.getElementById('otpResult').style.display = 'none';
+
+                    document.getElementById('btnActionDone').disabled = false;
+                    document.getElementById('btnActionCancel').disabled = false;
+                    document.getElementById('btnActionReplace').disabled = false;
+
+                    startPolling();
+                    startCountdown(remDuration);
+                    startCancelCountdown(remCancel > 0 ? remCancel : 0);
+                } else {
+                    clearOrderState(); 
+                }
+            } else {
+                // Jika order dihapus (dari perangkat lain karena di-klik DONE/CANCEL), tutup card
+                if (currentId) {
+                    clearInterval(pollTimer); clearInterval(countdownTimer);
+                    if(cancelTimerInterval) clearInterval(cancelTimerInterval);
+                    document.getElementById('orderCard').style.display = 'none';
+                    currentId = null;
+                }
+            }
+        });
     </script>
 </body>
 </html>
