@@ -90,7 +90,6 @@
         }
         .otp-display:active { transform: scale(0.95); }
         
-        /* PERBAIKAN GRID TOMBOL: 2x2 Agar Muat di Semua Layar HP */
         .btn-action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .btn-order { border: none; padding: 14px 5px; border-radius: 12px; background: white; font-size: 12px; font-weight: 800; color: var(--dark); cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: 0.2s; }
         .btn-order:active { transform: scale(0.95); background: #f8fafc; }
@@ -312,7 +311,7 @@
     <div class="modal-overlay" id="loginModal">
         <div class="modal-content">
             <h3 style="margin-bottom: 20px;">Login Admin</h3>
-            <div class="input-group"><label>Email</label><input type="email" id="loginEmail" placeholder="admin@gmail.com"></div>
+            <div class="input-group"><label>Username / Email</label><input type="text" id="loginEmail" placeholder="admin"></div>
             <div class="input-group"><label>Password</label><input type="password" id="loginPass" placeholder="******"></div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                 <button class="btn-order" style="background:#eee; padding:15px;" onclick="closeLoginModal()">Batal</button>
@@ -367,6 +366,9 @@
         let masterLinks = [];
         let masterLinkIds = [];
         let isDraggingLinks = false;
+        
+        // PERBAIKAN RELOAD: Variabel untuk merekam OTP terakhir
+        let lastOtpReceived = "000000";
 
         function updateUI() { 
             const eField = document.getElementById('emailField');
@@ -680,6 +682,10 @@
             currentServerType = serverTerpilih;
             currentService = s; currentCountry = c; currentProvider = providerSelected;
             
+            // PERBAIKAN: Reset OTP Tracking saat pesan baru
+            lastOtpReceived = "000000";
+            document.getElementById('otpResult').innerText = "000000";
+            
             document.getElementById('orderCard').style.display = 'block';
             document.getElementById('phoneDisplay').innerText = "Mencari...";
             document.getElementById('copyPhoneIcon').style.display = 'none';
@@ -756,6 +762,7 @@
             btnPesan.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right:8px;"></i> PESAN SEKARANG';
         };
 
+        // PERBAIKAN: Fungsi Polling Didesain Untuk Mengabaikan OTP Lama
         function startPolling() {
             if(pollTimer) clearInterval(pollTimer);
             pollTimer = setInterval(async () => {
@@ -766,12 +773,16 @@
                         const resp = await fetch(`${BASE_URL}?action=getStatus&id=${currentId}`);
                         const text = await resp.text();
                         if (text.includes("STATUS_OK")) {
-                            clearInterval(pollTimer);
-                            document.getElementById('otpLoading').style.display = 'none';
                             const code = text.split(":")[1];
-                            document.getElementById('otpResult').innerText = code;
-                            document.getElementById('otpResult').style.display = 'block';
-                            navigator.clipboard.writeText(code);
+                            // JIKA KODE BARU, TAMPILKAN
+                            if (code && code !== lastOtpReceived && code !== "000000") {
+                                clearInterval(pollTimer);
+                                document.getElementById('otpLoading').style.display = 'none';
+                                document.getElementById('otpResult').innerText = code;
+                                document.getElementById('otpResult').style.display = 'block';
+                                lastOtpReceived = code; // Ingat kode ini
+                                navigator.clipboard.writeText(code);
+                            }
                         }
                     } catch(e){}
 
@@ -783,12 +794,16 @@
                         });
                         const data = await resp.json();
                         if (data.success && data.status === 'received') {
-                            clearInterval(pollTimer);
-                            document.getElementById('otpLoading').style.display = 'none';
                             const code = data.smsCode;
-                            document.getElementById('otpResult').innerText = code;
-                            document.getElementById('otpResult').style.display = 'block';
-                            navigator.clipboard.writeText(code);
+                            // JIKA KODE BARU, TAMPILKAN
+                            if (code && code !== lastOtpReceived && code !== "000000") {
+                                clearInterval(pollTimer);
+                                document.getElementById('otpLoading').style.display = 'none';
+                                document.getElementById('otpResult').innerText = code;
+                                document.getElementById('otpResult').style.display = 'block';
+                                lastOtpReceived = code; // Ingat kode ini
+                                navigator.clipboard.writeText(code);
+                            }
                         } else if (data.status === 'cancelled' || data.status === 'expired') {
                             clearInterval(pollTimer);
                             document.getElementById('otpLoading').style.display = 'none';
@@ -821,26 +836,32 @@
             const btnCancel = document.getElementById('btnActionCancel');
             const btnReplace = document.getElementById('btnActionReplace');
             
-            // FUNGSI RELOAD (MINTA OTP KEDUA)
+            // PERBAIKAN: FUNGSI RELOAD
             if (tipe === 'RELOAD') {
                 btnReload.disabled = true;
                 btnReload.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 
+                // Menyembunyikan OTP yang sudah ada
                 document.getElementById('otpResult').style.display = 'none';
                 document.getElementById('otpLoading').style.display = 'flex';
                 
+                // Set status agar meminta ulang (khusus Server1)
                 if (currentServerType === 'server1') {
                     try { await fetch(`${BASE_URL}?action=setStatus&id=${currentId}&status=3`); } catch(e){}
+                } else if (currentServerType === 'nixpoin') {
+                    // Berusaha memberi instruksi retry jika server mendukung
+                    try { await fetch(`${NIXPOIN_PROXY}/api/v1/retry`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': NIXPOIN_API_KEY }, body: JSON.stringify({ orderId: currentId.toString() }) }); } catch(e){}
                 }
                 
-                startPolling(); // Mulai ulang proses pencarian OTP
+                // Mulai pencarian baru
+                startPolling(); 
                 
                 setTimeout(() => {
                     btnReload.disabled = false;
                     btnReload.innerHTML = '<i class="fas fa-sync-alt"></i> RELOAD';
-                }, 2500);
+                }, 2000);
                 
-                return; // Jangan lanjutkan ke proses hapus di bawah
+                return; // STOP! Jangan lanjutkan koding ke bawah, fungsi ini hanya meminta ulang
             }
 
             btnDone.disabled = true; btnReload.disabled = true; btnCancel.disabled = true; btnReplace.disabled = true;
@@ -904,7 +925,6 @@
             clearInterval(pollTimer); clearInterval(countdownTimer);
             if(cancelTimerInterval) clearInterval(cancelTimerInterval);
             
-            // Hapus Status dari Firebase setelah action success
             clearOrderState(); 
             
             document.getElementById('orderCard').style.display = 'none';
@@ -989,15 +1009,28 @@
         window.hapusDatabaseLink = async (e) => { if(e) e.stopPropagation(); if (masterLinkIds.length === 0) return; for (const id of masterLinkIds) { await deleteDoc(doc(db, "random_links", id)); } toggleMenu(); };
         function animateBtn(sel) { const b = document.querySelector(sel); b.classList.add('flash-success'); setTimeout(() => b.classList.remove('flash-success'), 500); }
         
+        // PERBAIKAN: FUNGSI LOGIN TANPA @GMAIL.COM 
         document.getElementById('btnLoginExec').addEventListener('click', async () => {
-            const email = document.getElementById('loginEmail').value;
+            let email = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPass').value;
-            if(!email || !pass) { alert("Email dan Password tidak boleh kosong!"); return; }
+            
+            if(!email || !pass) { alert("Username dan Password tidak boleh kosong!"); return; }
+            
+            // LOGIKA TAMBAH OTOMATIS: Jika tidak ada lambang '@', sistem otomatis menebak email
+            if (!email.includes('@')) {
+                email = email + '@gmail.com'; 
+            }
+
             const btn = document.getElementById('btnLoginExec');
             const originalText = btn.innerText;
             btn.innerText = "Loading..."; btn.disabled = true;
-            try { await signInWithEmailAndPassword(auth, email, pass); closeLoginModal(); document.getElementById('loginEmail').value = ''; document.getElementById('loginPass').value = ''; } 
-            catch (e) { alert("Login Gagal! Pastikan email dan password benar."); } 
+            try { 
+                await signInWithEmailAndPassword(auth, email, pass); 
+                closeLoginModal(); 
+                document.getElementById('loginEmail').value = ''; 
+                document.getElementById('loginPass').value = ''; 
+            } 
+            catch (e) { alert("Login Gagal! Pastikan Username dan password benar."); } 
             finally { btn.innerText = originalText; btn.disabled = false; }
         });
 
