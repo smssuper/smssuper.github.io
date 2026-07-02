@@ -75,38 +75,23 @@
         /* SCROLLABLE ORDER WRAPPER */
         #ordersWrapper {
             display: flex; flex-direction: column; gap: 12px; 
-            max-height: 400px; /* Batasan tinggi untuk scroll internal */
-            overflow-y: auto; scrollbar-width: none;
+            max-height: 400px; overflow-y: auto; scrollbar-width: none;
             padding: 2px 2px 10px 2px;
         }
         #ordersWrapper::-webkit-scrollbar { display: none; }
 
-        /* KARTU ANTRIAN MIRIP REFERENSI GAMBAR */
+        /* KARTU ANTRIAN */
         .card-active { 
             background: #ffffff; border: 1px solid #edf2f7; border-radius: 16px; 
             padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
             display: flex; flex-direction: column; gap: 10px;
         }
-        .card-active-header {
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .service-name {
-            font-size: 14px; font-weight: 800; color: var(--dark);
-        }
-        .timer-badge {
-            background: #f1f5f9; color: var(--gray); font-size: 11px; font-weight: 700;
-            padding: 4px 8px; border-radius: 8px;
-        }
-        .number-row {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 5px;
-        }
-        .number-txt { 
-            font-size: 18px; /* Font nomor diperkecil */
-            font-weight: 700; color: var(--dark); letter-spacing: 1px; 
-        }
-        .copy-icon-btn {
-            color: #9ab4c6; cursor: pointer; font-size: 16px; transition: 0.2s;
-        }
+        .card-active-header { display: flex; justify-content: space-between; align-items: center; }
+        .service-name { font-size: 14px; font-weight: 800; color: var(--dark); }
+        .timer-badge { background: #f1f5f9; color: var(--gray); font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 8px; }
+        .number-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+        .number-txt { font-size: 18px; font-weight: 700; color: var(--dark); letter-spacing: 1px; }
+        .copy-icon-btn { color: #9ab4c6; cursor: pointer; font-size: 16px; transition: 0.2s; }
         .copy-icon-btn:active { transform: scale(0.8); }
         
         /* AREA OTP KECIL */
@@ -114,12 +99,11 @@
             font-size: 20px; font-weight: 900; color: var(--success); 
             letter-spacing: 4px; border: 1px dashed var(--success); 
             padding: 8px; border-radius: 10px; background: #f0fff4; 
-            cursor: pointer; transition: 0.2s; text-align: center;
-            margin: 5px 0;
+            cursor: pointer; transition: 0.2s; text-align: center; margin: 5px 0;
         }
         .otp-display-small:active { transform: scale(0.95); }
         
-        /* TOMBOL 1 BARIS x 4 KOLOM MENYAMPING KECIL */
+        /* TOMBOL MENYAMPING KECIL */
         .btn-action-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 5px; }
         .btn-order { 
             border: none; padding: 10px 4px; border-radius: 8px; 
@@ -149,7 +133,6 @@
         .btn-copy-card { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-radius: 12px; font-size: 18px; flex-shrink: 0; cursor: pointer; transition: 0.2s; }
         .btn-copy-card:active { transform: scale(0.9); }
         
-        /* KELAS UNTUK DRAG AND DROP MANUAL */
         .drag-handle { padding-right: 12px; cursor: grab; color: rgba(255,255,255,0.7); font-size: 18px; display: flex; align-items: center; justify-content: center; }
         .drag-handle:active { cursor: grabbing; }
         .sortable-ghost { opacity: 0.4; }
@@ -270,14 +253,12 @@
                             </div>
                         </div>
 
-                        <!-- ID Teks Nama Layanan -->
                         <span id="orderIdText" style="display:none;">Shopee</span>
 
                         <button style="width:100%; background:var(--secondary); color:white; border:none; padding:16px; border-radius:14px; font-weight:800; font-size:14px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s; margin-bottom: 25px;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
                             <i class="fas fa-shopping-cart" style="margin-right:8px;"></i> PESAN SEKARANG
                         </button>
                         
-                        <!-- KONTINER ANTRIAN ORDER (DI BAWAH TOMBOL PESAN) -->
                         <div id="activeOrdersContainer" style="display:none; margin-bottom: 20px;">
                             <h4 style="font-size: 15px; font-weight: 800; color: var(--dark); margin-top: 0; margin-bottom: 12px;">Pesanan Aktif</h4>
                             <div id="ordersWrapper"></div>
@@ -386,9 +367,6 @@
         let masterLinkIds = [];
         let isDraggingLinks = false;
         
-        // ==========================================
-        //  STATE MANAGEMENT UNTUK MULTI-ORDER
-        // ==========================================
         let activeOrders = JSON.parse(localStorage.getItem('multiActiveOrders')) || {};
         let globalPollTimer = null;
         let globalCountdownTimer = null;
@@ -406,28 +384,23 @@
         }
         updateUI();
 
-        // LOGIKA PENARIKAN RIWAYAT NOMOR SUKSES DARI FIREBASE
         const successCol = collection(db, "success_numbers");
         const qSuccess = query(successCol, orderBy("createdAt", "asc"));
         onSnapshot(qSuccess, (snapshot) => {
             const container = document.getElementById('successTableContainer');
             const tbody = document.getElementById('successTableBody');
-
             if (snapshot.empty) {
                 container.style.display = 'none';
                 successNumberIds = [];
                 return;
             }
-
             container.style.display = 'block';
             tbody.innerHTML = '';
             successNumberIds = [];
-
             let index = 1;
             snapshot.forEach((docSnap) => {
                 const item = docSnap.data();
                 successNumberIds.push(docSnap.id);
-                
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="color: var(--gray); font-weight: 800;">${index}</td>
@@ -441,9 +414,7 @@
         
         window.clearSuccessHistory = async () => {
             if(!confirm("Yakin ingin menghapus semua riwayat sukses?")) return;
-            for(const id of successNumberIds) {
-                await deleteDoc(doc(db, "success_numbers", id));
-            }
+            for(const id of successNumberIds) { await deleteDoc(doc(db, "success_numbers", id)); }
         };
 
         onSnapshot(collection(db, "random_links"), (snapshot) => {
@@ -455,38 +426,29 @@
         const linksCol = collection(db, "links");
         onSnapshot(query(linksCol), (snapshot) => {
             if (isDraggingLinks) return; 
-
             const container = document.getElementById('dynamicLinkContainer');
             let localLinks = [];
-            
-            snapshot.forEach((docSnap) => {
-                localLinks.push({ id: docSnap.id, ...docSnap.data() });
-            });
-
+            snapshot.forEach((docSnap) => { localLinks.push({ id: docSnap.id, ...docSnap.data() }); });
             localLinks.sort((a, b) => {
                 let valA = a.orderIndex !== undefined ? a.orderIndex : (a.createdAt || 0);
                 let valB = b.orderIndex !== undefined ? b.orderIndex : (b.createdAt || 0);
                 return valA - valB;
             });
-
             container.innerHTML = '';
             localLinks.forEach((link) => {
                 const card = document.createElement('div');
                 card.className = `lm-card ${link.color || 'bg-blue'}`;
                 card.setAttribute('data-id', link.id);
-                
                 card.innerHTML = `
-                    <div class="drag-handle">
-                        <i class="fas fa-grip-lines"></i>
-                    </div>
+                    <div class="drag-handle"><i class="fas fa-grip-lines"></i></div>
                     <div class="btn-copy-card" onclick="salinTeksLink('${link.id}', '${link.url}')" id="copyicon-${link.id}"><i class="far fa-copy"></i></div>
                     <div style="flex:1; padding:0 12px; cursor:pointer" onclick="window.open('${link.url}', '_blank')">
                         <div style="font-weight:700; font-size:13px; line-height:1.2;">${link.name || "..." }</div>
                         <div style="margin-top:4px;"><span style="font-size:9px; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px; font-weight:800;">STAR</span> <span style="font-size:10px; font-weight:700; opacity:0.9; margin-left:5px;">${link.price || "Rp 0"}</span></div>
                     </div>
                     <div class="action-btns" style="display:flex; gap:8px; margin-left:auto;">
-                        <div style="width:36px; height:36px; border-radius:10px; background:#ff4757; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; opacity:1; box-shadow: 0 2px 6px rgba(255, 71, 87, 0.4);" onclick="hapusDataLink('${link.id}')"><i class="fas fa-times"></i></div>
-                        <div style="width:36px; height:36px; border-radius:10px; background:#2ed573; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; opacity:1; box-shadow: 0 2px 6px rgba(46, 213, 115, 0.4);" onclick="bukaFormLink('${link.id}')"><i class="fas fa-check"></i></div>
+                        <div style="width:36px; height:36px; border-radius:10px; background:#ff4757; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(255, 71, 87, 0.4);" onclick="hapusDataLink('${link.id}')"><i class="fas fa-times"></i></div>
+                        <div style="width:36px; height:36px; border-radius:10px; background:#2ed573; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(46, 213, 115, 0.4);" onclick="bukaFormLink('${link.id}')"><i class="fas fa-check"></i></div>
                     </div>`;
                 container.appendChild(card);
             });
@@ -497,9 +459,7 @@
             handle: '.drag-handle',
             animation: 150,
             ghostClass: 'sortable-ghost',
-            onStart: function() {
-                isDraggingLinks = true; 
-            },
+            onStart: function() { isDraggingLinks = true; },
             onEnd: async function(evt) {
                 const itemEls = sortContainer.querySelectorAll('.lm-card');
                 const batchPromises = [];
@@ -507,7 +467,6 @@
                     const id = el.getAttribute('data-id');
                     batchPromises.push(updateDoc(doc(db, "links", id), { orderIndex: index }));
                 });
-                
                 await Promise.all(batchPromises);
                 setTimeout(() => { isDraggingLinks = false; }, 500); 
             }
@@ -529,13 +488,8 @@
             navigator.clipboard.writeText(first[Math.floor(Math.random()*first.length)] + " " + last[Math.floor(Math.random()*last.length)]);
             animateBtn('.ic-blue');
         };
-        window.acakNomorLokal = () => {
-            const prefixes = ["0812", "0857", "0819", "0895", "0882", "0821", "0878", "0813"];
-            const random = Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
-            navigator.clipboard.writeText(prefixes[Math.floor(Math.random()*prefixes.length)] + random);
-            animateBtn('.ic-green');
-        };
 
+        // FUNGSI ACAK ALAMAT DENGAN NOMOR HP ACAK
         let dataAlamatGlobal = null;
         window.acakAlamat = async () => {
             try {
@@ -547,6 +501,14 @@
                 const first = ["Budi", "Agus", "Siti", "Dewi", "Rudi", "Andi", "Joko", "Ayu", "Putra", "Rizky", "Ahmad", "Nisa", "Bagus", "Gilang", "Indra", "Dinda"];
                 const last = ["Santoso", "Wijaya", "Kusuma", "Saputra", "Hidayat", "Lestari", "Siregar", "Gunawan", "Pratama", "Nugroho", "Setiawan", "Mahendra"];
                 const randomName = first[Math.floor(Math.random()*first.length)] + " " + last[Math.floor(Math.random()*last.length)];
+                
+                const prefixes = ["0811", "0812", "0813", "0821", "0822", "0823", "0851", "0852", "0853", "0814", "0815", "0816", "0855", "0856", "0857", "0858", "0817", "0818", "0819", "0859", "0877", "0878", "0831", "0832", "0833", "0838", "0895", "0896", "0897", "0898", "0899", "0881", "0882", "0883", "0884", "0885", "0886", "0887", "0888", "0889"];
+                const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+                const randomSuffixLength = Math.floor(Math.random() * 3) + 7;
+                let randomSuffix = "";
+                for(let i=0; i<randomSuffixLength; i++){ randomSuffix += Math.floor(Math.random() * 10); }
+                const randomPhone = randomPrefix + randomSuffix;
+
                 const provinces = Object.keys(dataAlamatGlobal);
                 const randomProv = provinces[Math.floor(Math.random() * provinces.length)];
                 const cities = Object.keys(dataAlamatGlobal[randomProv]);
@@ -557,7 +519,7 @@
                 const randomVill = villages[Math.floor(Math.random() * villages.length)];
                 const postalCode = dataAlamatGlobal[randomProv][randomCity][randomDist][randomVill];
 
-                const finalResult = `${randomName}, ${randomVill}, Kec. ${randomDist}, ${randomCity}, ${randomProv} ${postalCode}`;
+                const finalResult = `${randomName}, ${randomPhone}, ${randomVill}, Kec. ${randomDist}, ${randomCity}, ${randomProv} ${postalCode}`;
                 navigator.clipboard.writeText(finalResult);
                 animateBtn('.ic-teal');
             } catch (error) {
@@ -566,10 +528,6 @@
             }
         };
 
-        // ==========================================
-        //  BAGIAN LOGIKA API & CUSTOM DROPDOWN
-        // ==========================================
-        
         const BASE_URL = "https://herosms-proxy.you-zainul.workers.dev/";
         const NIXPOIN_PROXY = "https://nixpoin-proxy.aku-zeens.workers.dev";
         const NIXPOIN_API_KEY = "sk_88c7c7caac38dafc2c125019afe7af968f0f6f85152cb969"; 
@@ -599,7 +557,6 @@
             container.style.display = 'block';
             let html = '';
             
-            // Urutkan ID agar pesanan terbaru ada di urutan paling atas
             ids.sort((a,b) => activeOrders[b].timestamp - activeOrders[a].timestamp).forEach(id => {
                 let order = activeOrders[id];
                 let displayOtp = order.otp !== "000000" && !order.isReloading;
@@ -631,8 +588,8 @@
                         <button class="btn-order btn-reload" onclick="tombolAksiMulti('${id}', 'RELOAD')" id="btnReload-${id}" ${order.isReloading ? 'disabled' : ''}>
                             ${order.isReloading ? '<i class="fas fa-spinner fa-spin"></i>' : 'RELOAD'}
                         </button>
-                        <button class="btn-order btn-cancel" id="btnCancel-${id}" onclick="tombolAksiMulti('${id}', 'CANCEL')">CANCEL</button>
-                        <button class="btn-order btn-replace" id="btnReplace-${id}" onclick="tombolAksiMulti('${id}', 'REPLACE')">REPLACE</button>
+                        <button class="btn-order btn-cancel" id="btnCancel-${id}" onclick="tombolAksiMulti('${id}', 'CANCEL')">BATAL</button>
+                        <button class="btn-order btn-replace" id="btnReplace-${id}" onclick="tombolAksiMulti('${id}', 'REPLACE')">GANTI</button>
                     </div>
                 </div>`;
             });
@@ -655,7 +612,6 @@
             const menu = document.getElementById('serverOptions');
             menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
         };
-
         window.selectServer = (val, text, event) => {
             event.stopPropagation();
             currentGlobalServer = val;
@@ -663,34 +619,27 @@
             document.getElementById('serverOptions').style.display = 'none';
             handleServerSwitch();
         };
-
         document.addEventListener('click', function(e) {
             const dropdown = document.getElementById('customServerDropdown');
             if (dropdown && !dropdown.contains(e.target)) {
                 document.getElementById('serverOptions').style.display = 'none';
             }
         });
-
         window.handleServerSwitch = () => { updateGlobalBalance(); };
 
         async function updateGlobalBalance() {
             const server = currentGlobalServer;
             const balElement = document.getElementById('balanceDisplay');
-
             if (server === 'server1') {
                 try {
                     const resp = await fetch(`${BASE_URL}?action=getBalance`);
                     const text = await resp.text();
-                    if(text.includes("ACCESS_BALANCE")) {
-                        balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4);
-                    }
+                    if(text.includes("ACCESS_BALANCE")) { balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4); }
                 } catch(e) { }
             } else if (server === 'nixpoin') {
                 try {
                     let resp = await fetch(`${NIXPOIN_PROXY}/api/v1/profile`, { headers: { 'X-API-Key': NIXPOIN_API_KEY } });
-                    if(resp.status === 404) {
-                        resp = await fetch(`${NIXPOIN_PROXY}/api/v1/balance`, { headers: { 'X-API-Key': NIXPOIN_API_KEY } });
-                    }
+                    if(resp.status === 404) { resp = await fetch(`${NIXPOIN_PROXY}/api/v1/balance`, { headers: { 'X-API-Key': NIXPOIN_API_KEY } }); }
                     const data = await resp.json();
                     if(data.success || data.balance !== undefined) {
                         let bal = data.balance !== undefined ? data.balance : (data.data && data.data.balance !== undefined ? data.data.balance : "0");
@@ -699,7 +648,6 @@
                 } catch(e) { }
             }
         }
-        
         handleServerSwitch();
         setInterval(updateGlobalBalance, 15000);
 
@@ -713,31 +661,15 @@
                     let order = activeOrders[id];
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
                     let remDuration = order.duration - elapsed;
-                    let remCancel = order.cancelCd - elapsed;
 
                     if (remDuration <= 0) {
                         delete activeOrders[id];
                         hasChanges = true;
                     } else {
-                        // Update Jam
                         let elClock = document.getElementById(`clock-${id}`);
                         if (elClock) {
                             let m = Math.floor(remDuration / 60), s = remDuration % 60;
                             elClock.innerText = m.toString().padStart(2, '0') + ":" + s.toString().padStart(2, '0');
-                        }
-
-                        // Update Tombol Cancel/Replace
-                        let btnCancel = document.getElementById(`btnCancel-${id}`);
-                        let btnReplace = document.getElementById(`btnReplace-${id}`);
-                        if (btnCancel && btnReplace) {
-                            if (remCancel > 0) {
-                                btnCancel.disabled = true; btnReplace.disabled = true;
-                                btnCancel.innerText = `BATAL (${remCancel}s)`;
-                                btnReplace.innerText = `GANTI (${remCancel}s)`;
-                            } else {
-                                btnCancel.disabled = false; btnReplace.disabled = false;
-                                btnCancel.innerText = "CANCEL"; btnReplace.innerText = "REPLACE";
-                            }
                         }
                     }
                 });
@@ -756,7 +688,6 @@
                 
                 for (let id in activeOrders) {
                     let order = activeOrders[id];
-                    
                     if (order.otp !== "000000" && !order.isReloading) continue;
                     
                     if (order.server === 'server1') {
