@@ -497,7 +497,7 @@
         };
 
         // ==========================================
-        // FUNGSI ACAK ALAMAT DENGAN NOMOR HP ACAK
+        // FUNGSI ACAK ALAMAT (KHUSUS JAWA & BALI)
         // ==========================================
         let dataAlamatGlobal = null;
         window.acakAlamat = async () => {
@@ -518,8 +518,28 @@
                 for(let i=0; i<randomSuffixLength; i++){ randomSuffix += Math.floor(Math.random() * 10); }
                 const randomPhone = randomPrefix + randomSuffix;
 
-                const provinces = Object.keys(dataAlamatGlobal);
-                const randomProv = provinces[Math.floor(Math.random() * provinces.length)];
+                // --- SISTEM FILTER PROVINSI JAWA & BALI ---
+                const daftarProvinsiTarget = [
+                    "DKI JAKARTA", 
+                    "JAWA BARAT", 
+                    "JAWA TENGAH", 
+                    "DI YOGYAKARTA", 
+                    "JAWA TIMUR", 
+                    "BANTEN", 
+                    "BALI"
+                ];
+
+                const ketersediaanProvinsi = Object.keys(dataAlamatGlobal);
+                const provinces = ketersediaanProvinsi.filter(prov => 
+                    daftarProvinsiTarget.includes(prov.toUpperCase().trim())
+                );
+
+                // Fallback otomatis jika data filter kosong karena perbedaan teks JSON
+                const finalProvinces = provinces.length > 0 ? provinces : ketersediaanProvinsi;
+                
+                const randomProv = finalProvinces[Math.floor(Math.random() * finalProvinces.length)];
+                // ------------------------------------------
+
                 const cities = Object.keys(dataAlamatGlobal[randomProv]);
                 const randomCity = cities[Math.floor(Math.random() * cities.length)];
                 const districts = Object.keys(dataAlamatGlobal[randomProv][randomCity]);
