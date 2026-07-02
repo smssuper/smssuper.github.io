@@ -259,6 +259,7 @@
                             <i class="fas fa-shopping-cart" style="margin-right:8px;"></i> PESAN SEKARANG
                         </button>
                         
+                        <!-- KONTINER ANTRIAN ORDER -->
                         <div id="activeOrdersContainer" style="display:none; margin-bottom: 20px;">
                             <h4 style="font-size: 15px; font-weight: 800; color: var(--dark); margin-top: 0; margin-bottom: 12px;">Pesanan Aktif</h4>
                             <div id="ordersWrapper"></div>
@@ -488,8 +489,16 @@
             navigator.clipboard.writeText(first[Math.floor(Math.random()*first.length)] + " " + last[Math.floor(Math.random()*last.length)]);
             animateBtn('.ic-blue');
         };
+        window.acakNomorLokal = () => {
+            const prefixes = ["0812", "0857", "0819", "0895", "0882", "0821", "0878", "0813"];
+            const random = Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+            navigator.clipboard.writeText(prefixes[Math.floor(Math.random()*prefixes.length)] + random);
+            animateBtn('.ic-green');
+        };
 
+        // ==========================================
         // FUNGSI ACAK ALAMAT DENGAN NOMOR HP ACAK
+        // ==========================================
         let dataAlamatGlobal = null;
         window.acakAlamat = async () => {
             try {
@@ -519,7 +528,10 @@
                 const randomVill = villages[Math.floor(Math.random() * villages.length)];
                 const postalCode = dataAlamatGlobal[randomProv][randomCity][randomDist][randomVill];
 
+                // INI ADALAH URUTAN YANG ANDA MINTA:
+                // [Nama], [Nomor HP], [Alamat lengkap...]
                 const finalResult = `${randomName}, ${randomPhone}, ${randomVill}, Kec. ${randomDist}, ${randomCity}, ${randomProv} ${postalCode}`;
+                
                 navigator.clipboard.writeText(finalResult);
                 animateBtn('.ic-teal');
             } catch (error) {
