@@ -528,8 +528,7 @@
                 const randomVill = villages[Math.floor(Math.random() * villages.length)];
                 const postalCode = dataAlamatGlobal[randomProv][randomCity][randomDist][randomVill];
 
-                // INI ADALAH URUTAN YANG ANDA MINTA:
-                // [Nama], [Nomor HP], [Alamat lengkap...]
+                // INI ADALAH FORMAT: [Nama], [Nomor HP], [Alamat lengkap...]
                 const finalResult = `${randomName}, ${randomPhone}, ${randomVill}, Kec. ${randomDist}, ${randomCity}, ${randomProv} ${postalCode}`;
                 
                 navigator.clipboard.writeText(finalResult);
@@ -547,14 +546,11 @@
         let currentGlobalServer = 'nixpoin'; 
         let shopeeNixpoinCode = 'sh'; 
 
-        async function syncActiveOrdersToFirebase() {
+        // PENYIMPANAN KE LOCAL STORAGE SAJA AGAR HANYA MUNCUL DI PERANGKAT INI
+        function saveLocalOrders() {
             localStorage.setItem('multiActiveOrders', JSON.stringify(activeOrders));
-            try {
-                await setDoc(doc(db, "app_state", "multi_orders"), { data: JSON.stringify(activeOrders) });
-            } catch(e) {}
         }
 
-        // FUNGSI RENDER UI ANTRIAN ORDER BERDASARKAN DESAIN BARU
         function renderOrdersUI() {
             const wrapper = document.getElementById('ordersWrapper');
             const container = document.getElementById('activeOrdersContainer');
@@ -688,7 +684,7 @@
 
                 if (hasChanges) {
                     renderOrdersUI();
-                    syncActiveOrdersToFirebase();
+                    saveLocalOrders();
                 }
             }, 1000);
         }
@@ -742,7 +738,7 @@
 
                 if(hasChanges) {
                     renderOrdersUI();
-                    syncActiveOrdersToFirebase();
+                    saveLocalOrders();
                 }
             }, 5000);
         }
@@ -809,7 +805,7 @@
                     isReloading: false
                 };
                 
-                syncActiveOrdersToFirebase();
+                saveLocalOrders();
                 renderOrdersUI();
             }
 
@@ -831,7 +827,7 @@
                     try { await fetch(`${NIXPOIN_PROXY}/api/v1/retry`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': NIXPOIN_API_KEY }, body: JSON.stringify({ orderId: id.toString() }) }); } catch(e){}
                 }
                 
-                syncActiveOrdersToFirebase();
+                saveLocalOrders();
                 return; 
             }
 
@@ -876,7 +872,7 @@
             }
             
             delete activeOrders[id];
-            syncActiveOrdersToFirebase();
+            saveLocalOrders();
             renderOrdersUI();
 
             if (tipe === 'REPLACE') {
@@ -983,24 +979,6 @@
             const cont = document.querySelector('.container');
             if (user) { document.getElementById('btn-login').style.display='none'; document.getElementById('btn-logout').style.display='flex'; cont.style.opacity='1'; cont.style.pointerEvents='auto'; }
             else { document.getElementById('btn-login').style.display='flex'; document.getElementById('btn-logout').style.display='none'; cont.style.opacity='0.3'; cont.style.pointerEvents='none'; }
-        });
-
-        // SINKRONISASI MULTI-DEVICE
-        onSnapshot(doc(db, "app_state", "multi_orders"), (docSnap) => {
-            if (docSnap.exists()) {
-                try {
-                    const remoteData = JSON.parse(docSnap.data().data);
-                    if(JSON.stringify(remoteData) !== JSON.stringify(activeOrders)) {
-                        activeOrders = remoteData;
-                        renderOrdersUI();
-                    }
-                } catch(e){}
-            } else {
-                if (Object.keys(activeOrders).length > 0) {
-                    activeOrders = {};
-                    renderOrdersUI();
-                }
-            }
         });
 
         startGlobalTimers();
