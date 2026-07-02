@@ -75,15 +75,16 @@
         /* MULTI-ORDER WRAPPER (ANTRIAN) */
         #ordersWrapper {
             position: fixed; bottom: 20px; left: 15px; right: 15px; z-index: 9999;
-            display: flex; flex-direction: column; gap: 12px; 
+            display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; 
             max-height: 65vh; overflow-y: auto; scrollbar-width: none; pointer-events: none;
         }
         #ordersWrapper::-webkit-scrollbar { display: none; }
 
+        /* KARTU ANTRIAN DINAMIS */
         .card-active { 
-            background: rgba(255, 255, 255, 0.95); border-left: 5px solid var(--secondary); border-radius: 20px; 
+            background: rgba(255, 255, 255, 0.98); border-left: 5px solid var(--secondary); border-radius: 20px; 
             padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); pointer-events: auto;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px); display: block; position: relative; width: 100%; box-sizing: border-box;
         }
         .number-txt { font-size: 24px; font-weight: 800; color: var(--dark); letter-spacing: 1px; }
         
@@ -96,8 +97,9 @@
         }
         .otp-display:active { transform: scale(0.95); }
         
-        .btn-action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
-        .btn-order { border: none; padding: 12px 5px; border-radius: 12px; background: #f0f2f5; font-size: 11px; font-weight: 800; color: var(--dark); cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; }
+        /* 2 BARIS x 2 KOLOM TOMBOL */
+        .btn-action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-order { border: none; padding: 14px 5px; border-radius: 12px; background: #f0f2f5; font-size: 12px; font-weight: 800; color: var(--dark); cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: 0.2s; }
         .btn-order:active { transform: scale(0.95); background: #e2e8f0; }
         .btn-order:disabled { cursor: not-allowed; background: #e2e8f0 !important; color: #a0aec0 !important; box-shadow: none; }
 
@@ -243,7 +245,7 @@
                             </div>
                         </div>
 
-                        <!-- ID BARU UNTUK DISPLAY NAMA LAYANAN -->
+                        <!-- ID Teks Nama Layanan -->
                         <span id="orderIdText" style="display:none;">Shopee</span>
 
                         <button style="width:100%; background:var(--secondary); color:white; border:none; padding:16px; border-radius:14px; font-weight:800; font-size:14px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
@@ -294,7 +296,7 @@
         </div>
     </div>
 
-    <!-- CONTAINER UNTUK ANTRIAN MULTI-ORDER -->
+    <!-- CONTAINER UNTUK ANTRIAN MULTI-ORDER (Ini yang membungkus semua pesanan) -->
     <div id="ordersWrapper"></div>
 
     <div class="modal-overlay" id="loginModal">
@@ -560,7 +562,7 @@
             } catch(e) {}
         }
 
-        // Fungsi merender seluruh kartu antrian
+        // FUNGSI UTAMA MENGHASILKAN HTML KARTU ANTRIAN
         function renderOrdersUI() {
             const wrapper = document.getElementById('ordersWrapper');
             const ids = Object.keys(activeOrders);
@@ -571,7 +573,8 @@
             }
 
             let html = '';
-            // Render dari urutan terbaru (paling atas)
+            
+            // Render urutan terbaru di atas
             ids.sort((a,b) => activeOrders[b].timestamp - activeOrders[a].timestamp).forEach(id => {
                 let order = activeOrders[id];
                 let displayOtp = order.otp !== "000000" && !order.isReloading;
@@ -597,8 +600,8 @@
                     </div>
                     
                     <div class="btn-action-row">
-                        <button class="btn-order" style="background:#e8f5e9; color:#2e7d32;" onclick="tombolAksiMulti('${id}', 'DONE')">DONE</button>
-                        <button class="btn-order" style="background:#e3f2fd; color:#1565c0;" onclick="tombolAksiMulti('${id}', 'RELOAD')" ${order.isReloading ? 'disabled' : ''}>
+                        <button class="btn-order" style="background:#e8f5e9; color:#2e7d32;" onclick="tombolAksiMulti('${id}', 'DONE')" id="btnDone-${id}">DONE</button>
+                        <button class="btn-order" style="background:#e3f2fd; color:#1565c0;" onclick="tombolAksiMulti('${id}', 'RELOAD')" id="btnReload-${id}" ${order.isReloading ? 'disabled' : ''}>
                             ${order.isReloading ? '<i class="fas fa-spinner fa-spin"></i>' : '<i class="fas fa-sync-alt"></i> RELOAD'}
                         </button>
                         <button class="btn-order" id="btnCancel-${id}" onclick="tombolAksiMulti('${id}', 'CANCEL')">CANCEL</button>
@@ -609,7 +612,7 @@
             wrapper.innerHTML = html;
         }
 
-        // Loop Global untuk Update Jam / Timer
+        // Loop Timer Global
         function startGlobalTimers() {
             if(globalCountdownTimer) clearInterval(globalCountdownTimer);
             globalCountdownTimer = setInterval(() => {
@@ -626,14 +629,14 @@
                         delete activeOrders[id];
                         hasChanges = true;
                     } else {
-                        // Update UI Jam langsung tanpa render ulang seluruh HTML
+                        // Update Jam
                         let elClock = document.getElementById(`clock-${id}`);
                         if (elClock) {
                             let m = Math.floor(remDuration / 60), s = remDuration % 60;
                             elClock.innerText = m.toString().padStart(2, '0') + ":" + s.toString().padStart(2, '0');
                         }
 
-                        // Update Tombol Cancel/Replace
+                        // Update Tombol Ganti/Batal
                         let btnCancel = document.getElementById(`btnCancel-${id}`);
                         let btnReplace = document.getElementById(`btnReplace-${id}`);
                         if (btnCancel && btnReplace) {
@@ -656,7 +659,7 @@
             }, 1000);
         }
 
-        // Loop Global untuk Cek OTP
+        // Loop Polling Cek OTP Global
         function startGlobalPolling() {
             if(globalPollTimer) clearInterval(globalPollTimer);
             globalPollTimer = setInterval(async () => {
@@ -665,7 +668,7 @@
                 for (let id in activeOrders) {
                     let order = activeOrders[id];
                     
-                    // Lewati jika sudah dapat OTP dan sedang tidak direload
+                    // Kalau OTP sudah ada dan tidak sedang dalam posisi mau minta baru (Reload), lompati API request
                     if (order.otp !== "000000" && !order.isReloading) continue;
                     
                     if (order.server === 'server1') {
@@ -674,7 +677,7 @@
                             const text = await resp.text();
                             if (text.includes("STATUS_OK")) {
                                 const code = text.split(":")[1];
-                                if (code && code !== order.otp && code !== "000000") {
+                                if (code && code !== "000000" && code !== order.otp) {
                                     activeOrders[id].otp = code;
                                     activeOrders[id].isReloading = false;
                                     hasChanges = true;
@@ -691,7 +694,7 @@
                             const data = await resp.json();
                             if (data.success && data.status === 'received') {
                                 const code = data.smsCode;
-                                if (code && code !== order.otp && code !== "000000") {
+                                if (code && code !== "000000" && code !== order.otp) {
                                     activeOrders[id].otp = code;
                                     activeOrders[id].isReloading = false;
                                     hasChanges = true;
@@ -720,7 +723,10 @@
             
             let kodeUntukServer = (server === 'server1') ? 'ka' : shopeeNixpoinCode;
             let displayName = provider === 'any' ? "Otomatis" : providerName;
+            
+            // Simpan nama layanan ke elemen tak terlihat
             document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
+            
             beliNomorAPI(kodeUntukServer, 6, provider, server);
         };
 
@@ -762,7 +768,7 @@
             }
             
             if (newId && newPhone) {
-                // Tambahkan ke antrian
+                // Tambahkan ke sistem antrian Multi-Order
                 activeOrders[newId] = {
                     id: newId,
                     phone: newPhone,
@@ -788,9 +794,10 @@
             if (!activeOrders[id]) return;
             const order = activeOrders[id];
 
+            // FUNGSI RELOAD
             if (tipe === 'RELOAD') {
                 activeOrders[id].isReloading = true;
-                renderOrdersUI(); // re-render untuk memunculkan spinner
+                renderOrdersUI();
 
                 if (order.server === 'server1') {
                     try { await fetch(`${BASE_URL}?action=setStatus&id=${id}&status=3`); } catch(e){}
@@ -799,10 +806,19 @@
                 }
                 
                 syncActiveOrdersToFirebase();
-                return; // Tunggu polling mengambil data lagi
+                return; // Jangan lanjutkan ke bawah agar nomor tidak dihapus
             }
 
-            // UNTUK DONE, CANCEL, REPLACE
+            // Kunci semua tombol ketika sedang proses API Done/Cancel
+            const btnDone = document.getElementById(`btnDone-${id}`);
+            const btnReload = document.getElementById(`btnReload-${id}`);
+            const btnCancel = document.getElementById(`btnCancel-${id}`);
+            const btnReplace = document.getElementById(`btnReplace-${id}`);
+            if(btnDone) btnDone.disabled = true;
+            if(btnReload) btnReload.disabled = true;
+            if(btnCancel) btnCancel.disabled = true;
+            if(btnReplace) btnReplace.disabled = true;
+
             let actionSuccess = true;
 
             if (order.server === 'server1') {
@@ -825,14 +841,18 @@
                 }
             }
             
-            if (!actionSuccess) return; 
+            // Jika proses gagal di server, hentikan fungsi agar kartu tidak tertutup
+            if (!actionSuccess) {
+                renderOrdersUI();
+                return; 
+            }
 
-            // Jika Selesai, Simpan ke History
+            // SIMPAN HISTORI NOMOR
             if (tipe === 'DONE' && order.phone && order.phone !== "Mencari...") {
                 try { await addDoc(collection(db, "success_numbers"), { phone: order.phone, createdAt: Date.now() }); } catch(e) {}
             }
             
-            // Hapus dari antrian
+            // HAPUS KARTU ANTRIAN TERSEBUT
             delete activeOrders[id];
             syncActiveOrdersToFirebase();
             renderOrdersUI();
@@ -865,7 +885,7 @@
             }
         };
 
-        // ... (Script Fungsi Import, Login, Logout lainnya tetap sama seperti sebelumnya) ...
+        // --- Logika Menu Lainnya (Import, Login, Link Acak, dsb) ---
         window.simpanDataLink = async () => {
             const id = document.getElementById('formLinkId').value;
             const colors = ['bg-red', 'bg-blue', 'bg-purple', 'bg-orange', 'bg-green', 'bg-teal'];
@@ -918,24 +938,31 @@
             else { document.getElementById('btn-login').style.display='flex'; document.getElementById('btn-logout').style.display='none'; cont.style.opacity='0.3'; cont.style.pointerEvents='none'; }
         });
 
-        // SINKRONISASI ORDER MULTI-DEVICE
+        // SINKRONISASI AKTIF MULTI-ORDER VIA FIREBASE
         onSnapshot(doc(db, "app_state", "multi_orders"), (docSnap) => {
             if (docSnap.exists()) {
                 try {
                     const remoteData = JSON.parse(docSnap.data().data);
-                    activeOrders = remoteData;
-                    renderOrdersUI();
+                    
+                    // Supaya timer tidak berantakan jika JSON sama persis
+                    if(JSON.stringify(remoteData) !== JSON.stringify(activeOrders)) {
+                        activeOrders = remoteData;
+                        renderOrdersUI();
+                    }
                 } catch(e){}
             } else {
-                activeOrders = {};
-                renderOrdersUI();
+                if (Object.keys(activeOrders).length > 0) {
+                    activeOrders = {};
+                    renderOrdersUI();
+                }
             }
         });
 
-        // Jalankan service utama
+        // MULAI SISTEM BACKGROUND
         startGlobalTimers();
         startGlobalPolling();
         renderOrdersUI();
+
     </script>
 </body>
 </html>
