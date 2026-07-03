@@ -982,24 +982,22 @@
         window.hapusDatabaseLink = async (e) => { if(e) e.stopPropagation(); if (masterLinkIds.length === 0) return; for (const id of masterLinkIds) { await deleteDoc(doc(db, "random_links", id)); } toggleMenu(); };
         function animateBtn(sel) { const b = document.querySelector(sel); b.classList.add('flash-success'); setTimeout(() => b.classList.remove('flash-success'), 500); }
         
-        document.getElementById('btnLoginExec').addEventListener('click', async () => {
-            let email = document.getElementById('loginEmail').value.trim();
-            const pass = document.getElementById('loginPass').value;
-            if(!email || !pass) { alert("Username dan Password tidak boleh kosong!"); return; }
-            if (!email.includes('@')) { email = email + '@gmail.com'; }
-            const btn = document.getElementById('btnLoginExec');
-            const originalText = btn.innerText;
-            btn.innerText = "Loading..."; btn.disabled = true;
-            try { await signInWithEmailAndPassword(auth, email, pass); closeLoginModal(); document.getElementById('loginEmail').value = ''; document.getElementById('loginPass').value = ''; } 
-            catch (e) { alert("Login Gagal! Pastikan Username dan password benar."); } 
-            finally { btn.innerText = originalText; btn.disabled = false; }
+        // Bypas Login: Langsung masuk saat tombol diklik tanpa cek username/password
+        document.getElementById('btnLoginExec').addEventListener('click', () => {
+            closeLoginModal();
+            const cont = document.querySelector('.container');
+            document.getElementById('btn-login').style.display = 'none';
+            document.getElementById('btn-logout').style.display = 'flex';
+            cont.style.opacity = '1';
+            cont.style.pointerEvents = 'auto';
         });
 
-        onAuthStateChanged(auth, (user) => {
-            const cont = document.querySelector('.container');
-            if (user) { document.getElementById('btn-login').style.display='none'; document.getElementById('btn-logout').style.display='flex'; cont.style.opacity='1'; cont.style.pointerEvents='auto'; }
-            else { document.getElementById('btn-login').style.display='flex'; document.getElementById('btn-logout').style.display='none'; cont.style.opacity='0.3'; cont.style.pointerEvents='none'; }
-        });
+        // Set status awal aplikasi menjadi terkunci (menunggu tombol login ditekan)
+        const cont = document.querySelector('.container');
+        document.getElementById('btn-login').style.display = 'flex';
+        document.getElementById('btn-logout').style.display = 'none';
+        cont.style.opacity = '0.3';
+        cont.style.pointerEvents = 'none';
 
         startGlobalTimers();
         startGlobalPolling();
