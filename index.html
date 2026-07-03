@@ -309,6 +309,7 @@
         </div>
     </div>
 
+    <!-- Modal Login tetap ada di kode tapi tidak akan dimunculkan -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-content">
             <h3 style="margin-bottom: 20px;">Login Admin</h3>
@@ -982,22 +983,15 @@
         window.hapusDatabaseLink = async (e) => { if(e) e.stopPropagation(); if (masterLinkIds.length === 0) return; for (const id of masterLinkIds) { await deleteDoc(doc(db, "random_links", id)); } toggleMenu(); };
         function animateBtn(sel) { const b = document.querySelector(sel); b.classList.add('flash-success'); setTimeout(() => b.classList.remove('flash-success'), 500); }
         
-        // Bypas Login: Langsung masuk saat tombol diklik tanpa cek username/password
-        document.getElementById('btnLoginExec').addEventListener('click', () => {
-            closeLoginModal();
-            const cont = document.querySelector('.container');
-            document.getElementById('btn-login').style.display = 'none';
-            document.getElementById('btn-logout').style.display = 'flex';
-            cont.style.opacity = '1';
-            cont.style.pointerEvents = 'auto';
-        });
-
-        // Set status awal aplikasi menjadi terkunci (menunggu tombol login ditekan)
+        // BUKA OTOMATIS: Langsung masuk ke dalam aplikasi tanpa klik apapun
         const cont = document.querySelector('.container');
-        document.getElementById('btn-login').style.display = 'flex';
-        document.getElementById('btn-logout').style.display = 'none';
-        cont.style.opacity = '0.3';
-        cont.style.pointerEvents = 'none';
+        
+        // Sembunyikan tombol login di menu samping
+        document.getElementById('btn-login').style.display = 'none'; 
+        
+        // Pastikan layar utama bisa langsung diklik dan tidak buram
+        cont.style.opacity = '1';
+        cont.style.pointerEvents = 'auto';
 
         startGlobalTimers();
         startGlobalPolling();
