@@ -161,14 +161,9 @@
         <div style="display:flex; align-items:center; gap:8px">
             <i class="fas fa-bars" onclick="toggleMenu()" style="cursor:pointer; font-size: 18px; margin-right: 5px;"></i>
             
-            <div style="position: relative; display: flex; align-items: center;" id="customServerDropdown" onclick="toggleServerMenu()">
-                <span id="currentServerText" style="font-weight: 800; font-size: 16px; color: var(--dark); letter-spacing: -0.5px; text-transform: uppercase; cursor:pointer; padding-right: 15px;">NIXPOIN</span>
-                <i class="fas fa-caret-down" style="font-size: 12px; color: var(--gray); position: absolute; right: 0; pointer-events: none;"></i>
-                
-                <div id="serverOptions" style="display: none; position: absolute; top: 35px; left: 0; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; z-index: 9999; flex-direction: column; min-width: 160px; border: 1px solid #edf2f7;">
-                    <div onclick="selectServer('nixpoin', 'NIXPOIN', event)" style="padding: 14px 16px; font-size: 13px; font-weight: 800; color: var(--dark); border-bottom: 1px solid #f0f2f5; cursor:pointer; transition: 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">NIXPOIN</div>
-                    <div onclick="selectServer('server1', 'SMS HERO', event)" style="padding: 14px 16px; font-size: 13px; font-weight: 800; color: var(--dark); cursor:pointer; transition: 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">SMS HERO</div>
-                </div>
+            <!-- Server Dropdown Dihapus, hanya menampilkan teks SMS HERO Statis -->
+            <div style="position: relative; display: flex; align-items: center;">
+                <span style="font-weight: 900; font-size: 16px; color: var(--secondary); letter-spacing: -0.5px; text-transform: uppercase; padding-right: 15px;">SMS HERO</span>
             </div>
         </div>
         <div style="position: absolute; left: 50%; transform: translateX(-50%); cursor: pointer; border-radius: 50%; background: #f0f3f6; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;" onclick="window.location.href='https://smssuper.github.io/filtercopy.html'">
@@ -535,7 +530,6 @@
                     daftarProvinsiTarget.includes(prov.toUpperCase().trim())
                 );
 
-                // Fallback otomatis jika data filter kosong karena perbedaan teks JSON
                 const finalProvinces = provinces.length > 0 ? provinces : ketersediaanProvinsi;
                 
                 const randomProv = finalProvinces[Math.floor(Math.random() * finalProvinces.length)];
@@ -549,7 +543,6 @@
                 const randomVill = villages[Math.floor(Math.random() * villages.length)];
                 const postalCode = dataAlamatGlobal[randomProv][randomCity][randomDist][randomVill];
 
-                // INI ADALAH FORMAT: [Nama], [Nomor HP], [Alamat lengkap...]
                 const finalResult = `${randomName}, ${randomPhone}, ${randomVill}, Kec. ${randomDist}, ${randomCity}, ${randomProv} ${postalCode}`;
                 
                 navigator.clipboard.writeText(finalResult);
@@ -560,14 +553,10 @@
             }
         };
 
+        // KONFIGURASI SMS HERO
         const BASE_URL = "https://herosms-proxy.you-zainul.workers.dev/";
-        const NIXPOIN_PROXY = "https://nixpoin-proxy.aku-zeens.workers.dev";
-        const NIXPOIN_API_KEY = "sk_26454d1d818e4fa7493036cdf9034709236ae73ee1c3c76e"; 
+        const SMS_HERO_API_KEY = ""; // Isi API Key Anda di sini JIKA worker proxy membutuhkannya (misal: "1234abcd...")
         
-        let currentGlobalServer = 'nixpoin'; 
-        let shopeeNixpoinCode = 'sh'; 
-
-        // PENYIMPANAN KE LOCAL STORAGE SAJA AGAR HANYA MUNCUL DI PERANGKAT INI
         function saveLocalOrders() {
             localStorage.setItem('multiActiveOrders', JSON.stringify(activeOrders));
         }
@@ -625,59 +614,22 @@
             wrapper.innerHTML = html;
         }
 
-        async function fetchCorrectShopeeCode() {
-            try {
-                const resp = await fetch(`${NIXPOIN_PROXY}/api/v1/services`, { headers: { 'X-API-Key': NIXPOIN_API_KEY } });
-                const data = await resp.json();
-                if(data.success && data.data) {
-                    const found = data.data.find(s => s.name.toLowerCase().includes('shopee'));
-                    if(found) shopeeNixpoinCode = found.code;
-                }
-            } catch(e) {}
-        }
-        fetchCorrectShopeeCode();
-
-        window.toggleServerMenu = () => {
-            const menu = document.getElementById('serverOptions');
-            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-        };
-        window.selectServer = (val, text, event) => {
-            event.stopPropagation();
-            currentGlobalServer = val;
-            document.getElementById('currentServerText').innerText = text;
-            document.getElementById('serverOptions').style.display = 'none';
-            handleServerSwitch();
-        };
-        document.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('customServerDropdown');
-            if (dropdown && !dropdown.contains(e.target)) {
-                document.getElementById('serverOptions').style.display = 'none';
-            }
-        });
-        window.handleServerSwitch = () => { updateGlobalBalance(); };
-
         async function updateGlobalBalance() {
-            const server = currentGlobalServer;
             const balElement = document.getElementById('balanceDisplay');
-            if (server === 'server1') {
-                try {
-                    const resp = await fetch(`${BASE_URL}?action=getBalance`);
-                    const text = await resp.text();
-                    if(text.includes("ACCESS_BALANCE")) { balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4); }
-                } catch(e) { }
-            } else if (server === 'nixpoin') {
-                try {
-                    let resp = await fetch(`${NIXPOIN_PROXY}/api/v1/profile`, { headers: { 'X-API-Key': NIXPOIN_API_KEY } });
-                    if(resp.status === 404) { resp = await fetch(`${NIXPOIN_PROXY}/api/v1/balance`, { headers: { 'X-API-Key': NIXPOIN_API_KEY } }); }
-                    const data = await resp.json();
-                    if(data.success || data.balance !== undefined) {
-                        let bal = data.balance !== undefined ? data.balance : (data.data && data.data.balance !== undefined ? data.data.balance : "0");
-                        balElement.innerText = "Rp " + bal;
-                    }
-                } catch(e) { }
+            try {
+                const authParam = SMS_HERO_API_KEY ? `api_key=${SMS_HERO_API_KEY}&` : '';
+                const resp = await fetch(`${BASE_URL}?${authParam}action=getBalance`);
+                const text = await resp.text();
+                if(text.includes("ACCESS_BALANCE")) { 
+                    balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4); 
+                } else {
+                    balElement.innerText = "Error Api";
+                }
+            } catch(e) {
+                balElement.innerText = "Offline";
             }
         }
-        handleServerSwitch();
+        updateGlobalBalance();
         setInterval(updateGlobalBalance, 15000);
 
         function startGlobalTimers() {
@@ -719,42 +671,23 @@
                     let order = activeOrders[id];
                     if (order.otp !== "000000" && !order.isReloading) continue;
                     
-                    if (order.server === 'server1') {
-                        try {
-                            const resp = await fetch(`${BASE_URL}?action=getStatus&id=${id}`);
-                            const text = await resp.text();
-                            if (text.includes("STATUS_OK")) {
-                                const code = text.split(":")[1];
-                                if (code && code !== "000000" && code !== order.otp) {
-                                    activeOrders[id].otp = code;
-                                    activeOrders[id].isReloading = false;
-                                    hasChanges = true;
-                                    navigator.clipboard.writeText(code);
-                                }
-                            }
-                        } catch(e){}
-
-                    } else if (order.server === 'nixpoin') {
-                        try {
-                            const resp = await fetch(`${NIXPOIN_PROXY}/api/v1/status?orderId=${id}`, {
-                                method: 'GET', headers: { 'X-API-Key': NIXPOIN_API_KEY }
-                            });
-                            const data = await resp.json();
-                            if (data.success && data.status === 'received') {
-                                const code = data.smsCode;
-                                if (code && code !== "000000" && code !== order.otp) {
-                                    activeOrders[id].otp = code;
-                                    activeOrders[id].isReloading = false;
-                                    hasChanges = true;
-                                    navigator.clipboard.writeText(code);
-                                }
-                            } else if (data.status === 'cancelled' || data.status === 'expired') {
-                                delete activeOrders[id];
+                    try {
+                        const authParam = SMS_HERO_API_KEY ? `api_key=${SMS_HERO_API_KEY}&` : '';
+                        const resp = await fetch(`${BASE_URL}?${authParam}action=getStatus&id=${id}`);
+                        const text = await resp.text();
+                        if (text.includes("STATUS_OK")) {
+                            const code = text.split(":")[1];
+                            if (code && code !== "000000" && code !== order.otp) {
+                                activeOrders[id].otp = code;
+                                activeOrders[id].isReloading = false;
                                 hasChanges = true;
-                                updateGlobalBalance();
+                                navigator.clipboard.writeText(code);
                             }
-                        } catch(e){}
-                    }
+                        } else if (text.includes("STATUS_CANCEL")) {
+                             delete activeOrders[id];
+                             hasChanges = true;
+                        }
+                    } catch(e){}
                 }
 
                 if(hasChanges) {
@@ -765,58 +698,46 @@
         }
 
         window.prosesPesanLayanan = () => {
-            const server = currentGlobalServer;
             const provider = document.getElementById('pilihProvider').value;
             const providerName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
             
-            let kodeUntukServer = (server === 'server1') ? 'ka' : shopeeNixpoinCode;
+            // "ka" adalah kode standar layanan Shopee di API Sms-activate / smshub (SMS HERO)
+            let kodeLayanan = 'ka'; 
             let displayName = provider === 'any' ? "Otomatis" : providerName;
             document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
-            beliNomorAPI(kodeUntukServer, 6, provider, server);
+            beliNomorAPI(kodeLayanan, 6, provider);
         };
 
-        window.beliNomorAPI = async (s, c, providerSelected, serverTerpilih) => {
+        window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
             btnPesan.disabled = true;
             btnPesan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> MEMPROSES...';
             
             let newId = null, newPhone = null, dur = 900, cancelCd = 0;
 
-            if (serverTerpilih === 'server1') {
-                try {
-                    const reqUrl = (providerSelected !== 'any') ? `${BASE_URL}?action=getNumber&service=${s}&country=${c}&operator=${providerSelected}` : `${BASE_URL}?action=getNumber&service=${s}&country=${c}`;
-                    const resp = await fetch(reqUrl);
-                    const text = await resp.text();
-                    if (text.includes("ACCESS_NUMBER")) {
-                        const parts = text.split(":"); 
-                        newId = parts[1]; newPhone = parts[2];
-                        dur = 900; cancelCd = 0;
-                    } else { alert("SMS HERO: Gagal atau Stok Kosong."); }
-                } catch (e) { alert("Error koneksi SMS Hero."); }
-            } else if (serverTerpilih === 'nixpoin') {
-                try {
-                    const bodyReq = { service: s, country: Number(c) };
-                    if (providerSelected !== 'any') { bodyReq.operator = providerSelected; }
-                    const resp = await fetch(`${NIXPOIN_PROXY}/api/v1/order`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': NIXPOIN_API_KEY }, body: JSON.stringify(bodyReq)
-                    });
-                    const data = await resp.json();
-                    if (data.success) {
-                        newId = data.id.toString(); newPhone = data.phoneNumber;
-                        dur = 1200; cancelCd = 180;
-                        if(data.newBalance) { document.getElementById('balanceDisplay').innerText = "Rp " + data.newBalance; }
-                    } else {
-                        let errMsg = data.error || "Gagal mendapatkan nomor.";
-                        alert("Info Nixpoin: " + errMsg);
-                    }
-                } catch (e) { alert("Koneksi ke server Nixpoin gagal."); }
+            try {
+                const authParam = SMS_HERO_API_KEY ? `api_key=${SMS_HERO_API_KEY}&` : '';
+                const baseReq = `${BASE_URL}?${authParam}action=getNumber&service=${s}&country=${c}`;
+                const reqUrl = (providerSelected !== 'any') ? `${baseReq}&operator=${providerSelected}` : baseReq;
+                
+                const resp = await fetch(reqUrl);
+                const text = await resp.text();
+                
+                if (text.includes("ACCESS_NUMBER")) {
+                    const parts = text.split(":"); 
+                    newId = parts[1]; newPhone = parts[2];
+                    dur = 900; cancelCd = 0;
+                } else { 
+                    alert("SMS HERO Gagal: Stok Kosong / Saldo Habis / Kunci API salah.\nRespons server: " + text); 
+                }
+            } catch (e) { 
+                alert("Error saat menghubungi Proxy SMS Hero. Silakan cek koneksi internet atau script worker.\nDetail: " + e.message); 
             }
             
             if (newId && newPhone) {
                 activeOrders[newId] = {
                     id: newId,
                     phone: newPhone,
-                    server: serverTerpilih,
                     service: s, country: c, provider: providerSelected,
                     displayName: document.getElementById('orderIdText').innerText,
                     timestamp: Date.now(),
@@ -837,17 +758,12 @@
         window.tombolAksiMulti = async (id, tipe) => {
             if (!activeOrders[id]) return;
             const order = activeOrders[id];
+            const authParam = SMS_HERO_API_KEY ? `api_key=${SMS_HERO_API_KEY}&` : '';
 
             if (tipe === 'RELOAD') {
                 activeOrders[id].isReloading = true;
                 renderOrdersUI();
-
-                if (order.server === 'server1') {
-                    try { await fetch(`${BASE_URL}?action=setStatus&id=${id}&status=3`); } catch(e){}
-                } else if (order.server === 'nixpoin') {
-                    try { await fetch(`${NIXPOIN_PROXY}/api/v1/retry`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': NIXPOIN_API_KEY }, body: JSON.stringify({ orderId: id.toString() }) }); } catch(e){}
-                }
-                
+                try { await fetch(`${BASE_URL}?${authParam}action=setStatus&id=${id}&status=3`); } catch(e){}
                 saveLocalOrders();
                 return; 
             }
@@ -861,33 +777,12 @@
             if(btnCancel) btnCancel.disabled = true;
             if(btnReplace) btnReplace.disabled = true;
 
-            let actionSuccess = true;
-
-            if (order.server === 'server1') {
-                if (tipe === 'CANCEL' || tipe === 'DONE' || tipe === 'REPLACE') {
-                    const status = (tipe === 'DONE') ? 6 : 8;
-                    try { await fetch(`${BASE_URL}?action=setStatus&id=${id}&status=${status}`); } catch(e){}
-                }
-            } else if (order.server === 'nixpoin') {
-                if (tipe === 'CANCEL' || tipe === 'REPLACE') {
-                    try {
-                        const resp = await fetch(`${NIXPOIN_PROXY}/api/v1/cancel`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': NIXPOIN_API_KEY }, body: JSON.stringify({ orderId: id.toString() }) });
-                        const data = await resp.json();
-                        if (!data.success) { alert("Nixpoin: Belum bisa dibatalkan."); actionSuccess = false; }
-                    } catch(e){ actionSuccess = false; }
-                } else if (tipe === 'DONE') {
-                    try {
-                        fetch(`${NIXPOIN_PROXY}/api/v1/complete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': NIXPOIN_API_KEY }, body: JSON.stringify({ orderId: id.toString() }) }).catch(e=>e);
-                        fetch(`${NIXPOIN_PROXY}/api/v1/finish`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Key': NIXPOIN_API_KEY }, body: JSON.stringify({ orderId: id.toString() }) }).catch(e=>e);
-                    } catch(e) {}
-                }
+            if (tipe === 'CANCEL' || tipe === 'DONE' || tipe === 'REPLACE') {
+                // 6 = done/selesai, 8 = cancel/batal
+                const status = (tipe === 'DONE') ? 6 : 8;
+                try { await fetch(`${BASE_URL}?${authParam}action=setStatus&id=${id}&status=${status}`); } catch(e){}
             }
             
-            if (!actionSuccess) {
-                renderOrdersUI();
-                return; 
-            }
-
             if (tipe === 'DONE' && order.phone && order.phone !== "Mencari...") {
                 try { await addDoc(collection(db, "success_numbers"), { phone: order.phone, createdAt: Date.now() }); } catch(e) {}
             }
@@ -897,7 +792,7 @@
             renderOrdersUI();
 
             if (tipe === 'REPLACE') {
-                beliNomorAPI(order.service, order.country, order.provider, order.server);
+                beliNomorAPI(order.service, order.country, order.provider);
             } else {
                 setTimeout(updateGlobalBalance, 1500);
             }
