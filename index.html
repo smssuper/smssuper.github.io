@@ -343,7 +343,7 @@
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-        // FIREBASE MILIK ANDA
+        // MENGGUNAKAN FIREBASE MILIK ANDA
         const firebaseConfig = {
             apiKey: "AIzaSyC-1_1_Mb28fyzxA3EmxaAYNZOxx1zm5HQ",
             authDomain: "smssuper-85754.firebaseapp.com",
@@ -769,14 +769,35 @@
             const btnReload = document.getElementById(`btnReload-${id}`);
             const btnCancel = document.getElementById(`btnCancel-${id}`);
             const btnReplace = document.getElementById(`btnReplace-${id}`);
+            
+            // Menonaktifkan semua tombol saat diproses
             if(btnDone) btnDone.disabled = true;
             if(btnReload) btnReload.disabled = true;
-            if(btnCancel) btnCancel.disabled = true;
-            if(btnReplace) btnReplace.disabled = true;
+            if(btnCancel) {
+                btnCancel.disabled = true;
+                if(tipe === 'CANCEL') btnCancel.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+            if(btnReplace) {
+                btnReplace.disabled = true;
+                if(tipe === 'REPLACE') btnReplace.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
 
             if (tipe === 'CANCEL' || tipe === 'DONE' || tipe === 'REPLACE') {
                 const status = (tipe === 'DONE') ? 6 : 8;
-                try { await callHeroApi(`action=setStatus&id=${id}&status=${status}`); } catch(e){}
+                try { 
+                    const text = await callHeroApi(`action=setStatus&id=${id}&status=${status}`); 
+                    
+                    // Cek jika API menolak pembatalan karena aturan 2 menit
+                    if ((tipe === 'CANCEL' || tipe === 'REPLACE') && text.includes('EARLY_CANCEL_DENIED')) {
+                        alert("HeroSMS: Nomor tidak bisa langsung dibatalkan. Anda harus menunggu 2 menit setelah pembelian.");
+                        renderOrdersUI(); // Kembalikan tombol ke keadaan semula
+                        return; // Jangan hapus pesanan
+                    }
+                } catch(e) {
+                    alert("Koneksi gagal saat membatalkan. Silakan coba lagi.");
+                    renderOrdersUI(); 
+                    return; 
+                }
             }
             
             if (tipe === 'DONE' && order.phone && order.phone !== "Mencari...") {
