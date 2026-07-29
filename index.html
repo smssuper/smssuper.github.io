@@ -541,8 +541,8 @@
         // KONFIGURASI API HERO SMS (Diperbarui dari Dokumentasi)
         // ==========================================
         
-        // URL diarahkan langsung ke server yang kompatibel dengan SMS-Activate
-        const BASE_URL = "https://hero-sms.com/stubs/handler_api.php";
+        // Menggunakan jembatan CORS Proxy untuk mencegah error 'Failed to fetch'
+        const BASE_URL = "https://corsproxy.io/?https://hero-sms.com/stubs/handler_api.php";
         
         // HARAP MASUKKAN API KEY ANDA DI BAWAH INI:
         const SMS_HERO_API_KEY = "c46df818337ec9B4d87c8B933B656c65"; 
