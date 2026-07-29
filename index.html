@@ -343,13 +343,15 @@
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
+        // MENGGUNAKAN FIREBASE MILIK ANDA
         const firebaseConfig = {
-            apiKey: "AIzaSyAYUvnhcCbtvBwoh9AxPviXlcAOQRx_aB0",
-            authDomain: "acaklink-dd61f.firebaseapp.com",
-            projectId: "acaklink-dd61f",
-            storageBucket: "acaklink-dd61f.firebasestorage.app",
-            messagingSenderId: "708564834074",
-            appId: "1:708564834074:web:e485cc2b69ab1525b17ea3"
+            apiKey: "AIzaSyC-1_1_Mb28fyzxA3EmxaAYNZOxx1zm5HQ",
+            authDomain: "smssuper-85754.firebaseapp.com",
+            databaseURL: "https://smssuper-85754-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "smssuper-85754",
+            storageBucket: "smssuper-85754.firebasestorage.app",
+            messagingSenderId: "516953018540",
+            appId: "1:516953018540:web:729bc35237405193744f09"
         };
 
         const app = initializeApp(firebaseConfig);
