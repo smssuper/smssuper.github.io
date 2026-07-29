@@ -515,7 +515,7 @@
                 for(let i=0; i<randomSuffixLength; i++){ randomSuffix += Math.floor(Math.random() * 10); }
                 const randomPhone = randomPrefix + randomSuffix;
 
-                const daftarProvinsiTarget = ["DKI JAKARTA", "JAWA BARAT", "JAWA TENGAH", "DI YOGYAKARTA", "JAWA TIMUR", "BANTEN", "BALI"];
+                const daftarProvinsiTarget = ["DKI JAKARTA", "JAWA BARAT", "JAWA TENGAH", "DI YOGYAKARTA", "JAWA TIMUR", "BANTEN"];
                 const ketersediaanProvinsi = Object.keys(dataAlamatGlobal);
                 const provinces = ketersediaanProvinsi.filter(prov => daftarProvinsiTarget.includes(prov.toUpperCase().trim()));
                 const finalProvinces = provinces.length > 0 ? provinces : ketersediaanProvinsi;
@@ -619,11 +619,14 @@
                     balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4); 
                 } else if(text.includes("cloudflare") || text.includes("<html")) {
                     balElement.innerText = "Cek Worker";
+                    console.log("Worker tidak diset dengan benar:", text);
                 } else {
                     balElement.innerText = "Error API";
+                    console.log("Error dari server:", text);
                 }
             } catch(e) {
                 balElement.innerText = "Offline/CORS";
+                console.error("Gagal koneksi ke API via Worker", e);
             }
         }
         updateGlobalBalance();
