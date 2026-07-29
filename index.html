@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hero SMS Pro - API Fix</title>
+    <title>Hero SMS Pro - Fast Edition</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
@@ -303,7 +303,7 @@
         </div>
     </div>
 
-    <!-- Modal Login tetap ada di kode tapi tidak akan dimunculkan -->
+    <!-- Modal Login -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-content">
             <h3 style="margin-bottom: 20px;">Login Admin</h3>
@@ -343,7 +343,7 @@
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-        // MENGGUNAKAN FIREBASE MILIK ANDA
+        // FIREBASE MILIK ANDA
         const firebaseConfig = {
             apiKey: "AIzaSyC-1_1_Mb28fyzxA3EmxaAYNZOxx1zm5HQ",
             authDomain: "smssuper-85754.firebaseapp.com",
@@ -493,9 +493,6 @@
             animateBtn('.ic-green');
         };
 
-        // ==========================================
-        // FUNGSI ACAK ALAMAT
-        // ==========================================
         let dataAlamatGlobal = null;
         window.acakAlamat = async () => {
             try {
@@ -540,40 +537,18 @@
         };
 
         // ==========================================
-        // KONFIGURASI API HERO SMS & MULTI-PROXY ANTI-BLOKIR
+        // KONFIGURASI HERO SMS & WORKER PRIBADI ANDA 
         // ==========================================
         const SMS_HERO_API_KEY = "c46df818337ec9B4d87c8B933B656c65"; 
-        
-        // Fungsi untuk mencari jalur proxy yang hidup secara otomatis
+        const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
+
         async function callHeroApi(params) {
-            const targetUrl = `https://hero-sms.com/stubs/handler_api.php?api_key=${SMS_HERO_API_KEY}&${params}`;
-            
-            // Daftar Proxy Otomatis. Jika nomor 1 diblokir, akan otomatis lompat ke nomor 2, dst.
-            const proxies = [
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
-                `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-                `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
-            ];
-
-            let lastError = "Gagal menghubungi proxy";
-
-            for (let i = 0; i < proxies.length; i++) {
-                try {
-                    const response = await fetch(proxies[i]);
-                    const text = await response.text();
-                    
-                    // Memastikan balasan adalah data API murni, bukan blokir Cloudflare/HTML
-                    if (text && !text.toLowerCase().includes("<html") && !text.toLowerCase().includes("cloudflare")) {
-                        return text; // Sukses, hentikan pencarian
-                    }
-                } catch (e) {
-                    lastError = e.message;
-                    console.log(`Jalur ${i+1} diblokir, mencari jalur alternatif...`);
-                }
+            const url = `${PRIVATE_WORKER_URL}?api_key=${SMS_HERO_API_KEY}&${params}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error("Gagal terhubung ke Worker Pribadi Anda.");
             }
-            
-            throw new Error(lastError);
+            return await response.text();
         }
 
         function saveLocalOrders() {
@@ -639,17 +614,22 @@
                 const text = await callHeroApi("action=getBalance");
                 if(text.includes("ACCESS_BALANCE")) { 
                     balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4); 
+                } else if(text.includes("cloudflare") || text.includes("<html")) {
+                    balElement.innerText = "Cek Worker";
+                    console.log("Worker tidak diset dengan benar:", text);
                 } else {
                     balElement.innerText = "Error API";
                     console.log("Error dari server:", text);
                 }
             } catch(e) {
                 balElement.innerText = "Offline/CORS";
-                console.error("Gagal koneksi ke API", e);
+                console.error("Gagal koneksi ke API via Worker", e);
             }
         }
         updateGlobalBalance();
-        setInterval(updateGlobalBalance, 15000);
+        
+        // Update balance per 5 detik
+        setInterval(updateGlobalBalance, 5000);
 
         function startGlobalTimers() {
             if(globalCountdownTimer) clearInterval(globalCountdownTimer);
@@ -683,6 +663,8 @@
 
         function startGlobalPolling() {
             if(globalPollTimer) clearInterval(globalPollTimer);
+            
+            // Cek OTP per 3 detik
             globalPollTimer = setInterval(async () => {
                 let hasChanges = false;
                 
@@ -711,14 +693,13 @@
                     renderOrdersUI();
                     saveLocalOrders();
                 }
-            }, 5000);
+            }, 3000);
         }
 
         window.prosesPesanLayanan = () => {
             const provider = document.getElementById('pilihProvider').value;
             const providerName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
             
-            // "ka" adalah kode standar layanan Shopee di API Sms-activate / smshub (SMS HERO)
             let kodeLayanan = 'ka'; 
             let displayName = provider === 'any' ? "Otomatis" : providerName;
             document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
@@ -742,11 +723,13 @@
                     const parts = text.split(":"); 
                     newId = parts[1]; newPhone = parts[2];
                     dur = 900; cancelCd = 0;
+                } else if(text.includes("cloudflare") || text.includes("<html")) {
+                    alert("Gagal: Worker Cloudflare Anda belum disetel kodenya dengan benar.");
                 } else { 
                     alert("SMS HERO Gagal: Stok Kosong / Saldo Habis.\nRespons server: " + text); 
                 }
             } catch (e) { 
-                alert("Error koneksi API. Periksa jaringan Anda.\nDetail: " + e.message); 
+                alert("Error Koneksi: " + e.message + "\nPastikan Cloudflare Worker Anda tidak diblokir/error!"); 
             }
             
             if (newId && newPhone) {
@@ -792,7 +775,6 @@
             if(btnReplace) btnReplace.disabled = true;
 
             if (tipe === 'CANCEL' || tipe === 'DONE' || tipe === 'REPLACE') {
-                // 6 = done/selesai, 8 = cancel/batal
                 const status = (tipe === 'DONE') ? 6 : 8;
                 try { await callHeroApi(`action=setStatus&id=${id}&status=${status}`); } catch(e){}
             }
@@ -808,7 +790,7 @@
             if (tipe === 'REPLACE') {
                 beliNomorAPI(order.service, order.country, order.provider);
             } else {
-                setTimeout(updateGlobalBalance, 1500);
+                setTimeout(updateGlobalBalance, 1000);
             }
         };
 
@@ -892,7 +874,6 @@
         window.hapusDatabaseLink = async (e) => { if(e) e.stopPropagation(); if (masterLinkIds.length === 0) return; for (const id of masterLinkIds) { await deleteDoc(doc(db, "random_links", id)); } toggleMenu(); };
         function animateBtn(sel) { const b = document.querySelector(sel); b.classList.add('flash-success'); setTimeout(() => b.classList.remove('flash-success'), 500); }
         
-        // BUKA OTOMATIS: Langsung masuk ke dalam aplikasi tanpa klik apapun
         const cont = document.querySelector('.container');
         document.getElementById('btn-login').style.display = 'none'; 
         cont.style.opacity = '1';
