@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hero SMS Pro - Ultimate Fix</title>
+    <title>Hero SMS Pro - API Fix</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
@@ -161,7 +161,6 @@
         <div style="display:flex; align-items:center; gap:8px">
             <i class="fas fa-bars" onclick="toggleMenu()" style="cursor:pointer; font-size: 18px; margin-right: 5px;"></i>
             
-            <!-- Server Dropdown Dihapus, hanya menampilkan teks SMS HERO Statis -->
             <div style="position: relative; display: flex; align-items: center;">
                 <span style="font-weight: 900; font-size: 16px; color: var(--secondary); letter-spacing: -0.5px; text-transform: uppercase; padding-right: 15px;">SMS HERO</span>
             </div>
@@ -493,7 +492,7 @@
         };
 
         // ==========================================
-        // FUNGSI ACAK ALAMAT (KHUSUS JAWA & BALI)
+        // FUNGSI ACAK ALAMAT
         // ==========================================
         let dataAlamatGlobal = null;
         window.acakAlamat = async () => {
@@ -503,38 +502,23 @@
                     if (!response.ok) throw new Error("Network response was not ok");
                     dataAlamatGlobal = await response.json();
                 }
-                const first = ["Budi", "Agus", "Siti", "Dewi", "Rudi", "Andi", "Joko", "Ayu", "Putra", "Rizky", "Ahmad", "Nisa", "Bagus", "Gilang", "Indra", "Dinda"];
-                const last = ["Santoso", "Wijaya", "Kusuma", "Saputra", "Hidayat", "Lestari", "Siregar", "Gunawan", "Pratama", "Nugroho", "Setiawan", "Mahendra"];
+                const first = ["Budi", "Agus", "Siti", "Dewi", "Rudi", "Andi", "Joko", "Ayu", "Putra", "Rizky", "Ahmad", "Nisa"];
+                const last = ["Santoso", "Wijaya", "Kusuma", "Saputra", "Hidayat", "Lestari", "Siregar", "Gunawan", "Pratama"];
                 const randomName = first[Math.floor(Math.random()*first.length)] + " " + last[Math.floor(Math.random()*last.length)];
                 
-                const prefixes = ["0811", "0812", "0813", "0821", "0822", "0823", "0851", "0852", "0853", "0814", "0815", "0816", "0855", "0856", "0857", "0858", "0817", "0818", "0819", "0859", "0877", "0878", "0831", "0832", "0833", "0838", "0895", "0896", "0897", "0898", "0899", "0881", "0882", "0883", "0884", "0885", "0886", "0887", "0888", "0889"];
+                const prefixes = ["0811", "0812", "0813", "0821", "0851", "0852", "0853", "0814", "0815", "0855", "0856", "0857", "0819", "0859", "0877", "0895", "0896"];
                 const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
                 const randomSuffixLength = Math.floor(Math.random() * 3) + 7;
                 let randomSuffix = "";
                 for(let i=0; i<randomSuffixLength; i++){ randomSuffix += Math.floor(Math.random() * 10); }
                 const randomPhone = randomPrefix + randomSuffix;
 
-                // --- SISTEM FILTER PROVINSI JAWA & BALI ---
-                const daftarProvinsiTarget = [
-                    "DKI JAKARTA", 
-                    "JAWA BARAT", 
-                    "JAWA TENGAH", 
-                    "DI YOGYAKARTA", 
-                    "JAWA TIMUR", 
-                    "BANTEN", 
-                    "BALI"
-                ];
-
+                const daftarProvinsiTarget = ["DKI JAKARTA", "JAWA BARAT", "JAWA TENGAH", "DI YOGYAKARTA", "JAWA TIMUR", "BANTEN", "BALI"];
                 const ketersediaanProvinsi = Object.keys(dataAlamatGlobal);
-                const provinces = ketersediaanProvinsi.filter(prov => 
-                    daftarProvinsiTarget.includes(prov.toUpperCase().trim())
-                );
-
+                const provinces = ketersediaanProvinsi.filter(prov => daftarProvinsiTarget.includes(prov.toUpperCase().trim()));
                 const finalProvinces = provinces.length > 0 ? provinces : ketersediaanProvinsi;
                 
                 const randomProv = finalProvinces[Math.floor(Math.random() * finalProvinces.length)];
-                // ------------------------------------------
-
                 const cities = Object.keys(dataAlamatGlobal[randomProv]);
                 const randomCity = cities[Math.floor(Math.random() * cities.length)];
                 const districts = Object.keys(dataAlamatGlobal[randomProv][randomCity]);
@@ -553,9 +537,15 @@
             }
         };
 
-        // KONFIGURASI SMS HERO
-        const BASE_URL = "https://herosms-proxy.you-zainul.workers.dev/";
-        const SMS_HERO_API_KEY = ""; // Isi API Key Anda di sini JIKA worker proxy membutuhkannya (misal: "1234abcd...")
+        // ==========================================
+        // KONFIGURASI API HERO SMS (Diperbarui dari Dokumentasi)
+        // ==========================================
+        
+        // URL diarahkan langsung ke server yang kompatibel dengan SMS-Activate
+        const BASE_URL = "https://hero-sms.com/stubs/handler_api.php";
+        
+        // HARAP MASUKKAN API KEY ANDA DI BAWAH INI:
+        const SMS_HERO_API_KEY = "MASUKKAN_API_KEY_ANDA_DISINI"; 
         
         function saveLocalOrders() {
             localStorage.setItem('multiActiveOrders', JSON.stringify(activeOrders));
@@ -616,17 +606,22 @@
 
         async function updateGlobalBalance() {
             const balElement = document.getElementById('balanceDisplay');
+            if (SMS_HERO_API_KEY === "MASUKKAN_API_KEY_ANDA_DISINI" || SMS_HERO_API_KEY === "") {
+                balElement.innerText = "Isi API Key!";
+                return;
+            }
             try {
-                const authParam = SMS_HERO_API_KEY ? `api_key=${SMS_HERO_API_KEY}&` : '';
-                const resp = await fetch(`${BASE_URL}?${authParam}action=getBalance`);
+                const resp = await fetch(`${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=getBalance`);
                 const text = await resp.text();
                 if(text.includes("ACCESS_BALANCE")) { 
                     balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4); 
                 } else {
-                    balElement.innerText = "Error Api";
+                    balElement.innerText = "Error API";
+                    console.log("Error dari server:", text);
                 }
             } catch(e) {
-                balElement.innerText = "Offline";
+                balElement.innerText = "Offline/CORS";
+                console.error("Gagal koneksi ke API", e);
             }
         }
         updateGlobalBalance();
@@ -670,10 +665,10 @@
                 for (let id in activeOrders) {
                     let order = activeOrders[id];
                     if (order.otp !== "000000" && !order.isReloading) continue;
+                    if (!SMS_HERO_API_KEY || SMS_HERO_API_KEY === "MASUKKAN_API_KEY_ANDA_DISINI") continue;
                     
                     try {
-                        const authParam = SMS_HERO_API_KEY ? `api_key=${SMS_HERO_API_KEY}&` : '';
-                        const resp = await fetch(`${BASE_URL}?${authParam}action=getStatus&id=${id}`);
+                        const resp = await fetch(`${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=getStatus&id=${id}`);
                         const text = await resp.text();
                         if (text.includes("STATUS_OK")) {
                             const code = text.split(":")[1];
@@ -698,6 +693,10 @@
         }
 
         window.prosesPesanLayanan = () => {
+            if (SMS_HERO_API_KEY === "MASUKKAN_API_KEY_ANDA_DISINI" || SMS_HERO_API_KEY === "") {
+                alert("Harap masukkan API Key HeroSMS terlebih dahulu di dalam script kode!");
+                return;
+            }
             const provider = document.getElementById('pilihProvider').value;
             const providerName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
             
@@ -716,8 +715,7 @@
             let newId = null, newPhone = null, dur = 900, cancelCd = 0;
 
             try {
-                const authParam = SMS_HERO_API_KEY ? `api_key=${SMS_HERO_API_KEY}&` : '';
-                const baseReq = `${BASE_URL}?${authParam}action=getNumber&service=${s}&country=${c}`;
+                const baseReq = `${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=getNumber&service=${s}&country=${c}`;
                 const reqUrl = (providerSelected !== 'any') ? `${baseReq}&operator=${providerSelected}` : baseReq;
                 
                 const resp = await fetch(reqUrl);
@@ -728,10 +726,10 @@
                     newId = parts[1]; newPhone = parts[2];
                     dur = 900; cancelCd = 0;
                 } else { 
-                    alert("SMS HERO Gagal: Stok Kosong / Saldo Habis / Kunci API salah.\nRespons server: " + text); 
+                    alert("SMS HERO Gagal: Stok Kosong / Saldo Habis.\nRespons server: " + text); 
                 }
             } catch (e) { 
-                alert("Error saat menghubungi Proxy SMS Hero. Silakan cek koneksi internet atau script worker.\nDetail: " + e.message); 
+                alert("Error koneksi API. Periksa CORS atau jaringan Anda.\nDetail: " + e.message); 
             }
             
             if (newId && newPhone) {
@@ -758,12 +756,11 @@
         window.tombolAksiMulti = async (id, tipe) => {
             if (!activeOrders[id]) return;
             const order = activeOrders[id];
-            const authParam = SMS_HERO_API_KEY ? `api_key=${SMS_HERO_API_KEY}&` : '';
 
             if (tipe === 'RELOAD') {
                 activeOrders[id].isReloading = true;
                 renderOrdersUI();
-                try { await fetch(`${BASE_URL}?${authParam}action=setStatus&id=${id}&status=3`); } catch(e){}
+                try { await fetch(`${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=setStatus&id=${id}&status=3`); } catch(e){}
                 saveLocalOrders();
                 return; 
             }
@@ -780,7 +777,7 @@
             if (tipe === 'CANCEL' || tipe === 'DONE' || tipe === 'REPLACE') {
                 // 6 = done/selesai, 8 = cancel/batal
                 const status = (tipe === 'DONE') ? 6 : 8;
-                try { await fetch(`${BASE_URL}?${authParam}action=setStatus&id=${id}&status=${status}`); } catch(e){}
+                try { await fetch(`${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=setStatus&id=${id}&status=${status}`); } catch(e){}
             }
             
             if (tipe === 'DONE' && order.phone && order.phone !== "Mencari...") {
@@ -880,11 +877,7 @@
         
         // BUKA OTOMATIS: Langsung masuk ke dalam aplikasi tanpa klik apapun
         const cont = document.querySelector('.container');
-        
-        // Sembunyikan tombol login di menu samping
         document.getElementById('btn-login').style.display = 'none'; 
-        
-        // Pastikan layar utama bisa langsung diklik dan tidak buram
         cont.style.opacity = '1';
         cont.style.pointerEvents = 'auto';
 
