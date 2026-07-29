@@ -331,7 +331,10 @@
             <div class="input-group"><label>Nama Link</label><input type="text" id="formInputNama"></div>
             <div class="input-group"><label>URL / Teks</label><input type="text" id="formInputUrl"></div>
             <div class="input-group"><label>Harga</label><input type="text" id="formInputHarga"></div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><button class="btn-order" style="background:#eee; padding:15px;" onclick="tutupFormLink()">Batal</button><button class="btn-order" style="background:var(--secondary); color:white; padding:15px;" onclick="simpanDataLink()">Simpan</button></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button class="btn-order" style="background:#eee; padding:15px;" onclick="tutupFormLink()">Batal</button>
+                <button class="btn-order" style="background:var(--secondary); color:white; padding:15px;" id="btnSimpanLink" onclick="simpanDataLink()">Simpan</button>
+            </div>
         </div>
     </div>
 
@@ -343,7 +346,7 @@
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-        // MENGGUNAKAN FIREBASE MILIK ANDA
+        // FIREBASE MILIK ANDA
         const firebaseConfig = {
             apiKey: "AIzaSyC-1_1_Mb28fyzxA3EmxaAYNZOxx1zm5HQ",
             authDomain: "smssuper-85754.firebaseapp.com",
@@ -446,7 +449,7 @@
                     </div>
                     <div class="action-btns" style="display:flex; gap:8px; margin-left:auto;">
                         <div style="width:36px; height:36px; border-radius:10px; background:#ff4757; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(255, 71, 87, 0.4);" onclick="hapusDataLink('${link.id}')"><i class="fas fa-times"></i></div>
-                        <div style="width:36px; height:36px; border-radius:10px; background:#2ed573; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(46, 213, 115, 0.4);" onclick="bukaFormLink('${link.id}')"><i class="fas fa-check"></i></div>
+                        <div style="width:36px; height:36px; border-radius:10px; background:#2ed573; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(46, 213, 115, 0.4);" onclick="bukaFormLink('${link.id}', \`${(link.name || '').replace(/`/g, '')}\`, \`${(link.url || '').replace(/`/g, '')}\`, \`${(link.price || '').replace(/`/g, '')}\`)"><i class="fas fa-edit"></i></div>
                     </div>`;
                 container.appendChild(card);
             });
@@ -616,14 +619,11 @@
                     balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4); 
                 } else if(text.includes("cloudflare") || text.includes("<html")) {
                     balElement.innerText = "Cek Worker";
-                    console.log("Worker tidak diset dengan benar:", text);
                 } else {
                     balElement.innerText = "Error API";
-                    console.log("Error dari server:", text);
                 }
             } catch(e) {
                 balElement.innerText = "Offline/CORS";
-                console.error("Gagal koneksi ke API via Worker", e);
             }
         }
         updateGlobalBalance();
@@ -836,18 +836,58 @@
             }
         };
 
-        window.simpanDataLink = async () => {
-            const id = document.getElementById('formLinkId').value;
-            const colors = ['bg-red', 'bg-blue', 'bg-purple', 'bg-orange', 'bg-green', 'bg-teal'];
-            const data = { name: document.getElementById('formInputNama').value || "Tanpa Nama", url: document.getElementById('formInputUrl').value || "#", price: document.getElementById('formInputHarga').value || "Rp 0" };
-            if(id) { await updateDoc(doc(db, "links", id), data); } 
-            else { 
-                data.color = colors[Math.floor(Math.random() * colors.length)]; 
-                data.createdAt = Date.now(); 
-                data.orderIndex = Date.now(); 
-                await addDoc(linksCol, data); 
+        // ==========================================
+        // PERBAIKAN TOMBOL SIMPAN LINK DATABASE
+        // ==========================================
+        window.bukaFormLink = (id, nama = '', url = '', harga = '') => { 
+            document.getElementById('formModal').style.display='flex'; 
+            if(id) { 
+                document.getElementById('formLinkId').value = id; 
+                document.getElementById('formModalTitle').innerText = 'Edit Link'; 
+                document.getElementById('formInputNama').value = nama;
+                document.getElementById('formInputUrl').value = url;
+                document.getElementById('formInputHarga').value = harga;
+            } else { 
+                document.getElementById('formLinkId').value = ''; 
+                document.getElementById('formModalTitle').innerText = 'Tambah Link'; 
+                document.getElementById('formInputNama').value = '';
+                document.getElementById('formInputUrl').value = '';
+                document.getElementById('formInputHarga').value = '';
             }
-            tutupFormLink();
+        };
+
+        window.simpanDataLink = async () => {
+            const btnSimpan = document.getElementById('btnSimpanLink');
+            btnSimpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Proses...';
+            btnSimpan.disabled = true;
+
+            try {
+                const id = document.getElementById('formLinkId').value;
+                const colors = ['bg-red', 'bg-blue', 'bg-purple', 'bg-orange', 'bg-green', 'bg-teal'];
+                const data = { 
+                    name: document.getElementById('formInputNama').value || "Tanpa Nama", 
+                    url: document.getElementById('formInputUrl').value || "#", 
+                    price: document.getElementById('formInputHarga').value || "Rp 0" 
+                };
+
+                if(id) { 
+                    await updateDoc(doc(db, "links", id), data); 
+                } else { 
+                    data.color = colors[Math.floor(Math.random() * colors.length)]; 
+                    data.createdAt = Date.now(); 
+                    data.orderIndex = Date.now(); 
+                    await addDoc(collection(db, "links"), data); 
+                }
+                
+                tutupFormLink();
+            } catch (error) {
+                console.error("Gagal simpan:", error);
+                alert("Gagal menyimpan data!\nCek koneksi atau pastikan Anda sudah Login Admin.\n\nDetail Error: " + error.message);
+                document.getElementById('btn-login').style.display = 'flex';
+            } finally {
+                btnSimpan.innerHTML = 'Simpan';
+                btnSimpan.disabled = false;
+            }
         };
 
         window.toggleMenu = () => document.getElementById('sidebar').classList.toggle('active');
@@ -856,11 +896,6 @@
         window.openPassModal = () => { document.getElementById('passModal').style.display='flex'; toggleMenu(); };
         window.closePassModal = () => { document.getElementById('passModal').style.display='none'; };
         window.savePassword = () => { localStorage.setItem('userPassword', document.getElementById('newPassInput').value); closePassModal(); };
-        window.bukaFormLink = (id) => { 
-            document.getElementById('formModal').style.display='flex'; 
-            if(id) { document.getElementById('formLinkId').value=id; document.getElementById('formModalTitle').innerText='Edit Link'; }
-            else { document.getElementById('formLinkId').value=''; document.getElementById('formModalTitle').innerText='Tambah Link'; }
-        };
         window.tutupFormLink = () => document.getElementById('formModal').style.display='none';
         window.hapusDataLink = async (id) => await deleteDoc(doc(db, "links", id));
         
