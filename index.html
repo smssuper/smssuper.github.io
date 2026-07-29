@@ -538,15 +538,19 @@
         };
 
         // ==========================================
-        // KONFIGURASI API HERO SMS (Diperbarui dari Dokumentasi)
+        // KONFIGURASI API HERO SMS & PROXY
         // ==========================================
-        
-        // Menggunakan jembatan CORS Proxy untuk mencegah error 'Failed to fetch'
-        const BASE_URL = "https://corsproxy.io/?https://hero-sms.com/stubs/handler_api.php";
-        
-        // HARAP MASUKKAN API KEY ANDA DI BAWAH INI:
         const SMS_HERO_API_KEY = "c46df818337ec9B4d87c8B933B656c65"; 
         
+        // Fungsi untuk menembus CORS & Cloudflare
+        async function callHeroApi(params) {
+            const targetUrl = `https://hero-sms.com/stubs/handler_api.php?api_key=${SMS_HERO_API_KEY}&${params}`;
+            // Menggunakan AllOrigins sebagai proxy bypass
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+            const response = await fetch(proxyUrl);
+            return await response.text();
+        }
+
         function saveLocalOrders() {
             localStorage.setItem('multiActiveOrders', JSON.stringify(activeOrders));
         }
@@ -606,15 +610,13 @@
 
         async function updateGlobalBalance() {
             const balElement = document.getElementById('balanceDisplay');
-            if (SMS_HERO_API_KEY === "MASUKKAN_API_KEY_ANDA_DISINI" || SMS_HERO_API_KEY === "") {
-                balElement.innerText = "Isi API Key!";
-                return;
-            }
             try {
-                const resp = await fetch(`${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=getBalance`);
-                const text = await resp.text();
+                const text = await callHeroApi("action=getBalance");
                 if(text.includes("ACCESS_BALANCE")) { 
                     balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4); 
+                } else if(text.includes("cloudflare") || text.includes("<html")) {
+                    balElement.innerText = "Error Proxy";
+                    console.log("Diblokir Cloudflare:", text);
                 } else {
                     balElement.innerText = "Error API";
                     console.log("Error dari server:", text);
@@ -665,11 +667,9 @@
                 for (let id in activeOrders) {
                     let order = activeOrders[id];
                     if (order.otp !== "000000" && !order.isReloading) continue;
-                    if (!SMS_HERO_API_KEY || SMS_HERO_API_KEY === "MASUKKAN_API_KEY_ANDA_DISINI") continue;
                     
                     try {
-                        const resp = await fetch(`${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=getStatus&id=${id}`);
-                        const text = await resp.text();
+                        const text = await callHeroApi(`action=getStatus&id=${id}`);
                         if (text.includes("STATUS_OK")) {
                             const code = text.split(":")[1];
                             if (code && code !== "000000" && code !== order.otp) {
@@ -693,10 +693,6 @@
         }
 
         window.prosesPesanLayanan = () => {
-            if (SMS_HERO_API_KEY === "MASUKKAN_API_KEY_ANDA_DISINI" || SMS_HERO_API_KEY === "") {
-                alert("Harap masukkan API Key HeroSMS terlebih dahulu di dalam script kode!");
-                return;
-            }
             const provider = document.getElementById('pilihProvider').value;
             const providerName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
             
@@ -715,21 +711,22 @@
             let newId = null, newPhone = null, dur = 900, cancelCd = 0;
 
             try {
-                const baseReq = `${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=getNumber&service=${s}&country=${c}`;
-                const reqUrl = (providerSelected !== 'any') ? `${baseReq}&operator=${providerSelected}` : baseReq;
+                let params = `action=getNumber&service=${s}&country=${c}`;
+                if (providerSelected !== 'any') params += `&operator=${providerSelected}`;
                 
-                const resp = await fetch(reqUrl);
-                const text = await resp.text();
+                const text = await callHeroApi(params);
                 
                 if (text.includes("ACCESS_NUMBER")) {
                     const parts = text.split(":"); 
                     newId = parts[1]; newPhone = parts[2];
                     dur = 900; cancelCd = 0;
+                } else if(text.includes("cloudflare") || text.includes("<html")) {
+                    alert("Gagal: Request diblokir oleh sistem keamanan Cloudflare. Proxy AllOrigins terdeteksi sebagai bot.");
                 } else { 
                     alert("SMS HERO Gagal: Stok Kosong / Saldo Habis.\nRespons server: " + text); 
                 }
             } catch (e) { 
-                alert("Error koneksi API. Periksa CORS atau jaringan Anda.\nDetail: " + e.message); 
+                alert("Error koneksi API. Periksa jaringan Anda.\nDetail: " + e.message); 
             }
             
             if (newId && newPhone) {
@@ -760,7 +757,7 @@
             if (tipe === 'RELOAD') {
                 activeOrders[id].isReloading = true;
                 renderOrdersUI();
-                try { await fetch(`${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=setStatus&id=${id}&status=3`); } catch(e){}
+                try { await callHeroApi(`action=setStatus&id=${id}&status=3`); } catch(e){}
                 saveLocalOrders();
                 return; 
             }
@@ -777,7 +774,7 @@
             if (tipe === 'CANCEL' || tipe === 'DONE' || tipe === 'REPLACE') {
                 // 6 = done/selesai, 8 = cancel/batal
                 const status = (tipe === 'DONE') ? 6 : 8;
-                try { await fetch(`${BASE_URL}?api_key=${SMS_HERO_API_KEY}&action=setStatus&id=${id}&status=${status}`); } catch(e){}
+                try { await callHeroApi(`action=setStatus&id=${id}&status=${status}`); } catch(e){}
             }
             
             if (tipe === 'DONE' && order.phone && order.phone !== "Mencari...") {
