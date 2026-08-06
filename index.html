@@ -345,6 +345,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+        // 1. TAMBAHKAN IMPORT REALTIME DATABASE (RTDB)
+        import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
 
         // FIREBASE MILIK ANDA
         const firebaseConfig = {
@@ -360,9 +362,14 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        // 2. INISIALISASI RTDB
+        const rtdb = getDatabase(app);
 
-        let emailQueue = JSON.parse(localStorage.getItem('savedEmailQueue')) || [];
-        let emailHistory = JSON.parse(localStorage.getItem('savedEmailHistory')) || []; 
+        // Hapus pemanggilan localStorage, ganti dengan state memori sementara
+        let emailQueue = [];
+        let emailHistory = []; 
+        let userPassword = "Belum diatur";
+        
         let successNumberIds = []; 
         let masterLinks = [];
         let masterLinkIds = [];
@@ -372,18 +379,45 @@
         let globalPollTimer = null;
         let globalCountdownTimer = null;
 
+        // 3. LISTEN DATA DARI RTDB (GMAIL & PASSWORD) AGAR SINKRON SEMUA DEVICE
+        const emailQueueRef = ref(rtdb, 'gmail/queue');
+        const emailHistoryRef = ref(rtdb, 'gmail/history');
+        const passwordRef = ref(rtdb, 'settings/password');
+
+        onValue(emailQueueRef, (snapshot) => {
+            emailQueue = snapshot.val() || [];
+            updateUI();
+        });
+
+        onValue(emailHistoryRef, (snapshot) => {
+            emailHistory = snapshot.val() || [];
+            updateUI();
+        });
+
+        onValue(passwordRef, (snapshot) => {
+            if (snapshot.exists()) {
+                userPassword = snapshot.val();
+            } else {
+                userPassword = "Belum diatur";
+            }
+        });
+
+        // 4. FUNGSI UNTUK MENYIMPAN KE RTDB SETIAP ADA PERUBAHAN GMAIL
+        function saveGmailToDB() {
+            set(ref(rtdb, 'gmail/queue'), emailQueue);
+            set(ref(rtdb, 'gmail/history'), emailHistory);
+        }
+
         function updateUI() { 
             const eField = document.getElementById('emailField');
             eField.value = emailQueue.length > 0 ? emailQueue[0] : "Gmail Kosong..."; 
             document.getElementById('emailCounter').innerText = "Gmail: " + emailQueue.length;
-            localStorage.setItem('savedEmailQueue', JSON.stringify(emailQueue));
-            localStorage.setItem('savedEmailHistory', JSON.stringify(emailHistory));
+            
             const btnPrev = document.getElementById('btnPrevEmail');
             const btnNext = document.getElementById('btnNextEmail');
             if(emailHistory.length === 0) btnPrev.classList.add('disabled'); else btnPrev.classList.remove('disabled');
             if(emailQueue.length <= 1) btnNext.classList.add('disabled'); else btnNext.classList.remove('disabled');
         }
-        updateUI();
 
         const successCol = collection(db, "success_numbers");
         const qSuccess = query(successCol, orderBy("createdAt", "asc"));
@@ -478,10 +512,14 @@
             const slides = document.getElementsByClassName('slide');
             if(slides[index]) slider.scrollTo({ left: slides[index].offsetLeft - slider.offsetLeft, behavior: 'smooth' });
         };
-        window.prevEmail = () => { if (emailHistory.length === 0) return; emailQueue.unshift(emailHistory.pop()); updateUI(); };
-        window.nextEmail = () => { if (emailQueue.length <= 1) return; emailHistory.push(emailQueue.shift()); updateUI(); };
-        window.copyEmail = () => { if (emailQueue.length === 0) return; navigator.clipboard.writeText(emailQueue[0]); emailHistory.push(emailQueue.shift()); updateUI(); animateBtn('.ic-orange'); };
-        window.copyPassword = () => { navigator.clipboard.writeText(localStorage.getItem('userPassword') || "Belum diatur"); animateBtn('.ic-yellow'); };
+        
+        // 5. UPDATE FUNGSI TOMBOL UNTUK PUSH DATA KE RTDB
+        window.prevEmail = () => { if (emailHistory.length === 0) return; emailQueue.unshift(emailHistory.pop()); saveGmailToDB(); };
+        window.nextEmail = () => { if (emailQueue.length <= 1) return; emailHistory.push(emailQueue.shift()); saveGmailToDB(); };
+        window.copyEmail = () => { if (emailQueue.length === 0) return; navigator.clipboard.writeText(emailQueue[0]); emailHistory.push(emailQueue.shift()); saveGmailToDB(); animateBtn('.ic-orange'); };
+        
+        window.copyPassword = () => { navigator.clipboard.writeText(userPassword); animateBtn('.ic-yellow'); };
+        
         window.acakLink = () => { if (masterLinks.length === 0) return; navigator.clipboard.writeText(masterLinks[Math.floor(Math.random() * masterLinks.length)]); animateBtn('.ic-indigo'); };
         window.acakNama = () => {
             const first = ["Budi", "Agus", "Siti", "Dewi", "Rudi", "Andi", "Joko", "Ayu", "Putra", "Rizky", "Ahmad", "Nisa"];
@@ -539,9 +577,6 @@
             }
         };
 
-        // ==========================================
-        // KONFIGURASI HERO SMS & WORKER PRIBADI ANDA 
-        // ==========================================
         const SMS_HERO_API_KEY = "c46df818337ec9B4d87c8B933B656c65"; 
         const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
 
@@ -630,8 +665,6 @@
             }
         }
         updateGlobalBalance();
-        
-        // Update balance per 5 detik
         setInterval(updateGlobalBalance, 5000);
 
         function startGlobalTimers() {
@@ -666,8 +699,6 @@
 
         function startGlobalPolling() {
             if(globalPollTimer) clearInterval(globalPollTimer);
-            
-            // Cek OTP per 3 detik
             globalPollTimer = setInterval(async () => {
                 let hasChanges = false;
                 
@@ -773,7 +804,6 @@
             const btnCancel = document.getElementById(`btnCancel-${id}`);
             const btnReplace = document.getElementById(`btnReplace-${id}`);
             
-            // Menonaktifkan semua tombol saat diproses
             if(btnDone) btnDone.disabled = true;
             if(btnReload) btnReload.disabled = true;
             if(btnCancel) {
@@ -790,11 +820,10 @@
                 try { 
                     const text = await callHeroApi(`action=setStatus&id=${id}&status=${status}`); 
                     
-                    // Cek jika API menolak pembatalan karena aturan 2 menit
                     if ((tipe === 'CANCEL' || tipe === 'REPLACE') && text.includes('EARLY_CANCEL_DENIED')) {
                         alert("HeroSMS: Nomor tidak bisa langsung dibatalkan. Anda harus menunggu 2 menit setelah pembelian.");
-                        renderOrdersUI(); // Kembalikan tombol ke keadaan semula
-                        return; // Jangan hapus pesanan
+                        renderOrdersUI();
+                        return; 
                     }
                 } catch(e) {
                     alert("Koneksi gagal saat membatalkan. Silakan coba lagi.");
@@ -839,9 +868,6 @@
             }
         };
 
-        // ==========================================
-        // PERBAIKAN TOMBOL SIMPAN LINK DATABASE
-        // ==========================================
         window.bukaFormLink = (id, nama = '', url = '', harga = '') => { 
             document.getElementById('formModal').style.display='flex'; 
             if(id) { 
@@ -898,14 +924,26 @@
         window.closeLoginModal = () => { document.getElementById('loginModal').style.display='none'; };
         window.openPassModal = () => { document.getElementById('passModal').style.display='flex'; toggleMenu(); };
         window.closePassModal = () => { document.getElementById('passModal').style.display='none'; };
-        window.savePassword = () => { localStorage.setItem('userPassword', document.getElementById('newPassInput').value); closePassModal(); };
+        
+        // 6. SIMPAN PASSWORD KE RTDB
+        window.savePassword = () => { 
+            set(ref(rtdb, 'settings/password'), document.getElementById('newPassInput').value); 
+            closePassModal(); 
+        };
+        
         window.tutupFormLink = () => document.getElementById('formModal').style.display='none';
         window.hapusDataLink = async (id) => await deleteDoc(doc(db, "links", id));
         
         window.triggerImport = () => document.getElementById('fileInput').click();
+        
+        // 7. SIMPAN DATA IMPORT FILE GMAIL KE RTDB
         window.handleFile = (input) => {
             const reader = new FileReader();
-            reader.onload = (e) => { emailQueue = e.target.result.split('\n').map(em => em.trim()).filter(em => em !== ""); emailHistory = []; updateUI(); };
+            reader.onload = (e) => { 
+                emailQueue = e.target.result.split('\n').map(em => em.trim()).filter(em => em !== ""); 
+                emailHistory = []; 
+                saveGmailToDB(); 
+            };
             reader.readAsText(input.files[0]);
         };
 
@@ -928,9 +966,30 @@
         };
         
         window.handleLogout = () => { signOut(auth); localStorage.clear(); location.reload(); };
-        window.hapusTotalStorage = () => { localStorage.clear(); location.reload(); };
-        window.hapusDatabaseGmail = (e) => { if(e) e.stopPropagation(); emailQueue = []; emailHistory = []; updateUI(); toggleMenu(); };
-        window.hapusDatabaseLink = async (e) => { if(e) e.stopPropagation(); if (masterLinkIds.length === 0) return; for (const id of masterLinkIds) { await deleteDoc(doc(db, "random_links", id)); } toggleMenu(); };
+        
+        // 8. HAPUS DATABASE & STORAGE DARI RTDB DAN LOKAL
+        window.hapusTotalStorage = () => { 
+            localStorage.clear(); 
+            remove(ref(rtdb, 'gmail'));
+            remove(ref(rtdb, 'settings/password'));
+            location.reload(); 
+        };
+        
+        window.hapusDatabaseGmail = (e) => { 
+            if(e) e.stopPropagation(); 
+            emailQueue = []; 
+            emailHistory = []; 
+            saveGmailToDB(); 
+            toggleMenu(); 
+        };
+        
+        window.hapusDatabaseLink = async (e) => { 
+            if(e) e.stopPropagation(); 
+            if (masterLinkIds.length === 0) return; 
+            for (const id of masterLinkIds) { await deleteDoc(doc(db, "random_links", id)); } 
+            toggleMenu(); 
+        };
+        
         function animateBtn(sel) { const b = document.querySelector(sel); b.classList.add('flash-success'); setTimeout(() => b.classList.remove('flash-success'), 500); }
         
         const cont = document.querySelector('.container');
