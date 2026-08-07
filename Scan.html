@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Scan Nomor</title>
+    
+    <!-- Memanggil library scanner dari internet -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        /* Area kamera */
+        #reader {
+            width: 100%;
+            margin-bottom: 15px;
+            display: none; /* Disembunyikan sampai tombol scan ditekan */
+        }
+        /* Kolom lampiran hasil scan */
+        input[type="text"] {
+            width: 90%;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-scan { background-color: #4CAF50; } /* Hijau */
+        .btn-scan:hover { background-color: #45a049; }
+        
+        .btn-copy { background-color: #2196F3; } /* Biru */
+        .btn-copy:hover { background-color: #0b7dda; }
+        
+        .btn-hapus { background-color: #f44336; } /* Merah */
+        .btn-hapus:hover { background-color: #da190b; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Scanner Nomor</h2>
+        
+        <!-- Area tempat kamera akan muncul -->
+        <div id="reader"></div>
+        
+        <!-- Lampiran hasil scan -->
+        <input type="text" id="hasilScan" placeholder="Hasil scan akan muncul di sini..." readonly>
+        
+        <!-- Tombol Aksi -->
+        <div class="button-group">
+            <button class="btn-scan" onclick="mulaiScan()">Scan</button>
+            <button class="btn-copy" onclick="copyNomor()">Copy</button>
+            <button class="btn-hapus" onclick="hapusNomor()">Hapus</button>
+        </div>
+    </div>
+
+    <script>
+        let html5QrCode;
+
+        // 1. Logika Tombol Scan
+        function mulaiScan() {
+            const readerDiv = document.getElementById('reader');
+            readerDiv.style.display = 'block'; // Tampilkan area kamera
+
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            // Menggunakan kamera belakang (environment)
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 } // Kotak fokus scan
+                },
+                (decodedText, decodedResult) => {
+                    // Jika berhasil scan: masukkan ke kolom lampiran
+                    document.getElementById('hasilScan').value = decodedText;
+                    
+                    // Matikan kamera setelah berhasil
+                    html5QrCode.stop().then(() => {
+                        readerDiv.style.display = 'none';
+                    }).catch(err => {
+                        console.error("Gagal mematikan kamera", err);
+                    });
+                },
+                (errorMessage) => {
+                    // Proses mencari barcode (diabaikan agar tidak spam error di console)
+                }
+            ).catch((err) => {
+                alert("Kamera tidak dapat diakses! Pastikan Anda memberikan izin kamera pada browser.");
+                console.error(err);
+            });
+        }
+
+        // 2. Logika Tombol Copy
+        function copyNomor() {
+            const kolomHasil = document.getElementById("hasilScan");
+            
+            if (kolomHasil.value === "") {
+                alert("Kosong! Silakan scan nomor terlebih dahulu.");
+                return;
+            }
+
+            // Menyalin teks ke clipboard
+            kolomHasil.select();
+            kolomHasil.setSelectionRange(0, 99999); // Untuk kompatibilitas di HP
+            
+            navigator.clipboard.writeText(kolomHasil.value).then(() => {
+                alert("Nomor berhasil disalin: " + kolomHasil.value);
+            }).catch(err => {
+                alert("Gagal menyalin nomor!");
+            });
+        }
+
+        // 3. Logika Tombol Hapus
+        function hapusNomor() {
+            document.getElementById("hasilScan").value = "";
+            
+            // Jika kamera masih menyala, matikan juga kameranya
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('reader').style.display = 'none';
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>
