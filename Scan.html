@@ -10,7 +10,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
-        // Konfigurasi Firebase asli milik Anda
+        // Konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyBczEs357-LAAkF8TsSsm1ZC7b57aC2FkA",
             authDomain: "vacopy-1ced3.firebaseapp.com",
@@ -28,7 +28,7 @@
         const dataRef = ref(db, 'nomor_va');
         const inputField = document.getElementById('hasilInput');
 
-        // 1. Membaca data dari Firebase secara otomatis (Real-time)
+        // 1. Membaca data dari Firebase (Muncul di perangkat lain)
         onValue(dataRef, (snapshot) => {
             const data = snapshot.val();
             if (data && data.nomor) {
@@ -42,18 +42,30 @@
                 const text = await navigator.clipboard.readText();
                 const cleanText = text.replace(/\D/g, ''); 
                 
-                // Pastikan minimal 10 digit agar teks acak tidak masuk
                 if (cleanText.length >= 10) {
                     inputField.value = cleanText;
-                    // Simpan data ke Firebase agar tersinkronisasi
                     set(dataRef, { nomor: cleanText }); 
                 }
             } catch (err) { 
-                alert("Izinkan akses clipboard pada browser Anda!"); 
+                // Abaikan error tanpa alert jika sedang membaca dari device lain
+                console.log("Menunggu izin clipboard.");
             }
         };
 
-        // 3. Logika Hapus (menghapus dari UI dan Firebase)
+        // 3. Logika Tombol Copy (Untuk menyalin di perangkat penerima)
+        window.copyNomor = function() {
+            if (inputField.value === "") {
+                alert("Kosong! Tidak ada nomor untuk disalin.");
+                return;
+            }
+            navigator.clipboard.writeText(inputField.value).then(() => {
+                alert("Berhasil disalin: " + inputField.value);
+            }).catch(() => {
+                alert("Gagal menyalin nomor.");
+            });
+        };
+
+        // 4. Logika Tombol Hapus
         window.hapusInput = function() {
             inputField.value = "";
             set(dataRef, { nomor: "" });
@@ -96,17 +108,28 @@
             cursor: pointer;
         }
         
-        .btn-hapus { 
-            background-color: #f44336; 
+        /* Layout untuk mengembalikan tombol berdampingan */
+        .button-group { 
+            display: flex; 
+            gap: 15px; 
+            width: 100%;
+        }
+        button { 
+            flex: 1; 
             padding: 15px; 
             border: none; 
             border-radius: 8px; 
             color: white; 
             font-weight: bold; 
             cursor: pointer; 
-            width: 100%; 
             font-size: 16px;
+            transition: 0.2s;
         }
+        
+        .btn-copy { background-color: #2196F3; } /* Biru */
+        .btn-copy:hover { background-color: #0b7dda; }
+        
+        .btn-hapus { background-color: #f44336; } /* Merah */
         .btn-hapus:hover { background-color: #da190b; }
     </style>
 </head>
@@ -116,9 +139,14 @@
         <h2>Sync VA Data</h2>
         <p>Klik kolom di bawah untuk mengambil angka yang di-copy</p>
         
+        <!-- Kolom Input untuk Auto-Paste -->
         <input type="text" id="hasilInput" placeholder="Tekan di sini..." onclick="autoPaste()" readonly>
         
-        <button class="btn-hapus" onclick="hapusInput()">Hapus Data Sinkronisasi</button>
+        <!-- Tampilan tombol dikembalikan seperti semula -->
+        <div class="button-group">
+            <button class="btn-copy" onclick="copyNomor()">Copy</button>
+            <button class="btn-hapus" onclick="hapusInput()">Hapus</button>
+        </div>
     </div>
 
 </body>
