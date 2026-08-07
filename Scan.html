@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Scan Nomor</title>
+    <title>Aplikasi Scan Nomor Rekening</title>
     
-    <!-- Memanggil library scanner dari internet -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Memanggil library Tesseract.js (OCR) dari internet -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     
     <style>
         body {
@@ -27,28 +27,32 @@
             max-width: 400px;
             text-align: center;
         }
-        h2 {
-            margin-top: 0;
-            color: #333;
-        }
-        /* Area kamera */
-        #reader {
-            width: 100%;
-            margin-bottom: 15px;
-            display: none; /* Disembunyikan sampai tombol scan ditekan */
-        }
+        h2 { margin-top: 0; color: #333; }
+        
+        /* Input file disembunyikan, kita gunakan tombol custom */
+        #kameraInput { display: none; }
+        
         /* Kolom lampiran hasil scan */
         input[type="text"] {
             width: 90%;
             padding: 12px;
-            margin-bottom: 20px;
-            font-size: 16px;
-            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            font-size: 18px;
+            border: 2px solid #ccc;
             border-radius: 5px;
             text-align: center;
             font-weight: bold;
-            color: #333;
+            color: #ee4d2d; /* Warna oranye Shopee */
+            letter-spacing: 2px;
         }
+        #status {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+            min-height: 20px;
+        }
+        
+        /* Tombol */
         .button-group {
             display: flex;
             justify-content: center;
@@ -64,105 +68,133 @@
             color: white;
             font-weight: bold;
             transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .btn-scan { background-color: #4CAF50; } /* Hijau */
-        .btn-scan:hover { background-color: #45a049; }
-        
-        .btn-copy { background-color: #2196F3; } /* Biru */
+        .btn-scan { background-color: #ff5722; width: 100%; margin-bottom: 15px;} /* Oranye */
+        .btn-scan:hover { background-color: #e64a19; }
+        .btn-copy { background-color: #2196F3; flex: 1;} /* Biru */
         .btn-copy:hover { background-color: #0b7dda; }
-        
-        .btn-hapus { background-color: #f44336; } /* Merah */
+        .btn-hapus { background-color: #f44336; flex: 1;} /* Merah */
         .btn-hapus:hover { background-color: #da190b; }
+        
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff5722;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 0 auto 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Scanner Nomor</h2>
+        <h2>Scanner Nomor VA</h2>
         
-        <!-- Area tempat kamera akan muncul -->
-        <div id="reader"></div>
+        <!-- Input untuk membuka kamera (khusus HP) atau file explorer -->
+        <input type="file" id="kameraInput" accept="image/*" capture="environment" onchange="prosesGambar(event)">
+        
+        <!-- Tombol Scan Utama -->
+        <button class="btn-scan" onclick="bukaKamera()">📷 Scan Nomor dari Kamera</button>
+        
+        <div class="loader" id="loadingSpinner"></div>
+        <div id="status">Siap digunakan.</div>
         
         <!-- Lampiran hasil scan -->
-        <input type="text" id="hasilScan" placeholder="Hasil scan akan muncul di sini..." readonly>
+        <input type="text" id="hasilScan" placeholder="Nomor akan muncul di sini..." readonly>
         
         <!-- Tombol Aksi -->
         <div class="button-group">
-            <button class="btn-scan" onclick="mulaiScan()">Scan</button>
             <button class="btn-copy" onclick="copyNomor()">Copy</button>
             <button class="btn-hapus" onclick="hapusNomor()">Hapus</button>
         </div>
     </div>
 
     <script>
-        let html5QrCode;
+        const statusText = document.getElementById('status');
+        const loader = document.getElementById('loadingSpinner');
+        const hasilInput = document.getElementById('hasilScan');
 
-        // 1. Logika Tombol Scan
-        function mulaiScan() {
-            const readerDiv = document.getElementById('reader');
-            readerDiv.style.display = 'block'; // Tampilkan area kamera
-
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-
-            // Menggunakan kamera belakang (environment)
-            html5QrCode.start(
-                { facingMode: "environment" },
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 } // Kotak fokus scan
-                },
-                (decodedText, decodedResult) => {
-                    // Jika berhasil scan: masukkan ke kolom lampiran
-                    document.getElementById('hasilScan').value = decodedText;
-                    
-                    // Matikan kamera setelah berhasil
-                    html5QrCode.stop().then(() => {
-                        readerDiv.style.display = 'none';
-                    }).catch(err => {
-                        console.error("Gagal mematikan kamera", err);
-                    });
-                },
-                (errorMessage) => {
-                    // Proses mencari barcode (diabaikan agar tidak spam error di console)
-                }
-            ).catch((err) => {
-                alert("Kamera tidak dapat diakses! Pastikan Anda memberikan izin kamera pada browser.");
-                console.error(err);
-            });
+        // 1. Logika membuka kamera
+        function bukaKamera() {
+            document.getElementById('kameraInput').click();
         }
 
-        // 2. Logika Tombol Copy
+        // 2. Logika memproses gambar dengan AI (Tesseract)
+        async function prosesGambar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            statusText.innerText = "Membaca gambar... Mohon tunggu beberapa detik.";
+            loader.style.display = "block";
+            hasilInput.value = "";
+
+            try {
+                // Inisialisasi Tesseract (gunakan bahasa Inggris karena file datanya lebih ringan untuk angka)
+                const worker = await Tesseract.createWorker('eng');
+                
+                // PENTING: Batasi deteksi hanya untuk angka dan spasi agar sangat cepat & akurat
+                await worker.setParameters({
+                    tessedit_char_whitelist: '0123456789 ', 
+                });
+
+                // Proses gambar
+                const { data: { text } } = await worker.recognize(file);
+                await worker.terminate();
+
+                // Logika Filter (Regex)
+                // Mencari deretan angka yang panjangnya minimal 10 digit (untuk menyaring angka jam/nominal kecil)
+                const match = text.match(/(?:\d\s*){10,}/); 
+
+                if (match) {
+                    // Hapus spasi agar rapi dan mudah di-paste ke aplikasi bank
+                    const nomorBersih = match[0].replace(/\s/g, ''); 
+                    hasilInput.value = nomorBersih;
+                    statusText.innerText = "Berhasil! Nomor ditemukan.";
+                } else {
+                    statusText.innerText = "Nomor Virtual Account tidak terdeteksi.";
+                    alert("Gagal menemukan nomor panjang. Pastikan foto fokus dan jelas pada bagian nomor rekening.");
+                }
+            } catch (error) {
+                statusText.innerText = "Terjadi kesalahan sistem.";
+                console.error(error);
+            } finally {
+                loader.style.display = "none";
+                // Reset input file agar bisa scan gambar yang sama lagi jika perlu
+                event.target.value = ""; 
+            }
+        }
+
+        // 3. Logika Tombol Copy
         function copyNomor() {
-            const kolomHasil = document.getElementById("hasilScan");
-            
-            if (kolomHasil.value === "") {
-                alert("Kosong! Silakan scan nomor terlebih dahulu.");
+            if (hasilInput.value === "") {
+                alert("Kolom kosong! Silakan scan terlebih dahulu.");
                 return;
             }
-
-            // Menyalin teks ke clipboard
-            kolomHasil.select();
-            kolomHasil.setSelectionRange(0, 99999); // Untuk kompatibilitas di HP
+            hasilInput.select();
+            hasilInput.setSelectionRange(0, 99999); // Kompatibilitas HP
             
-            navigator.clipboard.writeText(kolomHasil.value).then(() => {
-                alert("Nomor berhasil disalin: " + kolomHasil.value);
-            }).catch(err => {
-                alert("Gagal menyalin nomor!");
+            navigator.clipboard.writeText(hasilInput.value).then(() => {
+                statusText.innerText = "Nomor berhasil di-copy!";
+            }).catch(() => {
+                alert("Gagal menyalin nomor.");
             });
         }
 
-        // 3. Logika Tombol Hapus
+        // 4. Logika Tombol Hapus
         function hapusNomor() {
-            document.getElementById("hasilScan").value = "";
-            
-            // Jika kamera masih menyala, matikan juga kameranya
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('reader').style.display = 'none';
-                });
-            }
+            hasilInput.value = "";
+            statusText.innerText = "Siap digunakan.";
         }
     </script>
 
