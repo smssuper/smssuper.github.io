@@ -3,221 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner 15 Digit (Versi Stabil)</title>
-    <!-- Library Tesseract.js untuk OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    
+    <title>Aplikasi Clipboard VA</title>
     <style>
         body { 
             font-family: Arial, sans-serif; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            padding: 20px; 
+            padding: 40px 20px; 
             background: #f4f4f9; 
+            margin: 0;
         }
         .container { 
             background: white; 
-            padding: 20px; 
-            border-radius: 10px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
             width: 100%; 
             max-width: 400px; 
             text-align: center; 
         }
+        h2 { color: #333; margin-bottom: 20px; }
         
-        /* Area Kamera */
-        #videoContainer { 
-            position: relative; 
-            width: 100%; 
-            height: 250px; 
-            background: #000; 
-            overflow: hidden; 
-            border-radius: 8px; 
-            margin-bottom: 15px; 
-            display: none; 
-        }
-        video { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-        }
-        
-        /* Input Teks */
+        /* Kolom tempat angka muncul */
         input { 
             width: 90%; 
-            padding: 12px; 
-            margin-bottom: 15px; 
-            font-size: 18px; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            font-size: 20px; 
             border: 2px solid #ddd; 
-            border-radius: 5px; 
+            border-radius: 8px; 
             text-align: center; 
             font-weight: bold; 
             color: #ee4d2d; 
-            letter-spacing: 1px;
+            background-color: #fffaf9;
         }
         
-        #status {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 15px;
-            min-height: 20px;
-        }
-
-        /* Tombol Utama */
-        .button-group { 
-            display: flex; 
-            gap: 10px; 
-        }
+        .button-group { display: flex; gap: 15px; }
         button { 
             flex: 1; 
-            padding: 12px; 
+            padding: 15px; 
             border: none; 
-            border-radius: 5px; 
+            border-radius: 8px; 
             color: white; 
             font-weight: bold; 
             cursor: pointer; 
-            transition: 0.2s;
+            font-size: 16px;
         }
-        .btn-scan { background-color: #ff5722; flex: 2;} /* Oranye, lebih lebar karena utama */
-        .btn-scan:hover { background-color: #e64a19; }
-        
-        .btn-copy { background-color: #2196F3; } /* Biru */
-        .btn-copy:hover { background-color: #0b7dda; }
-        
-        .btn-hapus { background-color: #f44336; } /* Merah */
-        .btn-hapus:hover { background-color: #da190b; }
-
-        /* Tombol Stop Kamera */
-        .btn-stop {
-            background-color: #9e9e9e;
-            width: 100%;
-            margin-top: 15px;
-            padding: 8px;
-            font-size: 14px;
-            display: none;
-        }
+        .btn-copy { background-color: #2196F3; }
+        .btn-hapus { background-color: #f44336; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Scanner VA (15 Digit)</h2>
-    
-    <div id="videoContainer">
-        <video id="video" autoplay playsinline></video>
-    </div>
+    <h2>Ambil Nomor VA</h2>
+    <p style="font-size: 12px; color: #666; margin-bottom: 20px;">
+        Klik kolom di bawah untuk mengambil angka yang di-copy
+    </p>
 
-    <div id="status">Kamera belum aktif. Tekan Scan.</div>
-
-    <input type="text" id="hasilScan" placeholder="Hasil 15 digit..." readonly>
+    <!-- Kolom Input -->
+    <input type="text" id="hasilInput" placeholder="Tekan di sini untuk ambil..." onclick="autoPaste()">
     
     <div class="button-group">
-        <button class="btn-scan" id="btnScan" onclick="aksiScan()">Scan</button>
-        <button class="btn-copy" onclick="copyNomor()">Copy</button>
-        <button class="btn-hapus" onclick="hapusNomor()">Hapus</button>
+        <button class="btn-copy" onclick="copyResult()">Copy</button>
+        <button class="btn-hapus" onclick="hapusInput()">Hapus</button>
     </div>
-
-    <button class="btn-stop" id="btnStop" onclick="matikanKamera()">Matikan Kamera</button>
 </div>
 
 <script>
-    let video = document.getElementById('video');
-    let videoContainer = document.getElementById('videoContainer');
-    let hasilScan = document.getElementById('hasilScan');
-    let statusText = document.getElementById('status');
-    let btnScan = document.getElementById('btnScan');
-    let btnStop = document.getElementById('btnStop');
-    
-    let worker;
-    let isKameraAktif = false;
+    const inputField = document.getElementById('hasilInput');
 
-    // Menyiapkan AI Pembaca Teks
-    async function siapkanOCR() {
-        if (!worker) {
-            statusText.innerText = "Menyiapkan sistem pembaca (loading)...";
-            worker = await Tesseract.createWorker('eng');
-            await worker.setParameters({ tessedit_char_whitelist: '0123456789 ' });
-            statusText.innerText = "Sistem siap.";
-        }
-    }
-
-    // Logika Tombol Scan (Buka Kamera ATAU Ambil Foto)
-    async function aksiScan() {
-        // 1. Jika kamera belum aktif -> Buka Kamera
-        if (!isKameraAktif) {
-            await siapkanOCR();
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                video.srcObject = stream;
-                videoContainer.style.display = 'block';
-                btnStop.style.display = 'block';
-                isKameraAktif = true;
-                
-                statusText.innerText = "Arahkan ke nomor, lalu tekan tombol jepret.";
-                btnScan.innerText = "📸 Ambil Foto & Scan";
-            } catch (err) {
-                statusText.innerText = "Gagal mengakses kamera. Pastikan izin kamera diberikan.";
-            }
-        } 
-        // 2. Jika kamera sudah aktif -> Ambil Foto (Snapshot) lalu baca
-        else {
-            statusText.innerText = "Memproses gambar... mohon tunggu.";
+    // 1. Logika Auto-Paste
+    // Fungsi ini akan berjalan saat input diklik
+    async function autoPaste() {
+        try {
+            // Meminta izin membaca clipboard
+            const text = await navigator.clipboard.readText();
             
-            // Mengambil gambar dari video yang sedang berjalan
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            // Filter: Hanya ambil angka, dan pastikan minimal 10 digit (untuk menghindari teks lain)
+            const cleanText = text.replace(/\D/g, ''); 
             
-            // Proses gambar dengan AI
-            const { data: { text } } = await worker.recognize(canvas);
-            
-            // Cari hanya angka yang berjumlah 15 digit (buang spasi)
-            const teksTanpaSpasi = text.replace(/\s/g, '');
-            const match = teksTanpaSpasi.match(/\d{15}/); 
-
-            if (match) {
-                hasilScan.value = match[0];
-                statusText.innerText = "Nomor berhasil ditemukan!";
-                matikanKamera(); // Otomatis matikan kamera setelah berhasil
+            if (cleanText.length >= 10) {
+                inputField.value = cleanText;
             } else {
-                statusText.innerText = "Nomor 15 digit tidak terbaca. Pastikan fokus dan coba jepret lagi!";
+                alert("Clipboard tidak berisi nomor yang valid (minimal 10 digit).");
             }
+        } catch (err) {
+            alert("Gagal membaca clipboard. Pastikan Anda sudah memberikan izin akses (Allow) pada browser.");
         }
     }
 
-    // Logika Mematikan Kamera
-    function matikanKamera() {
-        if (video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
-            video.srcObject = null;
-        }
-        videoContainer.style.display = 'none';
-        btnStop.style.display = 'none';
-        isKameraAktif = false;
-        btnScan.innerText = "Scan"; // Kembalikan teks tombol
-        if(hasilScan.value === "") statusText.innerText = "Kamera dimatikan.";
+    // 2. Logika Copy Hasil
+    function copyResult() {
+        if (inputField.value === "") return;
+        inputField.select();
+        navigator.clipboard.writeText(inputField.value);
+        alert("Berhasil disalin!");
     }
 
-    // Logika Copy
-    function copyNomor() {
-        if (hasilScan.value === "") {
-            alert("Kosong! Belum ada nomor yang di-scan.");
-            return;
-        }
-        navigator.clipboard.writeText(hasilScan.value).then(() => {
-            alert("Berhasil disalin: " + hasilScan.value);
-        }).catch(() => {
-            alert("Gagal menyalin.");
-        });
+    // 3. Logika Hapus (Hanya hapus hasil di kolom)
+    function hapusInput() {
+        inputField.value = "";
     }
 
-    // Logika Hapus (Hanya Hapus Teks Saja)
-    function hapusNomor() {
-        hasilScan.value = "";
-        statusText.innerText = "Teks dihapus.";
-    }
+    // Opsi tambahan: Auto-paste saat halaman pertama kali dimuat
+    window.onload = autoPaste;
 </script>
 
 </body>
