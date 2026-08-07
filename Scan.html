@@ -3,7 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Clipboard VA</title>
+    <title>Auto-Sync VA</title>
+    
+    <script type="module">
+        // Import Firebase App dan Realtime Database
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
+        // Konfigurasi Firebase asli milik Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyBczEs357-LAAkF8TsSsm1ZC7b57aC2FkA",
+            authDomain: "vacopy-1ced3.firebaseapp.com",
+            databaseURL: "https://vacopy-1ced3-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "vacopy-1ced3",
+            storageBucket: "vacopy-1ced3.firebasestorage.app",
+            messagingSenderId: "876438682543",
+            appId: "1:876438682543:web:cef32ca1b989cae2410d5a",
+            measurementId: "G-N73YZJLG5M"
+        };
+
+        // Inisialisasi Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const dataRef = ref(db, 'nomor_va');
+        const inputField = document.getElementById('hasilInput');
+
+        // 1. Membaca data dari Firebase secara otomatis (Real-time)
+        onValue(dataRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.nomor) {
+                inputField.value = data.nomor;
+            }
+        });
+
+        // 2. Logika Auto-Paste & Simpan ke Firebase
+        window.autoPaste = async function() {
+            try {
+                const text = await navigator.clipboard.readText();
+                const cleanText = text.replace(/\D/g, ''); 
+                
+                // Pastikan minimal 10 digit agar teks acak tidak masuk
+                if (cleanText.length >= 10) {
+                    inputField.value = cleanText;
+                    // Simpan data ke Firebase agar tersinkronisasi
+                    set(dataRef, { nomor: cleanText }); 
+                }
+            } catch (err) { 
+                alert("Izinkan akses clipboard pada browser Anda!"); 
+            }
+        };
+
+        // 3. Logika Hapus (menghapus dari UI dan Firebase)
+        window.hapusInput = function() {
+            inputField.value = "";
+            set(dataRef, { nomor: "" });
+        };
+    </script>
+    
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -23,9 +79,9 @@
             max-width: 400px; 
             text-align: center; 
         }
-        h2 { color: #333; margin-bottom: 20px; }
+        h2 { color: #333; margin-bottom: 5px; }
+        p { font-size: 13px; color: #666; margin-bottom: 25px; }
         
-        /* Kolom tempat angka muncul */
         input { 
             width: 90%; 
             padding: 15px; 
@@ -37,79 +93,33 @@
             font-weight: bold; 
             color: #ee4d2d; 
             background-color: #fffaf9;
+            cursor: pointer;
         }
         
-        .button-group { display: flex; gap: 15px; }
-        button { 
-            flex: 1; 
+        .btn-hapus { 
+            background-color: #f44336; 
             padding: 15px; 
             border: none; 
             border-radius: 8px; 
             color: white; 
             font-weight: bold; 
             cursor: pointer; 
+            width: 100%; 
             font-size: 16px;
         }
-        .btn-copy { background-color: #2196F3; }
-        .btn-hapus { background-color: #f44336; }
+        .btn-hapus:hover { background-color: #da190b; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Ambil Nomor VA</h2>
-    <p style="font-size: 12px; color: #666; margin-bottom: 20px;">
-        Klik kolom di bawah untuk mengambil angka yang di-copy
-    </p>
-
-    <!-- Kolom Input -->
-    <input type="text" id="hasilInput" placeholder="Tekan di sini untuk ambil..." onclick="autoPaste()">
-    
-    <div class="button-group">
-        <button class="btn-copy" onclick="copyResult()">Copy</button>
-        <button class="btn-hapus" onclick="hapusInput()">Hapus</button>
+    <div class="container">
+        <h2>Sync VA Data</h2>
+        <p>Klik kolom di bawah untuk mengambil angka yang di-copy</p>
+        
+        <input type="text" id="hasilInput" placeholder="Tekan di sini..." onclick="autoPaste()" readonly>
+        
+        <button class="btn-hapus" onclick="hapusInput()">Hapus Data Sinkronisasi</button>
     </div>
-</div>
-
-<script>
-    const inputField = document.getElementById('hasilInput');
-
-    // 1. Logika Auto-Paste
-    // Fungsi ini akan berjalan saat input diklik
-    async function autoPaste() {
-        try {
-            // Meminta izin membaca clipboard
-            const text = await navigator.clipboard.readText();
-            
-            // Filter: Hanya ambil angka, dan pastikan minimal 10 digit (untuk menghindari teks lain)
-            const cleanText = text.replace(/\D/g, ''); 
-            
-            if (cleanText.length >= 10) {
-                inputField.value = cleanText;
-            } else {
-                alert("Clipboard tidak berisi nomor yang valid (minimal 10 digit).");
-            }
-        } catch (err) {
-            alert("Gagal membaca clipboard. Pastikan Anda sudah memberikan izin akses (Allow) pada browser.");
-        }
-    }
-
-    // 2. Logika Copy Hasil
-    function copyResult() {
-        if (inputField.value === "") return;
-        inputField.select();
-        navigator.clipboard.writeText(inputField.value);
-        alert("Berhasil disalin!");
-    }
-
-    // 3. Logika Hapus (Hanya hapus hasil di kolom)
-    function hapusInput() {
-        inputField.value = "";
-    }
-
-    // Opsi tambahan: Auto-paste saat halaman pertama kali dimuat
-    window.onload = autoPaste;
-</script>
 
 </body>
 </html>
