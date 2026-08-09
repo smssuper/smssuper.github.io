@@ -27,13 +27,14 @@
         .menu-card:hover { background: #f0f3f6; }
         .delete-icon-btn { width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; color: var(--danger); cursor: pointer; }
 
-        /* STICKY TOP AREA */
+        /* STICKY BOTTOM AREA (Dipindah ke bawah) */
         .sticky-area {
-            position: sticky; top: 60px; z-index: 900; background-color: var(--bg-body); 
-            padding: 15px 15px 10px 15px; margin: -15px -15px 0 -15px;
+            position: fixed; bottom: 0; left: 0; width: 100%; z-index: 900; background-color: var(--bg-body); 
+            padding: 10px 15px 15px 15px; box-sizing: border-box; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
         }
 
         .main-card { background: var(--white); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 10px; }
+        .sticky-area .main-card { margin-bottom: 0; }
         
         /* GMAIL NAV CONTAINER */
         .email-nav-container {
@@ -119,10 +120,11 @@
         .btn-replace { background: #fef3c7; color: #c2410c; }
 
         /* SLIDER KONTEN */
-        .view-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; gap: 15px; padding-bottom: 80px; scrollbar-width: none; margin-top: 10px; }
+        /* Padding-bottom ditambah (180px) agar bisa scroll sampai paling bawah melewati menu yang dipindah ke bawah */
+        .view-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; gap: 15px; padding-bottom: 180px; scrollbar-width: none; margin-top: 15px; padding-top: 10px; }
         .view-slider::-webkit-scrollbar { display: none; }
         .slide { min-width: 100%; scroll-snap-align: center; scroll-snap-stop: always; box-sizing: border-box; }
-        .slide-content { background: white; border-radius: 24px; padding: 20px; min-height: 400px; box-shadow: var(--shadow); }
+        .slide-content { background: white; border-radius: 24px; padding: 20px; min-height: 400px; box-shadow: var(--shadow); margin: 0 15px; }
 
         /* LINK CARD */
         .lm-card { display: flex; align-items: center; border-radius: 16px; padding: 12px; margin-bottom: 12px; color: white !important; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
@@ -188,33 +190,8 @@
     </div>
 
     <div class="container">
-        <div class="sticky-area">
-            <div class="main-card">
-                <div style="display:flex; justify-content: space-between; margin-bottom: 8px; padding: 0 5px;">
-                    <span style="font-size: 10px; color: var(--gray); font-weight: 800;" id="linkCounter">Link: 0</span>
-                    <span style="font-size: 10px; color: var(--gray); font-weight: 800;" id="emailCounter">Gmail: 0</span>
-                </div>
-                
-                <div class="email-nav-container">
-                    <i class="fas fa-chevron-left nav-arrow" id="btnPrevEmail" onclick="prevEmail()" title="Kembali ke Email Sebelumnya"></i>
-                    <input type="text" class="email-display-nav" value="Gmail Kosong..." id="emailField" readonly>
-                    <i class="fas fa-chevron-right nav-arrow" id="btnNextEmail" onclick="nextEmail()" title="Lewati Email Ini"></i>
-                </div>
-                
-                <div class="icon-grid">
-                    <button class="icon-btn ic-orange" onclick="copyEmail()"><i class="far fa-envelope"></i></button>
-                    <button class="icon-btn ic-yellow" onclick="copyPassword()"><i class="fas fa-key"></i></button>
-                    <button class="icon-btn ic-blue" onclick="acakNama()"><i class="far fa-user"></i></button>
-                    <button class="icon-btn ic-green" onclick="acakNomorLokal()"><i class="fas fa-phone-alt"></i></button>
-                    <button class="icon-btn ic-teal" onclick="acakAlamat()"><i class="fas fa-map-marker-alt"></i></button>
-                    <button class="icon-btn ic-indigo" onclick="acakLink()"><i class="fas fa-random"></i></button>
-                    <button class="icon-btn ic-purple" onclick="scrollToSlide(0)"><i class="fas fa-shopping-cart"></i></button>
-                    <button class="icon-btn ic-dark" onclick="scrollToSlide(1)"><i class="fas fa-database"></i></button>
-                    <button class="icon-btn ic-gray" onclick="scrollToSlide(2)"><i class="fas fa-external-link-alt"></i></button>
-                </div>
-            </div>
-        </div>
-
+        
+        <!-- SLIDER UTAMA SEKARANG BERADA DI ATAS -->
         <div class="view-slider" id="mainSlider">
             <div class="slide" id="slide-pesan">
                 <div class="slide-content">
@@ -299,6 +276,34 @@
                 <div class="slide-content" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; min-height: 500px; border-radius: 24px;">
                     <iframe src="https://smssuper.github.io/not.html" style="width: 100%; height: 100%; flex-grow: 1; border: none;"></iframe>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STICKY AREA SEKARANG DIPINDAH KE BAWAH (FIXED BOTTOM) -->
+    <div class="sticky-area">
+        <div class="main-card">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 8px; padding: 0 5px;">
+                <span style="font-size: 10px; color: var(--gray); font-weight: 800;" id="linkCounter">Link: 0</span>
+                <span style="font-size: 10px; color: var(--gray); font-weight: 800;" id="emailCounter">Gmail: 0</span>
+            </div>
+            
+            <div class="email-nav-container">
+                <i class="fas fa-chevron-left nav-arrow" id="btnPrevEmail" onclick="prevEmail()" title="Kembali ke Email Sebelumnya"></i>
+                <input type="text" class="email-display-nav" value="Gmail Kosong..." id="emailField" readonly>
+                <i class="fas fa-chevron-right nav-arrow" id="btnNextEmail" onclick="nextEmail()" title="Lewati Email Ini"></i>
+            </div>
+            
+            <div class="icon-grid">
+                <button class="icon-btn ic-orange" onclick="copyEmail()"><i class="far fa-envelope"></i></button>
+                <button class="icon-btn ic-yellow" onclick="copyPassword()"><i class="fas fa-key"></i></button>
+                <button class="icon-btn ic-blue" onclick="acakNama()"><i class="far fa-user"></i></button>
+                <button class="icon-btn ic-green" onclick="acakNomorLokal()"><i class="fas fa-phone-alt"></i></button>
+                <button class="icon-btn ic-teal" onclick="acakAlamat()"><i class="fas fa-map-marker-alt"></i></button>
+                <button class="icon-btn ic-indigo" onclick="acakLink()"><i class="fas fa-random"></i></button>
+                <button class="icon-btn ic-purple" onclick="scrollToSlide(0)"><i class="fas fa-shopping-cart"></i></button>
+                <button class="icon-btn ic-dark" onclick="scrollToSlide(1)"><i class="fas fa-database"></i></button>
+                <button class="icon-btn ic-gray" onclick="scrollToSlide(2)"><i class="fas fa-external-link-alt"></i></button>
             </div>
         </div>
     </div>
