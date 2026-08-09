@@ -27,7 +27,7 @@
         .menu-card:hover { background: #f0f3f6; }
         .delete-icon-btn { width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; color: var(--danger); cursor: pointer; }
 
-        /* STICKY BOTTOM AREA (Dipindah ke bawah) */
+        /* STICKY BOTTOM AREA */
         .sticky-area {
             position: fixed; bottom: 0; left: 0; width: 100%; z-index: 900; background-color: var(--bg-body); 
             padding: 10px 15px 15px 15px; box-sizing: border-box; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
@@ -120,7 +120,6 @@
         .btn-replace { background: #fef3c7; color: #c2410c; }
 
         /* SLIDER KONTEN */
-        /* Padding-bottom ditambah (180px) agar bisa scroll sampai paling bawah melewati menu yang dipindah ke bawah */
         .view-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; gap: 15px; padding-bottom: 180px; scrollbar-width: none; margin-top: 15px; padding-top: 10px; }
         .view-slider::-webkit-scrollbar { display: none; }
         .slide { min-width: 100%; scroll-snap-align: center; scroll-snap-stop: always; box-sizing: border-box; }
@@ -191,24 +190,12 @@
 
     <div class="container">
         
-        <!-- SLIDER UTAMA SEKARANG BERADA DI ATAS -->
         <div class="view-slider" id="mainSlider">
             <div class="slide" id="slide-pesan">
                 <div class="slide-content">
-                    <h3 style="margin-top:0; font-size:16px; margin-bottom: 20px;">PESAN NOMOR</h3>
                     
                     <div style="background:#f8fafc; padding:20px; border-radius:24px; border:1px solid #edf2f7; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                         
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #e2e8f0;">
-                            <div>
-                                <div style="font-weight:900; font-size:16px; color: var(--dark);">Shopee Indonesia</div>
-                                <div style="font-size:11px; color:var(--gray); margin-top:2px;">Layanan Otomatis</div>
-                            </div>
-                            <div style="color:var(--success); font-weight:900; font-size: 14px; background: #e8f5e9; padding: 6px 12px; border-radius: 10px;">
-                                <i class="fas fa-bolt"></i> Termurah
-                            </div>
-                        </div>
-
                         <div style="margin-bottom: 20px;">
                             <label style="font-size:11px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:8px; display:block;">Pilih Provider / Operator</label>
                             <div style="position: relative;">
@@ -280,7 +267,7 @@
         </div>
     </div>
 
-    <!-- STICKY AREA SEKARANG DIPINDAH KE BAWAH (FIXED BOTTOM) -->
+    <!-- STICKY AREA -->
     <div class="sticky-area">
         <div class="main-card">
             <div style="display:flex; justify-content: space-between; margin-bottom: 8px; padding: 0 5px;">
@@ -350,7 +337,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
-        // 1. TAMBAHKAN IMPORT REALTIME DATABASE (RTDB)
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
 
         // FIREBASE MILIK ANDA
@@ -367,10 +353,8 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        // 2. INISIALISASI RTDB
         const rtdb = getDatabase(app);
 
-        // Hapus pemanggilan localStorage, ganti dengan state memori sementara
         let emailQueue = [];
         let emailHistory = []; 
         let userPassword = "Belum diatur";
@@ -384,7 +368,6 @@
         let globalPollTimer = null;
         let globalCountdownTimer = null;
 
-        // 3. LISTEN DATA DARI RTDB (GMAIL & PASSWORD) AGAR SINKRON SEMUA DEVICE
         const emailQueueRef = ref(rtdb, 'gmail/queue');
         const emailHistoryRef = ref(rtdb, 'gmail/history');
         const passwordRef = ref(rtdb, 'settings/password');
@@ -407,7 +390,6 @@
             }
         });
 
-        // 4. FUNGSI UNTUK MENYIMPAN KE RTDB SETIAP ADA PERUBAHAN GMAIL
         function saveGmailToDB() {
             set(ref(rtdb, 'gmail/queue'), emailQueue);
             set(ref(rtdb, 'gmail/history'), emailHistory);
@@ -518,7 +500,6 @@
             if(slides[index]) slider.scrollTo({ left: slides[index].offsetLeft - slider.offsetLeft, behavior: 'smooth' });
         };
         
-        // 5. UPDATE FUNGSI TOMBOL UNTUK PUSH DATA KE RTDB
         window.prevEmail = () => { if (emailHistory.length === 0) return; emailQueue.unshift(emailHistory.pop()); saveGmailToDB(); };
         window.nextEmail = () => { if (emailQueue.length <= 1) return; emailHistory.push(emailQueue.shift()); saveGmailToDB(); };
         window.copyEmail = () => { if (emailQueue.length === 0) return; navigator.clipboard.writeText(emailQueue[0]); emailHistory.push(emailQueue.shift()); saveGmailToDB(); animateBtn('.ic-orange'); };
@@ -930,7 +911,6 @@
         window.openPassModal = () => { document.getElementById('passModal').style.display='flex'; toggleMenu(); };
         window.closePassModal = () => { document.getElementById('passModal').style.display='none'; };
         
-        // 6. SIMPAN PASSWORD KE RTDB
         window.savePassword = () => { 
             set(ref(rtdb, 'settings/password'), document.getElementById('newPassInput').value); 
             closePassModal(); 
@@ -941,7 +921,6 @@
         
         window.triggerImport = () => document.getElementById('fileInput').click();
         
-        // 7. SIMPAN DATA IMPORT FILE GMAIL KE RTDB
         window.handleFile = (input) => {
             const reader = new FileReader();
             reader.onload = (e) => { 
@@ -972,7 +951,6 @@
         
         window.handleLogout = () => { signOut(auth); localStorage.clear(); location.reload(); };
         
-        // 8. HAPUS DATABASE & STORAGE DARI RTDB DAN LOKAL
         window.hapusTotalStorage = () => { 
             localStorage.clear(); 
             remove(ref(rtdb, 'gmail'));
