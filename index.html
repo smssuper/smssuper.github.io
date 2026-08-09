@@ -75,40 +75,42 @@
 
         /* SCROLLABLE ORDER WRAPPER */
         #ordersWrapper {
-            display: flex; flex-direction: column; gap: 12px; 
-            max-height: 400px; overflow-y: auto; scrollbar-width: none;
-            padding: 2px 2px 10px 2px;
+            display: flex; flex-direction: column; gap: 8px; /* Diperkecil dari 12px */
+            max-height: 250px; /* Diperkecil agar pop-up tidak terlalu panjang */
+            overflow-y: auto; scrollbar-width: none;
+            padding: 2px 2px 5px 2px;
         }
         #ordersWrapper::-webkit-scrollbar { display: none; }
 
-        /* KARTU ANTRIAN */
+        /* KARTU ANTRIAN (DIPERKECIL) */
         .card-active { 
-            background: #ffffff; border: 1px solid #edf2f7; border-radius: 16px; 
-            padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
-            display: flex; flex-direction: column; gap: 10px;
+            background: #ffffff; border: 1px solid #edf2f7; border-radius: 12px; /* 16->12 */
+            padding: 12px; /* 16->12 */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
+            display: flex; flex-direction: column; gap: 6px; /* 10->6 */
         }
         .card-active-header { display: flex; justify-content: space-between; align-items: center; }
-        .service-name { font-size: 14px; font-weight: 800; color: var(--dark); }
-        .timer-badge { background: #f1f5f9; color: var(--gray); font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 8px; }
-        .number-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
-        .number-txt { font-size: 18px; font-weight: 700; color: var(--dark); letter-spacing: 1px; }
-        .copy-icon-btn { color: #9ab4c6; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .service-name { font-size: 12px; font-weight: 800; color: var(--dark); } /* 14->12 */
+        .timer-badge { background: #f1f5f9; color: var(--gray); font-size: 10px; font-weight: 700; padding: 4px 6px; border-radius: 6px; } /* 11->10 */
+        .number-row { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+        .number-txt { font-size: 15px; font-weight: 700; color: var(--dark); letter-spacing: 1px; } /* 18->15 */
+        .copy-icon-btn { color: #9ab4c6; cursor: pointer; font-size: 14px; transition: 0.2s; }
         .copy-icon-btn:active { transform: scale(0.8); }
         
-        /* AREA OTP KECIL */
+        /* AREA OTP KECIL (DIPERKECIL) */
         .otp-display-small { 
-            font-size: 20px; font-weight: 900; color: var(--success); 
-            letter-spacing: 4px; border: 1px dashed var(--success); 
-            padding: 8px; border-radius: 10px; background: #f0fff4; 
-            cursor: pointer; transition: 0.2s; text-align: center; margin: 5px 0;
+            font-size: 16px; font-weight: 900; color: var(--success); /* 20->16 */
+            letter-spacing: 3px; border: 1px dashed var(--success); 
+            padding: 6px; border-radius: 8px; background: #f0fff4; 
+            cursor: pointer; transition: 0.2s; text-align: center; margin: 3px 0;
         }
         .otp-display-small:active { transform: scale(0.95); }
         
-        /* TOMBOL MENYAMPING KECIL */
-        .btn-action-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 5px; }
+        /* TOMBOL MENYAMPING KECIL (DIPERKECIL) */
+        .btn-action-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 3px; }
         .btn-order { 
-            border: none; padding: 10px 4px; border-radius: 8px; 
-            background: #f8fafc; font-size: 10px; font-weight: 800; 
+            border: none; padding: 8px 2px; border-radius: 6px; /* 10->8 */
+            background: #f8fafc; font-size: 9px; font-weight: 800; /* 10->9 */
             color: var(--dark); cursor: pointer; transition: 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 4px;
         }
@@ -123,7 +125,7 @@
         .view-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; gap: 15px; padding-bottom: 180px; scrollbar-width: none; margin-top: 15px; padding-top: 10px; }
         .view-slider::-webkit-scrollbar { display: none; }
         .slide { min-width: 100%; scroll-snap-align: center; scroll-snap-stop: always; box-sizing: border-box; }
-        .slide-content { background: white; border-radius: 24px; padding: 20px; min-height: 400px; box-shadow: var(--shadow); margin: 0 15px; }
+        .slide-content { background: white; border-radius: 24px; padding: 15px; min-height: 400px; box-shadow: var(--shadow); margin: 0 15px; }
 
         /* LINK CARD */
         .lm-card { display: flex; align-items: center; border-radius: 16px; padding: 12px; margin-bottom: 12px; color: white !important; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
@@ -149,7 +151,7 @@
         @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
         /* TABEL SUKSES */
-        .success-table-container { margin-top: 25px; display: none; }
+        .success-table-container { margin-top: 15px; }
         .success-table { width: 100%; border-collapse: collapse; text-align: left; background: white; border-radius: 16px; overflow: hidden; border: 1px solid #edf2f7; }
         .success-table th { background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: var(--gray); font-weight: 800; border-bottom: 1px solid #edf2f7; }
         .success-table td { padding: 12px; font-size: 13px; font-weight: 700; color: var(--dark); border-bottom: 1px solid #edf2f7; }
@@ -194,12 +196,13 @@
             <div class="slide" id="slide-pesan">
                 <div class="slide-content">
                     
-                    <div style="background:#f8fafc; padding:20px; border-radius:24px; border:1px solid #edf2f7; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                    <!-- BOX PESANAN: DIBUAT STICKY & DIPERKECIL -->
+                    <div style="position: sticky; top: 60px; z-index: 100; background:#f8fafc; padding:15px; border-radius:20px; border:1px solid #edf2f7; box-shadow: 0 8px 20px rgba(0,0,0,0.06); margin-bottom: 10px;">
                         
-                        <div style="margin-bottom: 20px;">
-                            <label style="font-size:11px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:8px; display:block;">Pilih Provider / Operator</label>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Provider / Operator</label>
                             <div style="position: relative;">
-                                <select id="pilihProvider" style="width:100%; padding:14px 16px; border-radius:14px; border:1px solid #e2e8f0; background:white; font-size:14px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer;">
+                                <select id="pilihProvider" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:13px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer;">
                                     <option value="any">Otomatis (Paling Murah)</option>
                                     <option value="telkomsel">Telkomsel</option>
                                     <option value="xl">XL / Axis</option>
@@ -207,41 +210,42 @@
                                     <option value="three">Tri (3)</option>
                                     <option value="smartfren">Smartfren</option>
                                 </select>
-                                <i class="fas fa-caret-down" style="position: absolute; right: 15px; top: 18px; color: var(--gray); pointer-events: none;"></i>
+                                <i class="fas fa-caret-down" style="position: absolute; right: 14px; top: 12px; color: var(--gray); pointer-events: none;"></i>
                             </div>
                         </div>
 
                         <span id="orderIdText" style="display:none;">Shopee</span>
 
-                        <button style="width:100%; background:var(--secondary); color:white; border:none; padding:16px; border-radius:14px; font-weight:800; font-size:14px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s; margin-bottom: 25px;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
+                        <button style="width:100%; background:var(--secondary); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s; margin-bottom: 12px;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
                             <i class="fas fa-shopping-cart" style="margin-right:8px;"></i> PESAN SEKARANG
                         </button>
                         
                         <!-- KONTINER ANTRIAN ORDER -->
-                        <div id="activeOrdersContainer" style="display:none; margin-bottom: 20px;">
-                            <h4 style="font-size: 15px; font-weight: 800; color: var(--dark); margin-top: 0; margin-bottom: 12px;">Pesanan Aktif</h4>
+                        <div id="activeOrdersContainer" style="display:none;">
+                            <h4 style="font-size: 12px; font-weight: 800; color: var(--dark); margin-top: 0; margin-bottom: 8px;">Pesanan Aktif</h4>
                             <div id="ordersWrapper"></div>
                         </div>
-                        
-                        <div id="successTableContainer" class="success-table-container">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                <h4 style="font-size: 13px; color: var(--dark); margin:0;">Riwayat Sukses</h4>
-                                <span style="font-size:10px; color:var(--danger); font-weight:800; cursor:pointer;" onclick="clearSuccessHistory()"><i class="fas fa-trash-alt"></i> HAPUS</span>
-                            </div>
-                            <table class="success-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 15%;">No</th>
-                                        <th>Nomor HP</th>
-                                        <th style="width: 25%;">Ket</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="successTableBody">
-                                    </tbody>
-                            </table>
-                        </div>
-
                     </div>
+
+                    <!-- RIWAYAT SUKSES (AKAN TERSCROLL DI BAWAH KOTAK STICKY) -->
+                    <div id="successTableContainer" class="success-table-container" style="display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding: 0 5px;">
+                            <h4 style="font-size: 13px; color: var(--dark); margin:0;">Riwayat Sukses</h4>
+                            <span style="font-size:10px; color:var(--danger); font-weight:800; cursor:pointer;" onclick="clearSuccessHistory()"><i class="fas fa-trash-alt"></i> HAPUS</span>
+                        </div>
+                        <table class="success-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">No</th>
+                                    <th>Nomor HP</th>
+                                    <th style="width: 25%;">Ket</th>
+                                </tr>
+                            </thead>
+                            <tbody id="successTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+
                 </div>
             </div>
 
@@ -267,7 +271,7 @@
         </div>
     </div>
 
-    <!-- STICKY AREA -->
+    <!-- STICKY AREA BAWAH -->
     <div class="sticky-area">
         <div class="main-card">
             <div style="display:flex; justify-content: space-between; margin-bottom: 8px; padding: 0 5px;">
@@ -339,7 +343,6 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
 
-        // FIREBASE MILIK ANDA
         const firebaseConfig = {
             apiKey: "AIzaSyC-1_1_Mb28fyzxA3EmxaAYNZOxx1zm5HQ",
             authDomain: "smssuper-85754.firebaseapp.com",
@@ -610,9 +613,9 @@
                         <i class="far fa-copy copy-icon-btn" id="copyIcon-${id}" onclick="salinNomorText('${id}', '${order.phone}')"></i>
                     </div>
                     
-                    <div style="display:${displayLoading ? 'flex' : 'none'}; align-items:center; gap:8px; margin-top:5px; margin-bottom:5px;" id="loading-${id}">
-                        <i class="fas fa-circle" style="color:var(--success); font-size:8px;"></i>
-                        <span style="font-size: 11px; color: var(--gray); font-weight:600;">Menunggu OTP...</span>
+                    <div style="display:${displayLoading ? 'flex' : 'none'}; align-items:center; gap:6px; margin-top:2px; margin-bottom:2px;" id="loading-${id}">
+                        <i class="fas fa-circle" style="color:var(--success); font-size:6px;"></i>
+                        <span style="font-size: 10px; color: var(--gray); font-weight:600;">Menunggu OTP...</span>
                     </div>
 
                     <div id="otpDisplay-${id}" class="otp-display-small" onclick="salinOtpText('${id}', '${order.otp}')" style="display:${displayOtp ? 'block' : 'none'};">
