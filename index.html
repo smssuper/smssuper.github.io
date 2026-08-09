@@ -42,7 +42,7 @@
         }
 
         .main-card { background: var(--white); border-radius: 24px; padding: 15px; box-shadow: var(--shadow); margin-bottom: 0; }
-        .sticky-area .main-card { padding: 10px; margin-bottom: 0; border-radius: 20px; } /* Padding & Radius diperkecil */
+        .sticky-area .main-card { padding: 10px; margin-bottom: 0; border-radius: 20px; } 
         
         /* GMAIL NAV CONTAINER (DIPERKECIL) */
         .email-nav-container {
@@ -81,11 +81,11 @@
         .ic-dark { background: linear-gradient(135deg, #576574, #2c3e50); }
         .ic-gray { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
 
-        /* KONTAINER UTAMA TERKUNCI (DIANTARA HEADER & FOOTER) */
+        /* KONTAINER UTAMA TERKUNCI */
         .container {
             position: fixed;
-            top: 60px; /* Bawah Header */
-            bottom: 120px; /* Diperkecil karena nav bawah mengecil */
+            top: 60px; 
+            bottom: 120px; 
             left: 0; right: 0;
             overflow: hidden;
         }
@@ -113,65 +113,63 @@
             flex-direction: column;
         }
 
-        /* KHUSUS KONTEN PESANAN (MENGUNCI KOTAK ATAS, HANYA TABEL YANG SCROLL) */
+        /* KHUSUS KONTEN PESANAN */
         #slide-pesan .slide-content { overflow: hidden; } 
         
         #box-pesan-atas { 
-            flex-shrink: 0; /* MENGUNCI KOTAK AGAR TIDAK SCROLL */
+            flex-shrink: 0; 
             background:#f8fafc; padding:12px; border-radius:16px; 
             border:1px solid #edf2f7; box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
         }
         
         #successTableContainer { 
-            flex: 1; /* MENGISI RUANG TERSISA */
-            overflow-y: auto; /* TABEL SAJA YANG BISA DI-SCROLL */
+            flex: 1; 
+            overflow-y: auto; 
             margin-top: 10px; 
             padding-bottom: 10px; 
             padding-right: 5px;
         }
 
-        /* KHUSUS SLIDE DATABASE LINK (Bisa di-scroll isinya) */
         #slide-links .slide-content { overflow-y: auto; padding: 15px; } 
-        
-        /* KHUSUS SLIDE IFRAME */
         #slide-not .slide-content { padding: 0; overflow: hidden; }
 
-        /* SCROLLABLE ORDER WRAPPER (Dalam kotak atas) */
         #ordersWrapper {
             display: flex; flex-direction: column; gap: 8px; 
-            max-height: 200px; /* Batasan antrian agar tabel tidak hilang */
+            max-height: 200px; 
             overflow-y: auto; scrollbar-width: none;
             padding: 2px 2px 5px 2px;
         }
         #ordersWrapper::-webkit-scrollbar { display: none; }
 
-        /* KARTU ANTRIAN DENGAN POSISI TEKS DI TENGAH */
+        /* KARTU ANTRIAN */
         .card-active { 
             background: #ffffff; border: 1px solid #edf2f7; border-radius: 12px; 
             padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
             display: flex; flex-direction: column; gap: 6px; 
-            align-items: center; /* Membuat konten berada di tengah */
-            text-align: center; /* Memastikan teks berada di tengah */
+            align-items: center; 
+            text-align: center; 
         }
+        
+        /* HEADER KARTU DIKEMBALIKAN KE KIRI DAN KANAN (SPACE-BETWEEN) */
         .card-active-header { 
-            display: flex; justify-content: center; align-items: center; 
-            width: 100%; position: relative; 
+            display: flex; justify-content: space-between; align-items: center; 
+            width: 100%; 
         }
-        .service-name { font-size: 12px; font-weight: 800; color: var(--dark); } 
+        .service-name { font-size: 12px; font-weight: 800; color: var(--dark); text-align: left; } 
         .timer-badge { 
             background: #f1f5f9; color: var(--gray); font-size: 10px; 
             font-weight: 700; padding: 4px 6px; border-radius: 6px; 
-            position: absolute; right: 0; /* Menahan timer tetap di kanan */
         } 
+        
+        /* SISA KONTEN TETAP DI TENGAH */
         .number-row { 
-            display: flex; align-items: center; justify-content: center; /* Menengahkan nomor */
+            display: flex; align-items: center; justify-content: center; 
             gap: 10px; margin-bottom: 2px; width: 100%; 
         }
         .number-txt { font-size: 15px; font-weight: 700; color: var(--dark); letter-spacing: 1px; } 
         .copy-icon-btn { color: #9ab4c6; cursor: pointer; font-size: 14px; transition: 0.2s; }
         .copy-icon-btn:active { transform: scale(0.8); }
         
-        /* AREA OTP KECIL */
         .otp-display-small { 
             font-size: 16px; font-weight: 900; color: var(--success); 
             letter-spacing: 3px; border: 1px dashed var(--success); 
@@ -181,7 +179,6 @@
         }
         .otp-display-small:active { transform: scale(0.95); }
         
-        /* TOMBOL MENYAMPING KECIL */
         .btn-action-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 3px; width: 100%; }
         .btn-order { 
             border: none; padding: 8px 2px; border-radius: 6px; 
@@ -264,7 +261,6 @@
             <div class="slide" id="slide-pesan">
                 <div class="slide-content">
                     
-                    <!-- BOX PESANAN: DIKUNCI MATI (TIDAK BISA SCROLL) -->
                     <div id="box-pesan-atas">
                         <div style="margin-bottom: 10px;">
                             <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Provider / Operator</label>
@@ -287,14 +283,12 @@
                             <i class="fas fa-shopping-cart" style="margin-right:8px;"></i> PESAN SEKARANG
                         </button>
                         
-                        <!-- KONTINER ANTRIAN ORDER -->
                         <div id="activeOrdersContainer" style="display:none;">
                             <h4 style="font-size: 12px; font-weight: 800; color: var(--dark); margin-top: 0; margin-bottom: 8px;">Pesanan Aktif</h4>
                             <div id="ordersWrapper"></div>
                         </div>
                     </div>
 
-                    <!-- RIWAYAT SUKSES (HANYA INI YANG BISA BISA DI SCROLL) -->
                     <div id="successTableContainer" class="success-table-container" style="display:none;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding: 0 5px;">
                             <h4 style="font-size: 12px; color: var(--dark); margin:0; font-weight: 800;">Riwayat Sukses</h4>
@@ -338,7 +332,7 @@
         </div>
     </div>
 
-    <!-- STICKY AREA BAWAH (DIPERKECIL) -->
+    <!-- STICKY AREA BAWAH -->
     <div class="sticky-area">
         <div class="main-card">
             <div style="display:flex; justify-content: space-between; margin-bottom: 5px; padding: 0 5px;">
