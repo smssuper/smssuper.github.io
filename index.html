@@ -35,39 +35,40 @@
         .menu-card:hover { background: #f0f3f6; }
         .delete-icon-btn { width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; color: var(--danger); cursor: pointer; }
 
-        /* STICKY BOTTOM AREA (NAV BAWAH) */
+        /* STICKY BOTTOM AREA (NAV BAWAH - DIPERKECIL) */
         .sticky-area {
             position: fixed; bottom: 0; left: 0; width: 100%; z-index: 900; background-color: var(--bg-body); 
-            padding: 10px 15px 15px 15px; box-sizing: border-box; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+            padding: 5px 10px 10px 10px; box-sizing: border-box; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
         }
 
         .main-card { background: var(--white); border-radius: 24px; padding: 15px; box-shadow: var(--shadow); margin-bottom: 0; }
+        .sticky-area .main-card { padding: 10px; margin-bottom: 0; border-radius: 20px; } /* Padding & Radius diperkecil */
         
-        /* GMAIL NAV CONTAINER */
+        /* GMAIL NAV CONTAINER (DIPERKECIL) */
         .email-nav-container {
             display: flex; align-items: center; justify-content: space-between; 
-            background: #f8fafc; border-radius: 16px; margin-bottom: 15px; 
-            padding: 5px 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            background: #f8fafc; border-radius: 12px; margin-bottom: 8px; 
+            padding: 2px 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
             border: 2px solid #edf2f7;
         }
         .email-display-nav {
-            flex: 1; padding: 10px 10px; text-align: center; font-weight: 700; 
-            font-size: 14px; background: transparent; color: var(--dark); border: none; outline: none;
+            flex: 1; padding: 6px 8px; text-align: center; font-weight: 700; 
+            font-size: 12px; background: transparent; color: var(--dark); border: none; outline: none;
         }
-        .nav-arrow { font-size: 20px; color: var(--success); cursor: pointer; padding: 10px; transition: 0.2s; border-radius: 50%; }
+        .nav-arrow { font-size: 16px; color: var(--success); cursor: pointer; padding: 6px; transition: 0.2s; border-radius: 50%; }
         .nav-arrow:active { background: rgba(0,0,0,0.05); transform: scale(0.8); }
         .nav-arrow.disabled { color: var(--gray); opacity: 0.3; pointer-events: none; }
 
-        /* ICON GRID */
+        /* ICON GRID (DIPERKECIL) */
         .icon-grid { 
-            display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; overflow-x: auto; 
-            -webkit-overflow-scrolling: touch; padding-bottom: 5px; scrollbar-width: none; 
+            display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; padding-bottom: 2px; scrollbar-width: none; 
         }
         .icon-grid::-webkit-scrollbar { display: none; }
         .icon-btn { 
-            flex-shrink: 0; width: 50px; height: 50px; border-radius: 14px; display: flex; 
+            flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; display: flex; 
             align-items: center; justify-content: center; color: white; cursor: pointer; 
-            transition: 0.2s; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: none; 
+            transition: 0.2s; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: none; 
         }
         
         .ic-orange { background: linear-gradient(135deg, #ff9f43, #ff6b6b); }
@@ -84,7 +85,7 @@
         .container {
             position: fixed;
             top: 60px; /* Bawah Header */
-            bottom: 175px; /* Atas Footer Navigation */
+            bottom: 120px; /* Diperkecil karena nav bawah mengecil */
             left: 0; right: 0;
             overflow: hidden;
         }
@@ -337,12 +338,12 @@
         </div>
     </div>
 
-    <!-- STICKY AREA BAWAH -->
+    <!-- STICKY AREA BAWAH (DIPERKECIL) -->
     <div class="sticky-area">
         <div class="main-card">
-            <div style="display:flex; justify-content: space-between; margin-bottom: 8px; padding: 0 5px;">
-                <span style="font-size: 10px; color: var(--gray); font-weight: 800;" id="linkCounter">Link: 0</span>
-                <span style="font-size: 10px; color: var(--gray); font-weight: 800;" id="emailCounter">Gmail: 0</span>
+            <div style="display:flex; justify-content: space-between; margin-bottom: 5px; padding: 0 5px;">
+                <span style="font-size: 9px; color: var(--gray); font-weight: 800;" id="linkCounter">Link: 0</span>
+                <span style="font-size: 9px; color: var(--gray); font-weight: 800;" id="emailCounter">Gmail: 0</span>
             </div>
             
             <div class="email-nav-container">
