@@ -28,6 +28,15 @@
         const dataRef = ref(db, 'nomor_va');
         const inputField = document.getElementById('hasilInput');
 
+        // Fungsi untuk mengubah warna kolom input menjadi hijau jika terisi
+        function updateColor() {
+            if (inputField.value !== "") {
+                inputField.classList.add("input-terisi");
+            } else {
+                inputField.classList.remove("input-terisi");
+            }
+        }
+
         // 1. Membaca data dari Firebase secara real-time
         onValue(dataRef, (snapshot) => {
             const data = snapshot.val();
@@ -36,6 +45,7 @@
             } else {
                 inputField.value = "";
             }
+            updateColor();
         });
 
         // 2. Logika Auto-Paste (Saat kolom diklik)
@@ -49,6 +59,7 @@
                     inputField.value = cleanText;
                     // Simpan ke Firebase
                     set(dataRef, { nomor: cleanText }); 
+                    updateColor();
                 }
             } catch (err) { 
                 console.log("Izin clipboard diperlukan."); 
@@ -66,6 +77,7 @@
         window.hapusInput = function() {
             inputField.value = "";
             set(dataRef, { nomor: "" });
+            updateColor();
         };
     </script>
     
@@ -103,6 +115,14 @@
             color: #ee4d2d; 
             background-color: #fffaf9;
             cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        /* Style saat kolom terisi nomor (warna hijau) */
+        .input-terisi {
+            border: 3px solid #2ecc71 !important; 
+            background-color: #eafaf1 !important; 
+            color: #27ae60 !important; 
         }
         
         .button-group { 
