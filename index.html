@@ -310,13 +310,23 @@
                 </div>
             </div>
 
+            <!-- BAGIAN INI DIPERBARUI: DATABASE LINK HEADER -->
             <div class="slide" id="slide-links">
                 <div class="slide-content">
-                    <div style="display:flex; justify-content:flex-start; align-items:center; gap:15px; margin-bottom:20px;">
+                    
+                    <div style="display:flex; justify-content:flex-start; align-items:center; gap:10px; margin-bottom:20px; flex-wrap: wrap;">
                         <button style="background:var(--secondary); color:white; border:none; width:42px; height:42px; border-radius:12px; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 4px 10px rgba(52,152,219,0.3);" onclick="bukaFormLink(null)">
                             <i class="fas fa-plus"></i>
                         </button>
-                        <h3 style="margin:0; font-size:16px; font-weight:800;">DATABASE LINK</h3>
+                        <button style="background:var(--danger); color:white; border:none; width:42px; height:42px; border-radius:12px; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 4px 10px rgba(231,76,60,0.3);" onclick="hapusBanyakLink()">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <h3 style="margin:0; font-size:15px; font-weight:800; flex: 1;">DATABASE LINK</h3>
+                        
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="checkAllLinks" onchange="toggleCheckAllLinks(this)" style="width:16px; height:16px; cursor:pointer;">
+                            <label for="checkAllLinks" style="font-size: 11px; font-weight: 700; cursor: pointer; color: var(--gray);">Pilih Semua</label>
+                        </div>
                     </div>
                     
                     <div id="dynamicLinkContainer"></div>
@@ -525,8 +535,15 @@
                 const card = document.createElement('div');
                 card.className = `lm-card ${link.color || 'bg-blue'}`;
                 card.setAttribute('data-id', link.id);
+                
+                // BAGIAN INI DIPERBARUI: DITAMBAHKAN CHECKBOX DALAM KARTU
                 card.innerHTML = `
                     <div class="drag-handle"><i class="fas fa-grip-lines"></i></div>
+                    
+                    <div style="padding-right: 12px; display: flex; align-items: center;">
+                        <input type="checkbox" class="link-checkbox" value="${link.id}" style="width: 18px; height: 18px; cursor: pointer;">
+                    </div>
+
                     <div class="btn-copy-card" onclick="salinTeksLink('${link.id}', '${link.url}')" id="copyicon-${link.id}"><i class="far fa-copy"></i></div>
                     <div style="flex:1; padding:0 12px; cursor:pointer" onclick="window.open('${link.url}', '_blank')">
                         <div style="font-weight:700; font-size:13px; line-height:1.2;">${link.name || "..." }</div>
@@ -557,6 +574,40 @@
                 setTimeout(() => { isDraggingLinks = false; }, 500); 
             }
         });
+
+        // BAGIAN INI DIPERBARUI: FUNGSI JAVASCRIPT UNTUK CHECKBOX DAN HAPUS BANYAK
+        window.toggleCheckAllLinks = (source) => {
+            const checkboxes = document.querySelectorAll('.link-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        };
+
+        window.hapusBanyakLink = async () => {
+            const checkboxes = document.querySelectorAll('.link-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('Silakan centang minimal satu link yang ingin dihapus.');
+                return;
+            }
+
+            if (confirm(`Anda yakin ingin menghapus ${checkboxes.length} link yang dipilih?`)) {
+                try {
+                    const batchPromises = [];
+                    checkboxes.forEach(cb => {
+                        batchPromises.push(deleteDoc(doc(db, "links", cb.value)));
+                    });
+                    
+                    await Promise.all(batchPromises);
+                    
+                    const checkAll = document.getElementById('checkAllLinks');
+                    if(checkAll) checkAll.checked = false;
+                    
+                } catch (error) {
+                    console.error("Gagal menghapus beberapa data:", error);
+                    alert("Terjadi kesalahan saat menghapus data secara massal.");
+                }
+            }
+        };
+        // AKHIR BAGIAN YANG DIPERBARUI (FUNGSI HAPUS BANYAK)
 
         window.scrollToSlide = (index) => {
             const slider = document.getElementById('mainSlider');
