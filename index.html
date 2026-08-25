@@ -519,24 +519,49 @@
             document.getElementById('linkCounter').innerText = "Link: " + masterLinks.length;
         });
 
+        // ==========================================
+        // UPDATE: RENDER KARTU DENGAN TOMBOL CEKLIS
+        // ==========================================
         const linksCol = collection(db, "links");
         onSnapshot(query(linksCol), (snapshot) => {
             if (isDraggingLinks) return; 
             const container = document.getElementById('dynamicLinkContainer');
             let localLinks = [];
             snapshot.forEach((docSnap) => { localLinks.push({ id: docSnap.id, ...docSnap.data() }); });
+            
             localLinks.sort((a, b) => {
                 let valA = a.orderIndex !== undefined ? a.orderIndex : (a.createdAt || 0);
                 let valB = b.orderIndex !== undefined ? b.orderIndex : (b.createdAt || 0);
                 return valA - valB;
             });
+            
             container.innerHTML = '';
+            
+            // Mapping warna background class ke kode HEX untuk warna ikon ceklis
+            const colorMap = {
+                'bg-red': '#f25c78',
+                'bg-blue': '#4a90e2',
+                'bg-purple': '#8c5cd3',
+                'bg-orange': '#f5b041',
+                'bg-green': '#2ecc71',
+                'bg-teal': '#00d2d3'
+            };
+
             localLinks.forEach((link) => {
                 const card = document.createElement('div');
-                card.className = `lm-card ${link.color || 'bg-blue'}`;
+                const cardColorClass = link.color || 'bg-blue';
+                card.className = `lm-card ${cardColorClass}`;
                 card.setAttribute('data-id', link.id);
                 
-                // BAGIAN INI DIPERBARUI: DITAMBAHKAN CHECKBOX DALAM KARTU
+                // Menentukan warna ikon ceklis
+                const activeColorHex = colorMap[cardColorClass] || '#4a90e2';
+                const checkIconColor = link.isUsed ? activeColorHex : '#d1d8e0'; 
+                
+                // Menambahkan opacity pada card jika sudah digunakan agar terlihat beda
+                if (link.isUsed) {
+                    card.style.opacity = '0.7'; 
+                }
+
                 card.innerHTML = `
                     <div class="drag-handle"><i class="fas fa-grip-lines"></i></div>
                     
@@ -552,6 +577,9 @@
                     <div class="action-btns" style="display:flex; gap:8px; margin-left:auto;">
                         <div style="width:36px; height:36px; border-radius:10px; background:#ff4757; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(255, 71, 87, 0.4);" onclick="hapusDataLink('${link.id}')"><i class="fas fa-times"></i></div>
                         <div style="width:36px; height:36px; border-radius:10px; background:#2ed573; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(46, 213, 115, 0.4);" onclick="bukaFormLink('${link.id}', \`${(link.name || '').replace(/`/g, '')}\`, \`${(link.url || '').replace(/`/g, '')}\`, \`${(link.price || '').replace(/`/g, '')}\`)"><i class="fas fa-edit"></i></div>
+                        
+                        <!-- TOMBOL CEKLIS PENANDA -->
+                        <div style="width:36px; height:36px; border-radius:10px; background:white; color:${checkIconColor}; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: 0.3s;" onclick="toggleUsedStatus('${link.id}', ${link.isUsed || false})"><i class="fas fa-check"></i></div>
                     </div>`;
                 container.appendChild(card);
             });
@@ -575,7 +603,17 @@
             }
         });
 
-        // BAGIAN INI DIPERBARUI: FUNGSI JAVASCRIPT UNTUK CHECKBOX DAN HAPUS BANYAK
+        // FUNGSI UNTUK MENGUBAH STATUS CEKLIS PADA LINK
+        window.toggleUsedStatus = async (id, currentStatus) => {
+            try {
+                const newStatus = !currentStatus;
+                await updateDoc(doc(db, "links", id), { isUsed: newStatus });
+            } catch (error) {
+                console.error("Gagal mengubah status link:", error);
+                alert("Gagal mengubah status. Pastikan Anda sudah Login Admin.");
+            }
+        };
+
         window.toggleCheckAllLinks = (source) => {
             const checkboxes = document.querySelectorAll('.link-checkbox');
             checkboxes.forEach(cb => cb.checked = source.checked);
@@ -607,7 +645,6 @@
                 }
             }
         };
-        // AKHIR BAGIAN YANG DIPERBARUI (FUNGSI HAPUS BANYAK)
 
         window.scrollToSlide = (index) => {
             const slider = document.getElementById('mainSlider');
