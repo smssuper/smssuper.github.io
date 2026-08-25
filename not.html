@@ -181,7 +181,23 @@
         .btn-cancel { background: #fee2e2; color: #b91c1c; }
         .btn-replace { background: #fef3c7; color: #c2410c; }
 
-        .lm-card { display: flex; align-items: center; border-radius: 16px; padding: 12px; margin-bottom: 12px; color: white !important; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        /* KARTU LINK & EFEK NGEBLOK SAAT DIGUNAKAN */
+        .lm-card { 
+            display: flex; align-items: center; border-radius: 16px; 
+            padding: 12px; margin-bottom: 12px; color: white !important; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            position: relative; overflow: hidden; /* Penting untuk overlay */
+        }
+        
+        /* Agar isi kartu tetap berada di atas overlay saat status "ngeblok" */
+        .lm-card > div { position: relative; z-index: 2; }
+        
+        /* Overlay warna redup ngeblok kartu saat ditekan (Selesai/Digunakan) */
+        .lm-card.is-used-card::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.45); pointer-events: none; z-index: 1;
+        }
+
         .bg-red { background-color: #f25c78 !important; } .bg-blue { background-color: #4a90e2 !important; }
         .bg-purple { background-color: #8c5cd3 !important; } .bg-orange { background-color: #f5b041 !important; }
         .bg-green { background-color: #2ecc71 !important; } .bg-teal { background-color: #00d2d3 !important; }
@@ -193,6 +209,23 @@
         .drag-handle:active { cursor: grabbing; }
         .sortable-ghost { opacity: 0.4; }
 
+        /* TOMBOL CEKLIS (STANDAR) */
+        .btn-check-mark {
+            width: 36px; height: 36px; border-radius: 10px; background: white; color: #d1d8e0;
+            display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: 0.2s; box-sizing: border-box;
+            border: 2px solid transparent;
+        }
+
+        /* TOMBOL CEKLIS SAAT AKTIF (NGEBLOK WARNA MENGIKUTI KARTU & ICON PUTIH) */
+        .lm-card.bg-red .btn-check-mark.is-used-btn { background: #f25c78; color: white; border: 2px solid white; }
+        .lm-card.bg-blue .btn-check-mark.is-used-btn { background: #4a90e2; color: white; border: 2px solid white; }
+        .lm-card.bg-purple .btn-check-mark.is-used-btn { background: #8c5cd3; color: white; border: 2px solid white; }
+        .lm-card.bg-orange .btn-check-mark.is-used-btn { background: #f5b041; color: white; border: 2px solid white; }
+        .lm-card.bg-green .btn-check-mark.is-used-btn { background: #2ecc71; color: white; border: 2px solid white; }
+        .lm-card.bg-teal .btn-check-mark.is-used-btn { background: #00d2d3; color: white; border: 2px solid white; }
+
+        /* MODALS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
         .modal-content { background: var(--white); width: 100%; max-width: 400px; border-radius: 28px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         .input-group { margin-bottom: 15px; text-align: left; }
@@ -202,6 +235,7 @@
         .flash-success { animation: flash 0.5s ease; }
         @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
+        /* TABEL SUKSES */
         .success-table { width: 100%; border-collapse: collapse; text-align: left; background: white; border-radius: 16px; overflow: hidden; border: 1px solid #edf2f7; }
         .success-table th { background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: var(--gray); font-weight: 800; border-bottom: 1px solid #edf2f7; position: sticky; top: 0; z-index: 10; } 
         .success-table td { padding: 12px; font-size: 13px; font-weight: 700; color: var(--dark); border-bottom: 1px solid #edf2f7; }
@@ -291,7 +325,6 @@
                 </div>
             </div>
 
-            <!-- BAGIAN DATABASE LINK HEADER -->
             <div class="slide" id="slide-links">
                 <div class="slide-content">
                     
@@ -501,7 +534,7 @@
         });
 
         // =========================================================
-        // UPDATE RENDER KARTU: WARNA KOLOM NGEBLOK & EFEK KARTU
+        // UPDATE RENDER KARTU: WARNA KOLOM MURNI CSS & EFEK KARTU
         // =========================================================
         const linksCol = collection(db, "links");
         onSnapshot(query(linksCol), (snapshot) => {
@@ -517,65 +550,38 @@
             });
             
             container.innerHTML = '';
-            
-            const colorMap = {
-                'bg-red': '#f25c78',
-                'bg-blue': '#4a90e2',
-                'bg-purple': '#8c5cd3',
-                'bg-orange': '#f5b041',
-                'bg-green': '#2ecc71',
-                'bg-teal': '#00d2d3'
-            };
 
             localLinks.forEach((link) => {
                 const card = document.createElement('div');
                 const cardColorClass = link.color || 'bg-blue';
-                const activeColorHex = colorMap[cardColorClass] || '#4a90e2';
                 
-                // Setingan standar (belum digunakan)
-                let checkBtnBg = 'white';
-                let checkIconColor = '#d1d8e0';
-                let cardOverlay = '';
-                let borderBtn = 'none';
+                // Menentukan class jika status sudah digunakan
+                const isUsedCardClass = link.isUsed ? 'is-used-card' : '';
+                const isUsedBtnClass = link.isUsed ? 'is-used-btn' : '';
 
-                // JIKA SUDAH DIGUNAKAN
-                if (link.isUsed) {
-                    checkBtnBg = activeColorHex; // Background full / kolom terisi (ngeblok) warna kartu
-                    checkIconColor = 'white';    // Ikon menjadi putih
-                    borderBtn = '2px solid white'; // Tambahkan bingkai putih tipis agar kolom pop up
-                    
-                    // Membuat seluruh background kartu menjadi "ter-blok" (agak redup) dengan overlay gelap 
-                    cardOverlay = `<div style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); border-radius: 16px; pointer-events: none; z-index: 1;"></div>`;
-                }
-
-                card.className = `lm-card ${cardColorClass}`;
+                card.className = `lm-card ${cardColorClass} ${isUsedCardClass}`;
                 card.setAttribute('data-id', link.id);
-                // Tambahkan 'position: relative' agar overlay bekerja dan menutupi kartunya saja
-                card.style.position = 'relative';
 
-                // Susunan elemen di dalam kartu menggunakan Z-Index agar tetap berada di atas efek "blok" gelap
                 card.innerHTML = `
-                    ${cardOverlay}
+                    <div class="drag-handle"><i class="fas fa-grip-lines"></i></div>
                     
-                    <div class="drag-handle" style="position: relative; z-index: 2;"><i class="fas fa-grip-lines"></i></div>
-                    
-                    <div style="padding-right: 12px; display: flex; align-items: center; position: relative; z-index: 2;">
+                    <div style="padding-right: 12px; display: flex; align-items: center;">
                         <input type="checkbox" class="link-checkbox" value="${link.id}" style="width: 18px; height: 18px; cursor: pointer;">
                     </div>
 
-                    <div class="btn-copy-card" style="position: relative; z-index: 2;" onclick="salinTeksLink('${link.id}', '${link.url}')" id="copyicon-${link.id}"><i class="far fa-copy"></i></div>
-                    <div style="flex:1; padding:0 12px; cursor:pointer; position: relative; z-index: 2;" onclick="window.open('${link.url}', '_blank')">
+                    <div class="btn-copy-card" onclick="salinTeksLink('${link.id}', '${link.url}')" id="copyicon-${link.id}"><i class="far fa-copy"></i></div>
+                    <div style="flex:1; padding:0 12px; cursor:pointer" onclick="window.open('${link.url}', '_blank')">
                         <div style="font-weight:700; font-size:13px; line-height:1.2;">${link.name || "..." }</div>
                         <div style="margin-top:4px;"><span style="font-size:9px; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px; font-weight:800;">STAR</span> <span style="font-size:10px; font-weight:700; opacity:0.9; margin-left:5px;">${link.price || "Rp 0"}</span></div>
                     </div>
                     
-                    <div class="action-btns" style="display:flex; gap:8px; margin-left:auto; position: relative; z-index: 2;">
+                    <div class="action-btns" style="display:flex; gap:8px; margin-left:auto;">
                         <div style="width:36px; height:36px; border-radius:10px; background:#ff4757; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(255, 71, 87, 0.4);" onclick="hapusDataLink('${link.id}')"><i class="fas fa-times"></i></div>
                         
                         <div style="width:36px; height:36px; border-radius:10px; background:#2ed573; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(46, 213, 115, 0.4);" onclick="bukaFormLink('${link.id}', \`${(link.name || '').replace(/`/g, '')}\`, \`${(link.url || '').replace(/`/g, '')}\`, \`${(link.price || '').replace(/`/g, '')}\`)"><i class="fas fa-edit"></i></div>
                         
-                        <!-- TOMBOL CEKLIS (KOLOM NGEBLOK PENUH JIKA DIKLIK) -->
-                        <div style="width:36px; height:36px; border-radius:10px; background:${checkBtnBg}; color:${checkIconColor}; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: 0.3s; border: ${borderBtn}; box-sizing: border-box;" onclick="toggleUsedStatus('${link.id}', ${link.isUsed || false})"><i class="fas fa-check"></i></div>
+                        <!-- TOMBOL CEKLIS PENANDA -->
+                        <div class="btn-check-mark ${isUsedBtnClass}" id="checkBtn-${link.id}" onclick="toggleUsedStatus(event, '${link.id}', ${link.isUsed || false})"><i class="fas fa-check"></i></div>
                     </div>`;
                 container.appendChild(card);
             });
@@ -599,14 +605,27 @@
             }
         });
 
-        // Fungsi Simpan Status Ceklis ke Database
-        window.toggleUsedStatus = async (id, currentStatus) => {
+        // FUNGSI UPDATE INSTAN (OPTIMISTIC UI) KETIKA DIKLIK
+        window.toggleUsedStatus = async (e, id, currentStatus) => {
+            if(e) e.stopPropagation(); // Mencegah klik menembus ke elemen lain
+            
+            // 1. UPDATE VISUAL LOKAL SEKETIKA (Tanpa nunggu database loading)
+            const cardElement = document.querySelector(`.lm-card[data-id="${id}"]`);
+            const btnElement = document.getElementById(`checkBtn-${id}`);
+            
+            if(cardElement) cardElement.classList.toggle('is-used-card');
+            if(btnElement) btnElement.classList.toggle('is-used-btn');
+
+            // 2. SIMPAN KE DATABASE DI LATAR BELAKANG
             try {
                 const newStatus = !currentStatus;
                 await updateDoc(doc(db, "links", id), { isUsed: newStatus });
             } catch (error) {
-                console.error("Gagal mengubah status link:", error);
-                alert("Gagal mengubah status. Pastikan Anda sudah Login Admin.");
+                console.error("Gagal mengubah status link di database:", error);
+                // Jika error, kembalikan warna UI seperti semula (opsional)
+                if(cardElement) cardElement.classList.toggle('is-used-card');
+                if(btnElement) btnElement.classList.toggle('is-used-btn');
+                alert("Anda tidak memiliki akses, silakan Login Admin terlebih dahulu.");
             }
         };
 
