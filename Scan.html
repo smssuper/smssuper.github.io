@@ -104,7 +104,8 @@
         p { font-size: 13px; color: #666; margin-bottom: 25px; }
         
         input { 
-            width: 90%; 
+            box-sizing: border-box; /* Mencegah kolom berubah ukuran saat border menebal */
+            width: 100%; 
             padding: 15px; 
             margin-bottom: 20px; 
             font-size: 20px; 
@@ -115,14 +116,16 @@
             color: #ee4d2d; 
             background-color: #fffaf9;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s ease-in-out;
+            outline: none;
         }
         
-        /* Style saat kolom terisi nomor (warna hijau) */
+        /* Style saat kolom terisi nomor (warna hijau tebal) */
         .input-terisi {
-            border: 3px solid #2ecc71 !important; 
+            border: 4px solid #00C853 !important; /* Hijau tebal solid */
             background-color: #eafaf1 !important; 
             color: #27ae60 !important; 
+            box-shadow: 0 0 8px rgba(0, 200, 83, 0.3) !important; /* Efek glow hijau opsional */
         }
         
         .button-group { 
