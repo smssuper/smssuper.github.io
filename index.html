@@ -262,10 +262,10 @@
                 <div class="slide-content">
                     
                     <div id="box-pesan-atas">
-                        <div style="margin-bottom: 10px;">
-                            <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Provider / Operator</label>
-                            <div style="position: relative;">
-                                <select id="pilihProvider" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:13px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer;">
+                        <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Provider / Operator</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: stretch;">
+                            <div style="position: relative; flex: 1;">
+                                <select id="pilihProvider" style="width:100%; height:100%; padding:10px 30px 10px 14px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:13px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="any">Otomatis (Paling Murah)</option>
                                     <option value="telkomsel">Telkomsel</option>
                                     <option value="xl">XL / Axis</option>
@@ -273,16 +273,13 @@
                                     <option value="three">Tri (3)</option>
                                     <option value="smartfren">Smartfren</option>
                                 </select>
-                                <i class="fas fa-caret-down" style="position: absolute; right: 14px; top: 12px; color: var(--gray); pointer-events: none;"></i>
+                                <i class="fas fa-caret-down" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none;"></i>
                             </div>
+                            <button style="background:var(--secondary); color:white; border:none; padding:0 15px; border-radius:10px; font-weight:800; font-size:11px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s; display: flex; align-items: center; justify-content: center; white-space: nowrap;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
+                                <i class="fas fa-shopping-cart" style="margin-right:6px;"></i> PESAN
+                            </button>
                         </div>
-
                         <span id="orderIdText" style="display:none;">Shopee</span>
-
-                        <button style="width:100%; background:var(--secondary); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s; margin-bottom: 10px;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
-                            <i class="fas fa-shopping-cart" style="margin-right:8px;"></i> PESAN SEKARANG
-                        </button>
-                        
                         <div id="activeOrdersContainer" style="display:none;">
                             <h4 style="font-size: 12px; font-weight: 800; color: var(--dark); margin-top: 0; margin-bottom: 8px;">Pesanan Aktif</h4>
                             <div id="ordersWrapper"></div>
@@ -520,9 +517,6 @@
             document.getElementById('linkCounter').innerText = "Link: " + masterLinks.length;
         });
 
-        // ==========================================
-        // UPDATE: RENDER KARTU DENGAN TOMBOL CEKLIS
-        // ==========================================
         const linksCol = collection(db, "links");
         onSnapshot(query(linksCol), (snapshot) => {
             if (isDraggingLinks) return; 
@@ -538,7 +532,6 @@
             
             container.innerHTML = '';
             
-            // Mapping warna background class ke kode HEX untuk warna ikon ceklis
             const colorMap = {
                 'bg-red': '#f25c78',
                 'bg-blue': '#4a90e2',
@@ -554,11 +547,9 @@
                 card.className = `lm-card ${cardColorClass}`;
                 card.setAttribute('data-id', link.id);
                 
-                // Menentukan warna ikon ceklis
                 const activeColorHex = colorMap[cardColorClass] || '#4a90e2';
                 const checkIconColor = link.isUsed ? activeColorHex : '#d1d8e0'; 
                 
-                // Menambahkan opacity pada card jika sudah digunakan agar terlihat beda
                 if (link.isUsed) {
                     card.style.opacity = '0.7'; 
                 }
@@ -604,7 +595,6 @@
             }
         });
 
-        // FUNGSI UNTUK MENGUBAH STATUS CEKLIS PADA LINK
         window.toggleUsedStatus = async (id, currentStatus) => {
             try {
                 const newStatus = !currentStatus;
@@ -923,7 +913,7 @@
             }
 
             btnPesan.disabled = false;
-            btnPesan.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right:8px;"></i> PESAN SEKARANG';
+            btnPesan.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right:6px;"></i> PESAN';
         };
 
         window.tombolAksiMulti = async (id, tipe) => {
