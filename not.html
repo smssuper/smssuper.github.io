@@ -103,9 +103,12 @@
         .btn-icon-selesai { background: var(--secondary-color); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(4px); }
+        
+        /* UPDATE: Menambahkan fungsi scroll dan max-height pada modal agar tidak terpotong saat layar sempit/keyboard muncul */
         .modal-content { 
             background: white; padding: 24px; border-radius: 28px; 
             width: calc(100% - 60px); max-width: 380px; 
+            max-height: 85vh; overflow-y: auto;
             position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.25); 
             animation: modalFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
         }
@@ -132,11 +135,12 @@
         .form-control { width: 100%; padding: 14px; border: 1.5px solid var(--border-color); border-radius: 12px; font-size: 14px; outline: none; margin-bottom: 12px; background: #f8fafc; box-sizing: border-box; transition: 0.2s; font-family: 'Inter', sans-serif; }
         .form-control:focus { border-color: var(--primary-color); background: white; }
         
-        /* UPDATE: Membuat Textarea Catatan Menjadi Jauh Lebih Tinggi */
+        /* UPDATE: Membuat Textarea Catatan JAUH Lebih Tinggi Secara Default */
         textarea.form-control {
-            min-height: 180px;
-            resize: vertical; /* Memungkinkan textarea untuk ditarik ukurannya */
+            min-height: 280px; /* <--- Diperbesar drastis agar lebih panjang ke bawah */
+            resize: vertical; /* Memungkinkan ditarik manual jika kurang panjang */
             line-height: 1.5;
+            white-space: pre-wrap;
         }
         
         .btn-copy-choice {
@@ -150,7 +154,6 @@
 
         .hidden { display: none !important; }
         
-        /* Checkbox Styling */
         .note-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color); }
     </style>
 </head>
@@ -231,8 +234,10 @@
     <div class="modal-content">
         <h3 id="form-modal-title" style="margin-top:0; margin-bottom: 18px;">Catatan</h3>
         <input type="text" id="node-title" class="form-control" placeholder="Judul / Nomor (ex: 37)">
-        <!-- UPDATE: Elemen ini sekarang akan lebih lebar dan lebih tinggi -->
+        
+        <!-- KOLOM TEXTAREA INI SEKARANG TINGGI -->
         <textarea id="node-content" class="form-control" placeholder="Isi rincian catatan..."></textarea>
+        
         <div style="display: flex; gap: 10px;">
             <button type="button" class="btn-ctrl" style="background:#e2e8f0; color:var(--text-main); flex:1; padding: 12px;" id="btn-cancel-form">Batal</button>
             <button type="button" class="btn-ctrl" style="background:var(--primary-color); color:white; flex:2; padding: 12px;" id="btn-save-note">Simpan</button>
@@ -247,7 +252,10 @@
             <button onclick="closeModal('detail-modal')" style="border:none; background:none; cursor:pointer; font-size: 18px; color: var(--text-muted);"><i class="fas fa-times"></i></button>
         </div>
         <h3 id="view-title-text" style="margin-top: 0; margin-bottom: 12px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 10px;"></h3>
-        <div id="view-content" class="view-area"></div>
+        
+        <!-- UPDATE: Area Tampilan View ditambahkan height agar selaras -->
+        <div id="view-content" class="view-area" style="min-height: 200px; white-space: pre-wrap; font-size: 14px; line-height: 1.5; color: var(--text-main);"></div>
+        
         <div style="display: flex; gap: 8px; margin-top: 20px;">
             <button class="btn-ctrl" style="background:var(--primary-color); color:white; flex:1; padding: 12px;" id="btn-edit-note">Edit</button>
             <button class="btn-ctrl" style="background:#f59e0b; color:white; flex:1; padding: 12px;" id="btn-copy-note">Salin</button>
