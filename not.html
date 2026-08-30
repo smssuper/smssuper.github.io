@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Catatan Pengerjaan</title>
     <style>
-        /* Impor Font Modern dari Google */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
         :root {
@@ -25,276 +24,75 @@
             --text-muted: #64748b;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-            margin: 0;
-        }
-
-        .container {
-            background-color: var(--bg-card);
-            width: 100%;
-            max-width: 700px; 
-            padding: 32px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
-
-        /* 1. Baris Pertama: Judul */
-        h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin: 0 0 24px 0;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-            text-align: center;
-            letter-spacing: 0.5px;
-        }
-
-        /* 2-4. Baris Kolom Pengisian */
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 16px;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); display: flex; justify-content: center; padding: 20px 10px; margin: 0; }
+        .container { background-color: var(--bg-card); width: 100%; max-width: 700px; padding: 24px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+        h2 { font-size: 1.25rem; font-weight: 600; color: var(--primary); margin: 0 0 24px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); text-align: center; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 16px; }
+        .form-group label { font-size: 0.875rem; font-weight: 500; margin-bottom: 6px; color: var(--primary); }
+        .form-group input { font-family: 'Inter', sans-serif; padding: 10px 14px; font-size: 0.95rem; border: 1px solid var(--border); border-radius: 8px; outline: none; transition: all 0.2s ease; }
+        .form-group input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         
-        .form-group label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: var(--primary);
-        }
-
-        .form-group input {
-            font-family: 'Inter', sans-serif;
-            padding: 10px 14px;
-            font-size: 0.95rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            outline: none;
-            transition: all 0.2s ease;
-            color: var(--text-main);
-        }
-
-        .form-group input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        /* 5. Baris Tombol */
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-            margin-bottom: 32px;
-        }
-
-        button {
-            font-family: 'Inter', sans-serif;
-            flex: 1;
-            padding: 10px 16px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: white;
-        }
-
-        button:disabled {
-            background-color: var(--border) !important;
-            color: var(--text-muted) !important;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-
+        .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; margin-bottom: 32px; }
+        button { font-family: 'Inter', sans-serif; flex: 1; min-width: 80px; padding: 10px 12px; font-size: 0.875rem; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; color: white; }
+        button:disabled { background-color: var(--border) !important; color: var(--text-muted) !important; cursor: not-allowed; }
         #btnSimpan { background-color: var(--primary); }
-        #btnSimpan:not(:disabled):hover { background-color: var(--primary-hover); }
-
         #btnEdit { background-color: var(--warning); }
-        #btnEdit:not(:disabled):hover { background-color: var(--warning-hover); }
-
         #btnHapus { background-color: var(--danger); }
-        #btnHapus:not(:disabled):hover { background-color: var(--danger-hover); }
+        #btnBatal { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border); display: none; }
+        
+        .table-container { border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; min-width: 500px; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+        th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { background-color: #f8fafc; color: var(--text-muted); font-weight: 500; font-size: 0.75rem; }
+        tbody tr { cursor: pointer; background-color: var(--bg-card); }
+        tbody tr.terpilih { background-color: #e2e8f0; border-left: 4px solid var(--primary); }
+        .data-kosong { text-align: center; color: var(--text-muted); padding: 24px !important; font-style: italic; }
+        
+        .aksi-kolom { display: flex; gap: 10px; align-items: center; }
+        .ikon-aksi { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background-color: #f1f5f9; color: var(--text-muted); cursor: pointer; border: 1px solid transparent; }
+        .ikon-aksi.aktif-selesai { background-color: var(--success-bg); color: var(--success); border-color: var(--success); }
+        .ikon-aksi.aktif-gagal { background-color: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
 
-        #btnBatal { 
-            background-color: transparent; 
-            color: var(--text-muted); 
-            border: 1px solid var(--border); 
-            display: none;
-        }
-        #btnBatal:hover { background-color: var(--bg-body); color: var(--primary); }
-
-        /* 6. Daftar / Tabel (Bisa digeser) */
-        .table-container {
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow-x: auto; 
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch; 
-        }
-
-        /* Custom Scrollbar */
-        .table-container::-webkit-scrollbar { height: 8px; }
-        .table-container::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 0 0 8px 8px; }
-        .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .table-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        table {
-            width: 100%;
-            min-width: 600px; 
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.875rem;
-        }
-
-        th, td {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border);
-            white-space: nowrap; /* Mencegah kata menumpuk */
-        }
-
-        th {
-            background-color: #f8fafc;
-            color: var(--text-muted);
-            font-weight: 500;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-        }
-
-        tbody tr {
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            background-color: var(--bg-card);
-        }
-
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr:hover { background-color: #f1f5f9; }
-        tbody tr.terpilih {
-            background-color: #e2e8f0;
-            border-left: 4px solid var(--primary);
-        }
-
-        .data-kosong {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 24px !important;
-            font-style: italic;
-        }
-
-        /* --- DESAIN KOLOM AKSI (Ceklis & Silang) --- */
-        .aksi-kolom {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .ikon-aksi {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f1f5f9;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-
-        .ikon-aksi:hover { background-color: #e2e8f0; }
-
-        .ikon-aksi.aktif-selesai {
-            background-color: var(--success-bg);
-            color: var(--success);
-            border-color: var(--success);
-        }
-
-        .ikon-aksi.aktif-gagal {
-            background-color: var(--danger-bg);
-            color: var(--danger);
-            border-color: var(--danger);
-        }
-
-        /* --- DESAIN NOTIFIKASI CUSTOM (MODAL) --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(2px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; z-index: 1000; }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-
-        .modal-box {
-            background: white;
-            width: 90%;
-            max-width: 400px;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-            text-align: center;
-        }
-
-        .modal-overlay.active .modal-box { transform: translateY(0); }
-
-        .modal-box h3 { margin: 0 0 12px 0; color: var(--primary); font-size: 1.125rem; }
-        .modal-box p { margin: 0 0 24px 0; color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
-
+        .modal-box { background: white; width: 90%; max-width: 350px; padding: 24px; border-radius: 12px; text-align: center; }
+        .modal-box h3 { margin: 0 0 12px 0; color: var(--primary); }
+        .modal-box p { margin: 0 0 24px 0; color: var(--text-muted); font-size: 0.95rem; }
         .modal-actions { display: flex; gap: 12px; justify-content: center; }
         .btn-modal { padding: 8px 16px; border-radius: 6px; font-weight: 500; cursor: pointer; border: none; }
         .btn-modal-ok { background-color: var(--primary); color: white; }
         .btn-modal-batal { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); }
     </style>
+    
+    <!-- MENGGUNAKAN FIREBASE VERSI COMPAT (Aman untuk Aplikasi Android) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
     <div class="container">
-        <!-- 1. Judul -->
         <h2>CATATAN PENGERJAAN</h2>
 
-        <!-- 2, 3, 4. Kolom Pengisian -->
         <div class="form-group">
-            <label for="inputTanggal">Tanggal</label>
+            <label>Tanggal</label>
             <input type="date" id="inputTanggal">
         </div>
-
         <div class="form-group">
-            <label for="inputEmail">Email</label>
+            <label>Email</label>
             <input type="email" id="inputEmail" placeholder="nama@email.com">
         </div>
-
         <div class="form-group">
-            <label for="inputJam">Jam</label>
+            <label>Jam</label>
             <input type="time" id="inputJam">
         </div>
 
-        <!-- 5. Tombol Aksi -->
         <div class="action-buttons">
             <button id="btnSimpan" onclick="simpanData()">Simpan</button>
             <button id="btnEdit" onclick="editData()" disabled>Edit</button>
             <button id="btnHapus" onclick="konfirmasiHapus()" disabled>Hapus</button>
-            <button id="btnBatal" onclick="resetForm()">Batal Pilih</button>
+            <button id="btnBatal" onclick="resetForm()">Batal</button>
         </div>
 
-        <!-- 6. Tabel Data -->
         <div class="table-container">
             <table>
                 <thead>
@@ -306,14 +104,11 @@
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="daftarData">
-                    <!-- Data dari Firebase akan muncul di sini -->
-                </tbody>
+                <tbody id="daftarData"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- ELEMEN NOTIFIKASI CUSTOM (MODAL) -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-box">
             <h3 id="modalTitle">Peringatan</h3>
@@ -325,36 +120,32 @@
         </div>
     </div>
 
-    <!-- SCRIPT FIREBASE & LOGIKA APLIKASI -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        // Konfigurasi menggunakan databaseURL Anda
+    <!-- SCRIPT JAVASCRIPT TANPA TYPE MODULE -->
+    <script>
+        // Konfigurasi Database Anda
         const firebaseConfig = {
             databaseURL: "https://catatanproyek-adcff-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const catatanRef = ref(db, 'catatan');
+        // Inisialisasi Firebase Compat
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const catatanRef = db.ref('catatan');
 
         let daftarCatatan = [];
         let idTerpilih = null; 
 
         // AMBIL DATA REALTIME
-        onValue(catatanRef, (snapshot) => {
+        catatanRef.on('value', (snapshot) => {
             daftarCatatan = [];
             snapshot.forEach((childSnapshot) => {
-                const id = childSnapshot.key;
-                const data = childSnapshot.val();
-                daftarCatatan.push({ id: id, ...data });
+                daftarCatatan.push({ id: childSnapshot.key, ...childSnapshot.val() });
             });
             renderTabel();
         });
 
-        // NOTIFIKASI CUSTOM
-        window.tampilkanModal = function(judul, pesan, tipe, callback = null) {
+        // NOTIFIKASI
+        function tampilkanModal(judul, pesan, tipe, callback = null) {
             document.getElementById('modalTitle').innerText = judul;
             document.getElementById('modalMessage').innerText = pesan;
             const btnBatal = document.getElementById('modalBtnBatal');
@@ -363,23 +154,23 @@
             if (tipe === 'alert') {
                 btnBatal.style.display = 'none';
                 btnOk.innerText = 'Mengerti';
-                btnOk.onclick = window.tutupModal;
+                btnOk.onclick = tutupModal;
             } else if (tipe === 'confirm') {
                 btnBatal.style.display = 'block';
                 btnOk.innerText = 'Ya, Hapus';
                 btnOk.style.backgroundColor = 'var(--danger)'; 
                 btnOk.onclick = () => {
-                    window.tutupModal();
+                    tutupModal();
                     if(callback) callback();
                 };
             }
             document.getElementById('customModal').classList.add('active');
-        };
+        }
 
-        window.tutupModal = function() {
+        function tutupModal() {
             document.getElementById('customModal').classList.remove('active');
             setTimeout(() => { document.getElementById('modalBtnOk').style.backgroundColor = 'var(--primary)'; }, 300);
-        };
+        }
 
         // RENDER TABEL
         function renderTabel() {
@@ -387,13 +178,13 @@
             tbody.innerHTML = ''; 
 
             if (daftarCatatan.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="data-kosong">Belum ada catatan pengerjaan.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="data-kosong">Belum ada catatan.</td></tr>`;
                 return;
             }
 
             daftarCatatan.forEach((data, index) => {
                 const tr = document.createElement('tr');
-                tr.onclick = function() { window.pilihBaris(data.id); };
+                tr.onclick = function() { pilihBaris(data.id); };
 
                 if (idTerpilih === data.id) tr.classList.add('terpilih');
 
@@ -407,16 +198,11 @@
                     <td>${data.jam}</td>
                     <td>
                         <div class="aksi-kolom">
-                            <div class="ikon-aksi ${classSelesai}" title="Selesai" onclick="window.ubahStatus('${data.id}', 'selesai', event)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
+                            <div class="ikon-aksi ${classSelesai}" onclick="ubahStatus('${data.id}', 'selesai', event)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             </div>
-                            <div class="ikon-aksi ${classGagal}" title="Gagal" onclick="window.ubahStatus('${data.id}', 'gagal', event)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
+                            <div class="ikon-aksi ${classGagal}" onclick="ubahStatus('${data.id}', 'gagal', event)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </div>
                         </div>
                     </td>
@@ -425,50 +211,39 @@
             });
         }
 
-        function formatTanggal(tanggalString) {
-            if(!tanggalString) return '';
-            const options = { day: '2-digit', month: 'short', year: 'numeric' };
-            return new Date(tanggalString).toLocaleDateString('id-ID', options);
+        function formatTanggal(tgl) {
+            if(!tgl) return '';
+            return new Date(tgl).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
-        // UBAH STATUS (CEKLIS/SILANG)
-        window.ubahStatus = async function(id, statusBaru, event) {
+        function ubahStatus(id, statusBaru, event) {
             event.stopPropagation(); 
             const dataAwal = daftarCatatan.find(d => d.id === id);
             const statusFinal = dataAwal.status === statusBaru ? null : statusBaru;
-            
-            const itemRef = ref(db, `catatan/${id}`);
-            await update(itemRef, { status: statusFinal });
-        };
+            db.ref('catatan/' + id).update({ status: statusFinal });
+        }
 
-        // SIMPAN DATA BARU
-        window.simpanData = async function() {
+        function simpanData() {
             const tanggal = document.getElementById('inputTanggal').value;
             const email = document.getElementById('inputEmail').value;
             const jam = document.getElementById('inputJam').value;
 
             if (!tanggal || !email || !jam) {
-                window.tampilkanModal("Data Belum Lengkap", "Harap isi semua kolom.", "alert");
+                tampilkanModal("Belum Lengkap", "Harap isi semua kolom.", "alert");
                 return;
             }
 
-            document.getElementById('btnSimpan').innerText = "Menyimpan...";
-            document.getElementById('btnSimpan').disabled = true;
-
-            const referensiBaru = push(catatanRef);
-            await set(referensiBaru, { tanggal, email, jam, status: null });
+            document.getElementById('btnSimpan').innerText = "Memproses...";
+            const refBaru = db.ref('catatan').push();
             
-            document.getElementById('btnSimpan').innerText = "Simpan";
-            window.resetForm();
-        };
+            refBaru.set({ tanggal, email, jam, status: null }).then(() => {
+                document.getElementById('btnSimpan').innerText = "Simpan";
+                resetForm();
+            });
+        }
 
-        // KLIK BARIS (PILIH UNTUK EDIT/HAPUS)
-        window.pilihBaris = function(id) {
-            if (idTerpilih === id) {
-                window.resetForm();
-                return; 
-            }
-
+        function pilihBaris(id) {
+            if (idTerpilih === id) { resetForm(); return; }
             idTerpilih = id;
             const data = daftarCatatan.find(d => d.id === id);
 
@@ -479,59 +254,43 @@
             document.getElementById('btnSimpan').disabled = true;
             document.getElementById('btnEdit').disabled = false;
             document.getElementById('btnHapus').disabled = false;
-            document.getElementById('btnBatal').style.display = 'block';
-
+            document.getElementById('btnBatal').style.display = 'inline-block';
             renderTabel(); 
-        };
+        }
 
-        // EDIT DATA
-        window.editData = async function() {
+        function editData() {
             if (!idTerpilih) return;
-
             const tanggal = document.getElementById('inputTanggal').value;
             const email = document.getElementById('inputEmail').value;
             const jam = document.getElementById('inputJam').value;
 
-            if (!tanggal || !email || !jam) {
-                window.tampilkanModal("Data Belum Lengkap", "Kolom tidak boleh kosong.", "alert");
-                return;
-            }
-
-            document.getElementById('btnEdit').innerText = "Mengubah...";
-
-            const itemRef = ref(db, `catatan/${idTerpilih}`);
-            await update(itemRef, { tanggal, email, jam });
+            if (!tanggal || !email || !jam) return;
             
-            document.getElementById('btnEdit').innerText = "Edit";
-            window.resetForm();
-        };
-
-        // HAPUS DATA
-        window.konfirmasiHapus = function() {
-            if (!idTerpilih) return;
-            
-            window.tampilkanModal("Hapus Catatan?", "Data akan dihapus permanen dari Firebase.", "confirm", async function() {
-                const itemRef = ref(db, `catatan/${idTerpilih}`);
-                await remove(itemRef);
-                window.resetForm();
+            document.getElementById('btnEdit').innerText = "Memproses...";
+            db.ref('catatan/' + idTerpilih).update({ tanggal, email, jam }).then(() => {
+                document.getElementById('btnEdit').innerText = "Edit";
+                resetForm();
             });
-        };
+        }
 
-        // RESET FORMULIR
-        window.resetForm = function() {
+        function konfirmasiHapus() {
+            if (!idTerpilih) return;
+            tampilkanModal("Hapus Data?", "Data ini akan dihapus permanen.", "confirm", () => {
+                db.ref('catatan/' + idTerpilih).remove().then(() => resetForm());
+            });
+        }
+
+        function resetForm() {
             document.getElementById('inputTanggal').value = '';
             document.getElementById('inputEmail').value = '';
             document.getElementById('inputJam').value = '';
-            
             idTerpilih = null;
-            
             document.getElementById('btnSimpan').disabled = false;
             document.getElementById('btnEdit').disabled = true;
             document.getElementById('btnHapus').disabled = true;
             document.getElementById('btnBatal').style.display = 'none';
-            
             renderTabel();
-        };
+        }
     </script>
 </body>
 </html>
