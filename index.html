@@ -745,17 +745,25 @@
             globalCountdownTimer = setInterval(() => {
                 const now = Date.now();
                 let hasChanges = false;
+                
+                // MENCARI ORDERAN PERTAMA (Paling lama aktif)
+                const activeIds = Object.keys(activeOrders);
+                activeIds.sort((a,b) => activeOrders[a].timestamp - activeOrders[b].timestamp);
+                const oldestOrderId = activeIds.length > 0 ? activeIds[0] : null;
 
-                Object.keys(activeOrders).forEach(id => {
+                activeIds.forEach(id => {
                     let order = activeOrders[id];
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
                     let remDuration = order.duration - elapsed;
 
+                    // Cek apakah ini adalah orderan pertama
+                    let isOrderanPertama = (id === oldestOrderId);
+
                     // LOGIKA BARU: Batal Otomatis 2 Menit (120 Detik)
-                    // Jika orderan ke-2 ke atas, OTP belum masuk, dan lewat batas auto cancel
-                    if (order.autoCancelLimit && order.otp === "000000" && elapsed >= order.autoCancelLimit && !order.isCanceling) {
-                        activeOrders[id].isCanceling = true; // Mencegah spam klik tombol batal
-                        tombolAksiMulti(id, 'CANCEL'); // Eksekusi batal
+                    // Pengecualian mutlak: JANGAN batalkan orderan pertama
+                    if (!isOrderanPertama && order.otp === "000000" && elapsed >= 120 && !order.isCanceling) {
+                        activeOrders[id].isCanceling = true; 
+                        tombolAksiMulti(id, 'CANCEL'); 
                         let elClock = document.getElementById(`clock-${id}`);
                         if (elClock) elClock.innerText = "Batal...";
                         hasChanges = true;
@@ -851,22 +859,17 @@
             }
             
             if (newId && newPhone) {
-                // LOGIKA BARU: Cek jumlah orderan aktif. Jika sudah ada (>= 1), maka limit 2 menit.
-                let activeCount = Object.keys(activeOrders).length;
-                let autoCancelLimitSecs = (activeCount >= 1) ? 120 : null; 
-
                 activeOrders[newId] = {
                     id: newId,
                     phone: newPhone,
                     service: s, country: c, provider: providerSelected,
                     displayName: document.getElementById('orderIdText').innerText,
                     timestamp: Date.now(),
-                    duration: 1200, // DIUBAH: Menjadi 1200 Detik (20 Menit) Mengikuti standar web 
+                    duration: 1200, // 20 Menit
                     cancelCd: cancelCd,
                     otp: "000000",
                     isReloading: false,
-                    isCanceling: false,
-                    autoCancelLimit: autoCancelLimitSecs // Menyimpan batas waktu batal otomatis (120 dtk / null)
+                    isCanceling: false
                 };
                 
                 saveLocalOrders();
