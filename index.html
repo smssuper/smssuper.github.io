@@ -746,22 +746,24 @@
                 const now = Date.now();
                 let hasChanges = false;
                 
-                // MENCARI ORDERAN PERTAMA (Paling lama aktif)
+                // MENCARI ORDERAN TERAKHIR (Paling baru ditambahkan)
                 const activeIds = Object.keys(activeOrders);
+                // Urutkan dari yang paling lama ke paling baru (timestamp membesar)
                 activeIds.sort((a,b) => activeOrders[a].timestamp - activeOrders[b].timestamp);
-                const oldestOrderId = activeIds.length > 0 ? activeIds[0] : null;
+                // ID yang ada di posisi akhir array adalah orderan paling baru
+                const newestOrderId = activeIds.length > 0 ? activeIds[activeIds.length - 1] : null;
 
                 activeIds.forEach(id => {
                     let order = activeOrders[id];
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
                     let remDuration = order.duration - elapsed;
 
-                    // Cek apakah ini adalah orderan pertama
-                    let isOrderanPertama = (id === oldestOrderId);
+                    // Cek apakah ini adalah orderan terakhir/terbaru
+                    let isOrderanTerakhir = (id === newestOrderId);
 
                     // LOGIKA BARU: Batal Otomatis 2 Menit (120 Detik)
-                    // Pengecualian mutlak: JANGAN batalkan orderan pertama
-                    if (!isOrderanPertama && order.otp === "000000" && elapsed >= 120 && !order.isCanceling) {
+                    // Pengecualian mutlak: JANGAN batalkan orderan terakhir
+                    if (!isOrderanTerakhir && order.otp === "000000" && elapsed >= 120 && !order.isCanceling) {
                         activeOrders[id].isCanceling = true; 
                         tombolAksiMulti(id, 'CANCEL'); 
                         let elClock = document.getElementById(`clock-${id}`);
