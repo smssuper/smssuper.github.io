@@ -175,8 +175,9 @@
         <div style="display:flex; align-items:center; gap:8px">
             <i class="fas fa-bars" onclick="toggleMenu()" style="cursor:pointer; font-size: 18px; margin-right: 5px;"></i>
             
-            <div style="position: relative; display: flex; align-items: center;">
-                <span style="font-weight: 900; font-size: 16px; color: var(--secondary); letter-spacing: -0.5px; text-transform: uppercase; padding-right: 15px;">SMS HERO</span>
+            <div style="position: relative; display: flex; align-items: center; gap: 6px;">
+                <span id="headerBrandTitle" style="font-weight: 900; font-size: 16px; color: var(--secondary); letter-spacing: -0.5px; text-transform: uppercase;">SMS HERO</span>
+                <button onclick="toggleApiServer()" style="background: var(--warning); color: white; border: none; padding: 4px 6px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s;" title="Ganti Layanan API"><i class="fas fa-exchange-alt"></i></button>
             </div>
         </div>
         <div style="position: absolute; left: 50%; transform: translateX(-50%); cursor: pointer; border-radius: 50%; background: #f0f3f6; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;" onclick="window.location.href='https://smssuper.github.io/filtercopy.html'">
@@ -208,8 +209,10 @@
                 <div class="slide-content">
                     
                     <div id="box-pesan-atas">
-                        <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Provider / Operator</label>
+                        <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">ID Layanan & Operator</label>
                         <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: stretch;">
+                            <input type="text" id="inputIdLayanan" value="ka" title="ID Layanan (ka = shopee, atau angka ID untuk OTP Cepat)" style="width: 50px; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; font-size: 13px; font-weight: 700; outline: none; text-align: center; color: var(--dark); flex-shrink: 0; box-sizing: border-box;">
+                            
                             <div style="position: relative; flex: 1;">
                                 <select id="pilihProvider" style="width:100%; height:100%; padding:10px 30px 10px 14px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:13px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="any">Otomatis (Paling Murah)</option>
@@ -246,7 +249,7 @@
                                 </tr>
                             </thead>
                             <tbody id="successTableBody">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
 
@@ -384,6 +387,48 @@
         let globalPollTimer = null;
         let globalCountdownTimer = null;
 
+        // ===== KONFIGURASI API SERVER =====
+        window.currentApiMode = 'HERO'; // Status saat ini ('HERO' atau 'OTPCEPAT')
+        const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
+        const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
+        
+        // PASTE URL CLOUDFLARE WORKER OTP CEPAT YANG DIBUAT DI LANGKAH 2 DI BAWAH INI:
+        const OTPCEPAT_WORKER_URL = "https://masukkan-url-worker-otpcepat-anda-disini.workers.dev"; 
+
+        window.toggleApiServer = () => {
+            const titleEl = document.getElementById('headerBrandTitle');
+            const inputLayanan = document.getElementById('inputIdLayanan');
+            
+            if (window.currentApiMode === 'HERO') {
+                window.currentApiMode = 'OTPCEPAT';
+                titleEl.innerText = 'OTP CEPAT';
+                titleEl.style.color = '#e74c3c'; 
+                if(inputLayanan) inputLayanan.value = '1'; 
+            } else {
+                window.currentApiMode = 'HERO';
+                titleEl.innerText = 'SMS HERO';
+                titleEl.style.color = 'var(--secondary)';
+                if(inputLayanan) inputLayanan.value = 'ka'; 
+            }
+            updateGlobalBalance(); 
+        };
+
+        async function callHeroApi(params) {
+            let url = "";
+            if (window.currentApiMode === 'HERO') {
+                url = `${PRIVATE_WORKER_URL}?api_key=${SMS_HERO_API_KEY}&${params}`;
+            } else {
+                url = `${OTPCEPAT_WORKER_URL}/?${params}`;
+            }
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error("Gagal terhubung ke API Worker.");
+            }
+            return await response.text();
+        }
+        // ===================================
+
         const emailQueueRef = ref(rtdb, 'gmail/queue');
         const emailHistoryRef = ref(rtdb, 'gmail/history');
         const passwordRef = ref(rtdb, 'settings/password');
@@ -513,8 +558,6 @@
                     <div class="action-btns" style="display:flex; gap:8px; margin-left:auto;">
                         <div style="width:36px; height:36px; border-radius:10px; background:#ff4757; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(255, 71, 87, 0.4);" onclick="hapusDataLink('${link.id}')"><i class="fas fa-times"></i></div>
                         <div style="width:36px; height:36px; border-radius:10px; background:#2ed573; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(46, 213, 115, 0.4);" onclick="bukaFormLink('${link.id}', \`${(link.name || '').replace(/`/g, '')}\`, \`${(link.url || '').replace(/`/g, '')}\`, \`${(link.price || '').replace(/`/g, '')}\`)"><i class="fas fa-edit"></i></div>
-                        
-                        <!-- TOMBOL CEKLIS PENANDA -->
                         <div style="width:36px; height:36px; border-radius:10px; background:white; color:${checkIconColor}; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: 0.3s;" onclick="toggleUsedStatus('${link.id}', ${link.isUsed || false})"><i class="fas fa-check"></i></div>
                     </div>`;
                 container.appendChild(card);
@@ -556,24 +599,19 @@
 
         window.hapusBanyakLink = async () => {
             const checkboxes = document.querySelectorAll('.link-checkbox:checked');
-            
             if (checkboxes.length === 0) {
                 alert('Silakan centang minimal satu link yang ingin dihapus.');
                 return;
             }
-
             if (confirm(`Anda yakin ingin menghapus ${checkboxes.length} link yang dipilih?`)) {
                 try {
                     const batchPromises = [];
                     checkboxes.forEach(cb => {
                         batchPromises.push(deleteDoc(doc(db, "links", cb.value)));
                     });
-                    
                     await Promise.all(batchPromises);
-                    
                     const checkAll = document.getElementById('checkAllLinks');
                     if(checkAll) checkAll.checked = false;
-                    
                 } catch (error) {
                     console.error("Gagal menghapus beberapa data:", error);
                     alert("Terjadi kesalahan saat menghapus data secara massal.");
@@ -650,18 +688,6 @@
             }
         };
 
-        const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
-        const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
-
-        async function callHeroApi(params) {
-            const url = `${PRIVATE_WORKER_URL}?api_key=${SMS_HERO_API_KEY}&${params}`;
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error("Gagal terhubung ke Worker Pribadi Anda.");
-            }
-            return await response.text();
-        }
-
         function saveLocalOrders() {
             localStorage.setItem('multiActiveOrders', JSON.stringify(activeOrders));
         }
@@ -724,7 +750,7 @@
             try {
                 const text = await callHeroApi("action=getBalance");
                 if(text.includes("ACCESS_BALANCE")) { 
-                    balElement.innerText = "$ " + parseFloat(text.split(":")[1]).toFixed(4); 
+                    balElement.innerText = (window.currentApiMode === 'HERO' ? "$ " : "Rp ") + parseFloat(text.split(":")[1]).toFixed(window.currentApiMode === 'HERO' ? 4 : 0);
                 } else if(text.includes("cloudflare") || text.includes("<html")) {
                     balElement.innerText = "Cek Worker";
                     console.log("Worker tidak diset dengan benar:", text);
@@ -746,32 +772,23 @@
                 const now = Date.now();
                 let hasChanges = false;
                 
-                // MENCARI ORDERAN TERAKHIR (Paling baru ditambahkan)
                 const activeIds = Object.keys(activeOrders);
-                // Urutkan dari yang paling lama ke paling baru (timestamp membesar)
                 activeIds.sort((a,b) => activeOrders[a].timestamp - activeOrders[b].timestamp);
-                // ID yang ada di posisi akhir array adalah orderan paling baru
                 const newestOrderId = activeIds.length > 0 ? activeIds[activeIds.length - 1] : null;
 
                 activeIds.forEach(id => {
                     let order = activeOrders[id];
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
                     let remDuration = order.duration - elapsed;
-
-                    // Cek apakah ini adalah orderan terakhir/terbaru
                     let isOrderanTerakhir = (id === newestOrderId);
 
-                    // LOGIKA BARU: Batal Otomatis 2 Menit (120 Detik)
-                    // Pengecualian mutlak: JANGAN batalkan orderan terakhir
                     if (!isOrderanTerakhir && order.otp === "000000" && elapsed >= 120 && !order.isCanceling) {
                         activeOrders[id].isCanceling = true; 
                         tombolAksiMulti(id, 'CANCEL'); 
                         let elClock = document.getElementById(`clock-${id}`);
                         if (elClock) elClock.innerText = "Batal...";
                         hasChanges = true;
-                    } 
-                    // Logika Timer Standar
-                    else if (remDuration <= 0 && !order.isCanceling) {
+                    } else if (remDuration <= 0 && !order.isCanceling) {
                         delete activeOrders[id];
                         hasChanges = true;
                     } else if (!order.isCanceling) {
@@ -798,7 +815,7 @@
                 for (let id in activeOrders) {
                     let order = activeOrders[id];
                     if (order.otp !== "000000" && !order.isReloading) continue;
-                    if (order.isCanceling) continue; // Jangan poll kalau sedang proses batal
+                    if (order.isCanceling) continue; 
                     
                     try {
                         const text = await callHeroApi(`action=getStatus&id=${id}`);
@@ -828,10 +845,12 @@
             const provider = document.getElementById('pilihProvider').value;
             const providerName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
             
-            let kodeLayanan = 'ka'; 
+            let kodeLayanan = document.getElementById('inputIdLayanan').value || 'ka'; 
+            let countryCode = window.currentApiMode === 'HERO' ? 6 : 0; 
+
             let displayName = provider === 'any' ? "Otomatis" : providerName;
-            document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
-            beliNomorAPI(kodeLayanan, 6, provider);
+            document.getElementById('orderIdText').innerText = `Layanan: ${kodeLayanan} (${displayName})`;
+            beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
         window.beliNomorAPI = async (s, c, providerSelected) => {
@@ -854,7 +873,7 @@
                 } else if(text.includes("cloudflare") || text.includes("<html")) {
                     alert("Gagal: Worker Cloudflare Anda belum disetel kodenya dengan benar.");
                 } else { 
-                    alert("SMS HERO Gagal: Stok Kosong / Saldo Habis.\nRespons server: " + text); 
+                    alert("Gagal: Stok Kosong / Saldo Habis / Layanan tidak valid.\nRespons server: " + text); 
                 }
             } catch (e) { 
                 alert("Error Koneksi: " + e.message + "\nPastikan Cloudflare Worker Anda tidak diblokir/error!"); 
@@ -867,7 +886,7 @@
                     service: s, country: c, provider: providerSelected,
                     displayName: document.getElementById('orderIdText').innerText,
                     timestamp: Date.now(),
-                    duration: 1200, // 20 Menit
+                    duration: 1200, 
                     cancelCd: cancelCd,
                     otp: "000000",
                     isReloading: false,
@@ -916,14 +935,12 @@
                     const text = await callHeroApi(`action=setStatus&id=${id}&status=${status}`); 
                     
                     if ((tipe === 'CANCEL' || tipe === 'REPLACE') && text.includes('EARLY_CANCEL_DENIED')) {
-                        // Jika ke-deny dari API provider karena belum 2 menit
-                        alert("HeroSMS: Nomor tidak bisa langsung dibatalkan. Anda harus menunggu 2 menit setelah pembelian.");
-                        if(activeOrders[id]) activeOrders[id].isCanceling = false; // Kembalikan status cancel 
+                        alert("API Proxy: Nomor tidak bisa langsung dibatalkan. Anda harus menunggu sejenak sesuai aturan provider.");
+                        if(activeOrders[id]) activeOrders[id].isCanceling = false; 
                         renderOrdersUI();
                         return; 
                     }
                 } catch(e) {
-                    // Jangan alert jika di-trigger oleh sistem auto cancel agar tidak spam mengganggu UX
                     if(!order.isCanceling){
                         alert("Koneksi gagal saat membatalkan. Silakan coba lagi.");
                     }
