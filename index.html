@@ -392,8 +392,8 @@
         const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
         const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
         
-        // PASTE URL CLOUDFLARE WORKER OTP CEPAT YANG DIBUAT DI LANGKAH 2 DI BAWAH INI:
-        const OTPCEPAT_WORKER_URL = "https://masukkan-url-worker-otpcepat-anda-disini.workers.dev"; 
+        // URL OTP CEPAT sudah diperbaiki
+        const OTPCEPAT_WORKER_URL = "https://otpcepat-proxy.you-zainul.workers.dev"; 
 
         window.toggleApiServer = () => {
             const titleEl = document.getElementById('headerBrandTitle');
@@ -403,12 +403,23 @@
                 window.currentApiMode = 'OTPCEPAT';
                 titleEl.innerText = 'OTP CEPAT';
                 titleEl.style.color = '#e74c3c'; 
-                if(inputLayanan) inputLayanan.value = '1'; 
+                if(inputLayanan) {
+                    // GANTI ANGKA 10 DI BAWAH INI DENGAN ID SHOPEE DARI OTP CEPAT
+                    inputLayanan.value = '10'; 
+                    inputLayanan.disabled = true; // Mengunci kolom input
+                    inputLayanan.style.backgroundColor = '#e2e8f0'; // Efek abu-abu
+                    inputLayanan.title = 'Terkunci khusus layanan Shopee';
+                }
             } else {
                 window.currentApiMode = 'HERO';
                 titleEl.innerText = 'SMS HERO';
                 titleEl.style.color = 'var(--secondary)';
-                if(inputLayanan) inputLayanan.value = 'ka'; 
+                if(inputLayanan) {
+                    inputLayanan.value = 'ka'; 
+                    inputLayanan.disabled = false; // Membuka kunci kolom input kembali
+                    inputLayanan.style.backgroundColor = 'white'; // Kembali ke warna putih
+                    inputLayanan.title = 'ID Layanan (ka = shopee)';
+                }
             }
             updateGlobalBalance(); 
         };
