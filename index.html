@@ -211,7 +211,7 @@
                     <div id="box-pesan-atas">
                         <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">ID Layanan & Operator</label>
                         <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: stretch;">
-                            <input type="text" id="inputIdLayanan" value="ka" title="ID Layanan (ka = shopee, atau angka ID untuk OTP Cepat)" style="width: 50px; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; font-size: 13px; font-weight: 700; outline: none; text-align: center; color: var(--dark); flex-shrink: 0; box-sizing: border-box;">
+                            <input type="text" id="inputIdLayanan" value="ka" title="ID Layanan (ka = shopee)" style="width: 50px; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; font-size: 13px; font-weight: 700; outline: none; text-align: center; color: var(--dark); flex-shrink: 0; box-sizing: border-box;">
                             
                             <div style="position: relative; flex: 1;">
                                 <select id="pilihProvider" style="width:100%; height:100%; padding:10px 30px 10px 14px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:13px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
@@ -388,11 +388,10 @@
         let globalCountdownTimer = null;
 
         // ===== KONFIGURASI API SERVER =====
-        window.currentApiMode = 'HERO'; // Status saat ini ('HERO' atau 'OTPCEPAT')
+        window.currentApiMode = 'HERO'; 
         const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
         const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
         
-        // URL OTP CEPAT sudah diperbaiki
         const OTPCEPAT_WORKER_URL = "https://otpcepat-proxy.you-zainul.workers.dev"; 
 
         window.toggleApiServer = () => {
@@ -857,7 +856,9 @@
             const providerName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
             
             let kodeLayanan = document.getElementById('inputIdLayanan').value || 'ka'; 
-            let countryCode = window.currentApiMode === 'HERO' ? 6 : 0; 
+            
+            // UBAH DISINI: Ganti angka 12 dengan ID Negara Indonesia di OTP Cepat jika masih salah
+            let countryCode = window.currentApiMode === 'HERO' ? 6 : 12; 
 
             let displayName = provider === 'any' ? "Otomatis" : providerName;
             document.getElementById('orderIdText').innerText = `Layanan: ${kodeLayanan} (${displayName})`;
