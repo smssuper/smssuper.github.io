@@ -387,10 +387,22 @@
         let globalCountdownTimer = null;
 
         // ===== KONFIGURASI API SERVER =====
-        window.currentApiMode = 'HERO'; 
+        // 1. Ambil status API terakhir dari localStorage (default ke 'HERO' jika belum ada)
+        window.currentApiMode = localStorage.getItem('savedApiMode') || 'HERO'; 
+        
         const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
         const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
         const OTPCEPAT_WORKER_URL = "https://otpcepat-proxy.you-zainul.workers.dev"; 
+
+        // 2. Sesuaikan tampilan judul saat halaman pertama kali dimuat
+        const titleEl = document.getElementById('headerBrandTitle');
+        if (window.currentApiMode === 'OTPCEPAT') {
+            titleEl.innerText = 'OTP CEPAT';
+            titleEl.style.color = '#e74c3c'; 
+        } else {
+            titleEl.innerText = 'SMS HERO';
+            titleEl.style.color = 'var(--secondary)';
+        }
 
         window.toggleApiServer = () => {
             const titleEl = document.getElementById('headerBrandTitle');
@@ -404,6 +416,10 @@
                 titleEl.innerText = 'SMS HERO';
                 titleEl.style.color = 'var(--secondary)';
             }
+            
+            // 3. Simpan pilihan terbaru ke localStorage setiap kali tombol diklik
+            localStorage.setItem('savedApiMode', window.currentApiMode);
+            
             updateGlobalBalance(); 
         };
 
