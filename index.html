@@ -209,9 +209,8 @@
                 <div class="slide-content">
                     
                     <div id="box-pesan-atas">
-                        <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">ID Layanan & Operator</label>
+                        <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Provider / Operator</label>
                         <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: stretch;">
-                            <input type="text" id="inputIdLayanan" value="ka" title="ID Layanan (ka = shopee)" style="width: 50px; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; font-size: 13px; font-weight: 700; outline: none; text-align: center; color: var(--dark); flex-shrink: 0; box-sizing: border-box;">
                             
                             <div style="position: relative; flex: 1;">
                                 <select id="pilihProvider" style="width:100%; height:100%; padding:10px 30px 10px 14px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:13px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
@@ -219,7 +218,7 @@
                                     <option value="telkomsel">Telkomsel</option>
                                     <option value="xl">XL / Axis</option>
                                     <option value="indosat">Indosat</option>
-                                    <option value="three">Tri (3)</option>
+                                    <option value="tri">Tri (3)</option>
                                     <option value="smartfren">Smartfren</option>
                                 </select>
                                 <i class="fas fa-caret-down" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none;"></i>
@@ -396,29 +395,15 @@
 
         window.toggleApiServer = () => {
             const titleEl = document.getElementById('headerBrandTitle');
-            const inputLayanan = document.getElementById('inputIdLayanan');
             
             if (window.currentApiMode === 'HERO') {
                 window.currentApiMode = 'OTPCEPAT';
                 titleEl.innerText = 'OTP CEPAT';
                 titleEl.style.color = '#e74c3c'; 
-                if(inputLayanan) {
-                    // GANTI ANGKA 10 DI BAWAH INI DENGAN ID SHOPEE DARI OTP CEPAT
-                    inputLayanan.value = '10'; 
-                    inputLayanan.disabled = true; // Mengunci kolom input
-                    inputLayanan.style.backgroundColor = '#e2e8f0'; // Efek abu-abu
-                    inputLayanan.title = 'Terkunci khusus layanan Shopee';
-                }
             } else {
                 window.currentApiMode = 'HERO';
                 titleEl.innerText = 'SMS HERO';
                 titleEl.style.color = 'var(--secondary)';
-                if(inputLayanan) {
-                    inputLayanan.value = 'ka'; 
-                    inputLayanan.disabled = false; // Membuka kunci kolom input kembali
-                    inputLayanan.style.backgroundColor = 'white'; // Kembali ke warna putih
-                    inputLayanan.title = 'ID Layanan (ka = shopee)';
-                }
             }
             updateGlobalBalance(); 
         };
@@ -855,13 +840,20 @@
             const provider = document.getElementById('pilihProvider').value;
             const providerName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
             
-            let kodeLayanan = document.getElementById('inputIdLayanan').value || 'ka'; 
-            
-            // UBAH DISINI: Ganti angka 12 dengan ID Negara Indonesia di OTP Cepat jika masih salah
-            let countryCode = window.currentApiMode === 'HERO' ? 6 : 12; 
+            let kodeLayanan, countryCode;
+
+            if (window.currentApiMode === 'HERO') {
+                kodeLayanan = 'ka'; // ID Shopee untuk SMS Hero
+                countryCode = 6;    // ID Indonesia untuk SMS Hero
+            } else {
+                // --- PENGATURAN OTP CEPAT ---
+                // Ganti teks di bawah dengan angka ID khusus dari web OTP Cepat
+                kodeLayanan = 'ISI_DENGAN_ANGKA_ID_SHOPEE'; 
+                countryCode = 'ISI_DENGAN_ANGKA_ID_INDONESIA'; 
+            }
 
             let displayName = provider === 'any' ? "Otomatis" : providerName;
-            document.getElementById('orderIdText').innerText = `Layanan: ${kodeLayanan} (${displayName})`;
+            document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
