@@ -387,39 +387,41 @@
         let globalCountdownTimer = null;
 
         // ===== KONFIGURASI API SERVER =====
-        // 1. Ambil status API terakhir dari localStorage (default ke 'HERO' jika belum ada)
         window.currentApiMode = localStorage.getItem('savedApiMode') || 'HERO'; 
         
         const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
         const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
-        const OTPCEPAT_WORKER_URL = "https://otpcepat-proxy.you-zainul.workers.dev"; 
+        const OTPCEPAT_WORKER_URL = "https://otpcepat-proxy.you-zainul.workers.dev/"; 
+        const SMSCODE_WORKER_URL = "https://smscode-proxy.you-zainul.workers.dev/";
 
-        // 2. Sesuaikan tampilan judul saat halaman pertama kali dimuat
         const titleEl = document.getElementById('headerBrandTitle');
-        if (window.currentApiMode === 'OTPCEPAT') {
-            titleEl.innerText = 'OTP CEPAT';
-            titleEl.style.color = '#e74c3c'; 
-        } else {
-            titleEl.innerText = 'SMS HERO';
-            titleEl.style.color = 'var(--secondary)';
-        }
-
-        window.toggleApiServer = () => {
-            const titleEl = document.getElementById('headerBrandTitle');
-            
-            if (window.currentApiMode === 'HERO') {
-                window.currentApiMode = 'OTPCEPAT';
+        
+        function updateTitleUI() {
+            if (window.currentApiMode === 'OTPCEPAT') {
                 titleEl.innerText = 'OTP CEPAT';
                 titleEl.style.color = '#e74c3c'; 
+            } else if (window.currentApiMode === 'SMSCODE') {
+                titleEl.innerText = 'SMS CODE';
+                titleEl.style.color = '#8e44ad'; 
             } else {
-                window.currentApiMode = 'HERO';
                 titleEl.innerText = 'SMS HERO';
                 titleEl.style.color = 'var(--secondary)';
             }
+        }
+        
+        updateTitleUI();
+
+        window.toggleApiServer = () => {
+            if (window.currentApiMode === 'HERO') {
+                window.currentApiMode = 'OTPCEPAT';
+            } else if (window.currentApiMode === 'OTPCEPAT') {
+                window.currentApiMode = 'SMSCODE';
+            } else {
+                window.currentApiMode = 'HERO';
+            }
             
-            // 3. Simpan pilihan terbaru ke localStorage setiap kali tombol diklik
+            updateTitleUI();
             localStorage.setItem('savedApiMode', window.currentApiMode);
-            
             updateGlobalBalance(); 
         };
 
@@ -427,8 +429,10 @@
             let url = "";
             if (window.currentApiMode === 'HERO') {
                 url = `${PRIVATE_WORKER_URL}?api_key=${SMS_HERO_API_KEY}&${params}`;
+            } else if (window.currentApiMode === 'OTPCEPAT') {
+                url = `${OTPCEPAT_WORKER_URL}?${params}`;
             } else {
-                url = `${OTPCEPAT_WORKER_URL}/?${params}`;
+                url = `${SMSCODE_WORKER_URL}?${params}`;
             }
 
             const response = await fetch(url);
@@ -855,9 +859,8 @@
             const provider = document.getElementById('pilihProvider').value;
             const providerName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
             
-            // Pengaturan ID Layanan secara otomatis di latar belakang
-            let kodeLayanan = window.currentApiMode === 'HERO' ? 'ka' : '287'; 
-            let countryCode = window.currentApiMode === 'HERO' ? 6 : 6; 
+            let kodeLayanan = window.currentApiMode === 'HERO' ? 'ka' : (window.currentApiMode === 'OTPCEPAT' ? '287' : '87'); 
+            let countryCode = 6; 
 
             let displayName = provider === 'any' ? "Otomatis" : providerName;
             document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
