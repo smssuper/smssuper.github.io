@@ -861,14 +861,16 @@
         }
 
         window.prosesPesanLayanan = () => {
-            const provider = document.getElementById('pilihProvider').value;
-            const providerName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
+            // Kunci ke harga paling murah di semua operator
+            const provider = 'any'; 
             
-            let kodeLayanan = window.currentApiMode === 'HERO' ? 'ka' : (window.currentApiMode === 'OTPCEPAT' ? '287' : '87'); 
-            let countryCode = 6; 
+            // Ubah kode layanan Shopee menjadi 21 (platform_id) dan negara menjadi 7 khusus untuk SMSCODE
+            let kodeLayanan = window.currentApiMode === 'HERO' ? 'ka' : (window.currentApiMode === 'OTPCEPAT' ? '287' : '21'); 
+            let countryCode = window.currentApiMode === 'SMSCODE' ? 7 : 6; 
 
-            let displayName = provider === 'any' ? "Otomatis" : providerName;
+            let displayName = "Otomatis (Paling Murah)";
             document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
+            
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
