@@ -764,7 +764,12 @@
             try {
                 const text = await callHeroApi("action=getBalance");
                 if(text.includes("ACCESS_BALANCE")) { 
-                    balElement.innerText = (window.currentApiMode === 'HERO' ? "$ " : "Rp ") + parseFloat(text.split(":")[1]).toFixed(window.currentApiMode === 'HERO' ? 4 : 0);
+                    let bal = parseFloat(text.split(":")[1]);
+                    if (window.currentApiMode === 'HERO') {
+                        balElement.innerText = "$ " + bal.toFixed(4);
+                    } else {
+                        balElement.innerText = "Rp " + bal.toLocaleString('id-ID'); 
+                    }
                 } else if(text.includes("cloudflare") || text.includes("<html")) {
                     balElement.innerText = "Cek Worker";
                     console.log("Worker tidak diset dengan benar:", text);
