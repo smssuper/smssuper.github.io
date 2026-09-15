@@ -860,19 +860,35 @@
             }, 3000);
         }
 
+        // ===================================
+        // BAGIAN YANG DIPERBAIKI SESUAI REQUEST
+        // ===================================
         window.prosesPesanLayanan = () => {
             // Kunci ke harga paling murah di semua operator
             const provider = 'any'; 
             
-            // Ubah kode layanan Shopee menjadi 21 (platform_id) dan negara menjadi 7 khusus untuk SMSCODE
-            let kodeLayanan = window.currentApiMode === 'HERO' ? 'ka' : (window.currentApiMode === 'OTPCEPAT' ? '287' : '21'); 
-            let countryCode = window.currentApiMode === 'SMSCODE' ? 7 : 6; 
+            let kodeLayanan = 'ka';
+            let countryCode = 6;
+            
+            if (window.currentApiMode === 'HERO') {
+                kodeLayanan = 'ka';
+                countryCode = 6;
+            } else if (window.currentApiMode === 'OTPCEPAT') {
+                kodeLayanan = '287';
+                countryCode = 6;
+            } else if (window.currentApiMode === 'SMSCODE') {
+                // Berdasarkan referensi gambar 1000926548_2.jpg
+                // platform_id Shopee = 21, country_id Indonesia = 7
+                kodeLayanan = '21'; 
+                countryCode = 7;
+            }
 
             let displayName = "Otomatis (Paling Murah)";
             document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
             
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
+        // ===================================
 
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
