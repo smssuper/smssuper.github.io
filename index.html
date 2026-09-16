@@ -799,13 +799,13 @@
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
                     let remDuration = order.duration - elapsed;
 
-                    // UI Kunci Tombol Batal selama 3 menit khusus SMS Code
+                    // UI Kunci Tombol Batal selama 3,5 menit khusus SMS Code
                     if (order.apiMode === 'SMSCODE' && !order.isCanceling) {
                         let btnCancel = document.getElementById(`btnCancel-${id}`);
                         if (btnCancel) {
-                            if (elapsed < 180) { // Kurang dari 3 menit
+                            if (elapsed < 210) { // Kurang dari 3,5 menit
                                 btnCancel.disabled = true;
-                                btnCancel.innerHTML = `<i class="fas fa-lock" style="font-size:9px;"></i> ${180 - elapsed}s`;
+                                btnCancel.innerHTML = `<i class="fas fa-lock" style="font-size:9px;"></i> ${210 - elapsed}s`;
                             } else if (btnCancel.disabled) {
                                 btnCancel.disabled = false;
                                 btnCancel.innerHTML = 'BATAL';
@@ -813,8 +813,8 @@
                         }
                     }
 
-                    // FITUR BATAL OTOMATIS (3 Menit untuk SMS Code, 2 Menit untuk Layanan Lain)
-                    let autoCancelLimit = (order.apiMode === 'SMSCODE') ? 180 : 120;
+                    // FITUR BATAL OTOMATIS (3,5 Menit untuk SMS Code, 2 Menit untuk Layanan Lain)
+                    let autoCancelLimit = (order.apiMode === 'SMSCODE') ? 210 : 120;
                     
                     if (order.otp === "000000" && elapsed >= autoCancelLimit) {
                         if (!order.isCanceling && (!order.nextRetry || elapsed >= order.nextRetry)) {
