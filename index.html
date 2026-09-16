@@ -799,31 +799,44 @@
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
                     let remDuration = order.duration - elapsed;
 
-                    // FITUR BATAL OTOMATIS (Tepat setelah 2 menit / 120 detik SMS belum masuk)
-                    if (order.otp === "000000" && elapsed >= 120) {
-                        // Pastikan tidak sedang diproses, dan sudah melewati waktu tunggu penalti (retry)
+                    // UI Kunci Tombol Batal selama 3 menit khusus SMS Code
+                    if (order.apiMode === 'SMSCODE' && !order.isCanceling) {
+                        let btnCancel = document.getElementById(`btnCancel-${id}`);
+                        if (btnCancel) {
+                            if (elapsed < 180) { // Kurang dari 3 menit
+                                btnCancel.disabled = true;
+                                btnCancel.innerHTML = `<i class="fas fa-lock" style="font-size:9px;"></i> ${180 - elapsed}s`;
+                            } else if (btnCancel.disabled) {
+                                btnCancel.disabled = false;
+                                btnCancel.innerHTML = 'BATAL';
+                            }
+                        }
+                    }
+
+                    // FITUR BATAL OTOMATIS (3 Menit untuk SMS Code, 2 Menit untuk Layanan Lain)
+                    let autoCancelLimit = (order.apiMode === 'SMSCODE') ? 180 : 120;
+                    
+                    if (order.otp === "000000" && elapsed >= autoCancelLimit) {
                         if (!order.isCanceling && (!order.nextRetry || elapsed >= order.nextRetry)) {
-                            // Tandai sedang membatalkan agar timer tidak melakukan double-klik
                             activeOrders[id].isCanceling = true;
                             
                             let elClock = document.getElementById(`clock-${id}`);
                             if (elClock) elClock.innerText = "Auto Batal...";
                             
-                            // Eksekusi fungsi batal
                             tombolAksiMulti(id, 'AUTO_CANCEL');
                             hasChanges = true;
                             return; 
                         }
                     }
 
-                    // Jika sedang diproses batal/ganti, biarkan tulisan proses muncul
+                    // Sedang proses API
                     if (order.isCanceling) {
                         let elClock = document.getElementById(`clock-${id}`);
                         if (elClock && !elClock.innerText.includes("Batal")) elClock.innerText = "Batal...";
                         return;
                     }
 
-                    // Jika waktu pesanan di web aslinya benar-benar kadaluarsa (misal 25 menit habis)
+                    // Waktu Habis (misal 25 menit)
                     if (remDuration <= 0) {
                         delete activeOrders[id]; 
                         hasChanges = true;
@@ -931,13 +944,15 @@
             }
             
             if (newId && newPhone) {
-                // Tentukan durasi: SMS Code = 25 Menit (1500 detik), Sisanya = 20 Menit (1200 detik)
-                let durasiPesanan = window.currentApiMode === 'SMSCODE' ? 1500 : 1200;
+                // Tentukan durasi berdasar Mode API (SMSCODE = 25 Menit)
+                let currentApi = window.currentApiMode;
+                let durasiPesanan = currentApi === 'SMSCODE' ? 1500 : 1200;
 
                 activeOrders[newId] = {
                     id: newId,
                     phone: newPhone,
                     service: s, country: c, provider: providerSelected,
+                    apiMode: currentApi,
                     displayName: document.getElementById('orderIdText').innerText,
                     timestamp: Date.now(),
                     duration: durasiPesanan, 
@@ -956,7 +971,7 @@
         };
 
         // ==========================================
-        // FUNGSI AKSI TOMBOL (DIPERBAIKI)
+        // FUNGSI AKSI TOMBOL
         // ==========================================
         window.tombolAksiMulti = async (id, tipe) => {
             if (!activeOrders[id]) return;
@@ -980,7 +995,6 @@
                 return; 
             }
 
-            // Kunci tombol agar tidak dobel klik
             const btnDone = document.getElementById(`btnDone-${id}`);
             const btnReload = document.getElementById(`btnReload-${id}`);
             const btnCancel = document.getElementById(`btnCancel-${id}`);
@@ -1004,26 +1018,23 @@
                 try { 
                     const text = await callHeroApi(`action=setStatus&id=${id}&status=${status}`); 
                     
-                    // Jika server menolak dibatalkan karena belum saatnya
-                    if (text.includes('EARLY_CANCEL_DENIED')) {
+                    if ((tipe === 'CANCEL' || tipe === 'AUTO_CANCEL' || tipe === 'REPLACE') && text.includes('EARLY_CANCEL_DENIED')) {
                         if (tipe !== 'AUTO_CANCEL') {
                             alert("Nomor belum bisa dibatalkan.\nTunggu sekitar 1-2 menit sesuai dengan aturan pusat provider.");
                         }
                         
                         if(activeOrders[id]) {
                             activeOrders[id].isCanceling = false; 
-                            // Beri penalti waktu 30 detik sebelum sistem mencoba membatalkan lagi
                             activeOrders[id].nextRetry = Math.floor((Date.now() - activeOrders[id].timestamp) / 1000) + 30; 
                         }
                         renderOrdersUI();
                         saveLocalOrders();
-                        return; // Berhenti di sini, jangan hapus pesanan
+                        return; 
                     }
                 } catch(e) {
                     if(activeOrders[id]) {
                         if (tipe !== 'AUTO_CANCEL') alert("Koneksi gagal saat membatalkan. Silakan coba lagi.");
                         activeOrders[id].isCanceling = false; 
-                        // Jika gagal karena sinyal, coba auto-batal lagi 15 detik kemudian
                         activeOrders[id].nextRetry = Math.floor((Date.now() - activeOrders[id].timestamp) / 1000) + 15;
                     }
                     renderOrdersUI(); 
@@ -1036,7 +1047,6 @@
                 try { await addDoc(collection(db, "success_numbers"), { phone: order.phone, createdAt: Date.now() }); } catch(e) {}
             }
             
-            // Jika berhasil eksekusi di server pusat, baru pesanan Dihapus dari UI
             delete activeOrders[id];
             saveLocalOrders();
             renderOrdersUI();
