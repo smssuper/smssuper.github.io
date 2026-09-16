@@ -861,11 +861,11 @@
         }
 
         // ===================================
-        // BAGIAN YANG DIPERBAIKI SESUAI REQUEST
+        // FUNGSI UTAMA PEMESANAN (SUDAH DIPERBAIKI)
         // ===================================
         window.prosesPesanLayanan = () => {
-            // Kunci ke harga paling murah di semua operator
-            const provider = 'any'; 
+            // Ambil pilihan dari dropdown
+            let provider = document.getElementById('pilihProvider').value;
             
             let kodeLayanan = 'ka';
             let countryCode = 6;
@@ -877,13 +877,20 @@
                 kodeLayanan = '287';
                 countryCode = 6;
             } else if (window.currentApiMode === 'SMSCODE') {
-                // Berdasarkan referensi gambar 1000926548_2.jpg
-                // platform_id Shopee = 21, country_id Indonesia = 7
-                kodeLayanan = '21'; 
+                // Menggunakan catalog_product_id untuk Shopee Indonesia
+                kodeLayanan = '470'; 
                 countryCode = 7;
+                
+                // MENGUNCI HARGA TERMURAH: 
+                // Abaikan pilihan operator dari dropdown dan paksa menjadi 'any'
+                provider = 'any'; 
             }
 
             let displayName = "Otomatis (Paling Murah)";
+            if (provider !== 'any') {
+                displayName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
+            }
+
             document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
             
             beliNomorAPI(kodeLayanan, countryCode, provider);
