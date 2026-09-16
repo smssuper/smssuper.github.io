@@ -386,7 +386,6 @@
         let globalPollTimer = null;
         let globalCountdownTimer = null;
 
-        // ===== KONFIGURASI API SERVER =====
         window.currentApiMode = localStorage.getItem('savedApiMode') || 'HERO'; 
         
         const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
@@ -441,7 +440,6 @@
             }
             return await response.text();
         }
-        // ===================================
 
         const emailQueueRef = ref(rtdb, 'gmail/queue');
         const emailHistoryRef = ref(rtdb, 'gmail/history');
@@ -785,6 +783,9 @@
         updateGlobalBalance();
         setInterval(updateGlobalBalance, 5000);
 
+        // ==========================================
+        // FITUR BATAL OTOMATIS & PENGUKUR WAKTU
+        // ==========================================
         function startGlobalTimers() {
             if(globalCountdownTimer) clearInterval(globalCountdownTimer);
             globalCountdownTimer = setInterval(() => {
@@ -792,25 +793,39 @@
                 let hasChanges = false;
                 
                 const activeIds = Object.keys(activeOrders);
-                activeIds.sort((a,b) => activeOrders[a].timestamp - activeOrders[b].timestamp);
-                const newestOrderId = activeIds.length > 0 ? activeIds[activeIds.length - 1] : null;
 
                 activeIds.forEach(id => {
                     let order = activeOrders[id];
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
-                    let remDuration = order.duration - elapsed;
-                    let isOrderanTerakhir = (id === newestOrderId);
+                    let remDuration = order.duration - elapsed; // Hitung mundur 20 menit (1200 dtk)
 
-                    if (!isOrderanTerakhir && order.otp === "000000" && elapsed >= 120 && !order.isCanceling) {
-                        activeOrders[id].isCanceling = true; 
-                        tombolAksiMulti(id, 'CANCEL'); 
+                    if (order.isCanceling) {
                         let elClock = document.getElementById(`clock-${id}`);
                         if (elClock) elClock.innerText = "Batal...";
+                        return; // Jangan jalankan hitungan jika sedang diproses API
+                    }
+
+                    // FITUR BATAL OTOMATIS PINTAR (Setelah 2 Menit tanpa SMS)
+                    if (order.otp === "000000" && elapsed >= 120) {
+                        // Cek apakah server mengizinkan (atau menunggu jadwal coba lagi)
+                        if (!order.nextRetry || elapsed >= order.nextRetry) {
+                            activeOrders[id].isCanceling = true; // Tandai agar timer skip
+                            let elClock = document.getElementById(`clock-${id}`);
+                            if (elClock) elClock.innerText = "Auto Batal...";
+                            
+                            // Eksekusi Batal Otomatis ke API
+                            tombolAksiMulti(id, 'AUTO_CANCEL');
+                            hasChanges = true;
+                            return;
+                        }
+                    }
+
+                    // Jika Waktu 20 Menit Habis (Kadaluarsa Resmi)
+                    if (remDuration <= 0) {
+                        delete activeOrders[id]; 
                         hasChanges = true;
-                    } else if (remDuration <= 0 && !order.isCanceling) {
-                        delete activeOrders[id];
-                        hasChanges = true;
-                    } else if (!order.isCanceling) {
+                    } else {
+                        // Tampilkan Timer Normal
                         let elClock = document.getElementById(`clock-${id}`);
                         if (elClock) {
                             let m = Math.floor(remDuration / 60), s = remDuration % 60;
@@ -860,13 +875,8 @@
             }, 3000);
         }
 
-        // ===================================
-        // FUNGSI UTAMA PEMESANAN (SUDAH DIPERBAIKI)
-        // ===================================
         window.prosesPesanLayanan = () => {
-            // Ambil pilihan dari dropdown
             let provider = document.getElementById('pilihProvider').value;
-            
             let kodeLayanan = 'ka';
             let countryCode = 6;
             
@@ -877,12 +887,8 @@
                 kodeLayanan = '287';
                 countryCode = 6;
             } else if (window.currentApiMode === 'SMSCODE') {
-                // Menggunakan catalog_product_id untuk Shopee Indonesia
                 kodeLayanan = '470'; 
                 countryCode = 7;
-                
-                // MENGUNCI HARGA TERMURAH: 
-                // Abaikan pilihan operator dari dropdown dan paksa menjadi 'any'
                 provider = 'any'; 
             }
 
@@ -892,10 +898,8 @@
             }
 
             document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
-            
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
-        // ===================================
 
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
@@ -930,7 +934,7 @@
                     service: s, country: c, provider: providerSelected,
                     displayName: document.getElementById('orderIdText').innerText,
                     timestamp: Date.now(),
-                    duration: 1200, 
+                    duration: 1200, // Durasi pesanan aslinya adalah 20 menit (1200 detik)
                     cancelCd: cancelCd,
                     otp: "000000",
                     isReloading: false,
@@ -945,18 +949,34 @@
             btnPesan.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right:6px;"></i> PESAN';
         };
 
+        // ==========================================
+        // PERBAIKAN LOGIKA TOMBOL AKSI
+        // ==========================================
         window.tombolAksiMulti = async (id, tipe) => {
             if (!activeOrders[id]) return;
             const order = activeOrders[id];
 
+            // Aksi Khusus Reload
             if (tipe === 'RELOAD') {
-                activeOrders[id].isReloading = true;
+                activeOrders[id].otp = "000000"; 
+                activeOrders[id].isReloading = true; // Munculkan indikator loading
                 renderOrdersUI();
+                
                 try { await callHeroApi(`action=setStatus&id=${id}&status=3`); } catch(e){}
+                
+                // Matikan indikator setelah sebentar, sistem lanjut Polling API lagi
+                setTimeout(() => {
+                    if (activeOrders[id]) {
+                        activeOrders[id].isReloading = false;
+                        renderOrdersUI();
+                    }
+                }, 2000);
+
                 saveLocalOrders();
                 return; 
             }
 
+            // Kunci tombol saat sedang diproses untuk mencegah double-click
             const btnDone = document.getElementById(`btnDone-${id}`);
             const btnReload = document.getElementById(`btnReload-${id}`);
             const btnCancel = document.getElementById(`btnCancel-${id}`);
@@ -966,48 +986,66 @@
             if(btnReload) btnReload.disabled = true;
             if(btnCancel) {
                 btnCancel.disabled = true;
-                if(tipe === 'CANCEL') btnCancel.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                if(tipe === 'CANCEL' || tipe === 'AUTO_CANCEL') btnCancel.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             }
             if(btnReplace) {
                 btnReplace.disabled = true;
                 if(tipe === 'REPLACE') btnReplace.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             }
 
-            if (tipe === 'CANCEL' || tipe === 'DONE' || tipe === 'REPLACE') {
+            // Aksi Selesai, Batal, atau Ganti Nomor
+            if (tipe === 'CANCEL' || tipe === 'AUTO_CANCEL' || tipe === 'DONE' || tipe === 'REPLACE') {
                 const status = (tipe === 'DONE') ? 6 : 8;
+                activeOrders[id].isCanceling = true; 
+                
                 try { 
                     const text = await callHeroApi(`action=setStatus&id=${id}&status=${status}`); 
                     
-                    if ((tipe === 'CANCEL' || tipe === 'REPLACE') && text.includes('EARLY_CANCEL_DENIED')) {
-                        alert("API Proxy: Nomor tidak bisa langsung dibatalkan. Anda harus menunggu sejenak sesuai aturan provider.");
-                        if(activeOrders[id]) activeOrders[id].isCanceling = false; 
+                    // Deteksi penolakan batal karena masih terlalu awal di Server
+                    if ((tipe === 'CANCEL' || tipe === 'AUTO_CANCEL' || tipe === 'REPLACE') && text.includes('EARLY_CANCEL_DENIED')) {
+                        // Tampilkan pesan hanya jika pengguna membatalkan manual
+                        if (tipe !== 'AUTO_CANCEL') {
+                            alert("Nomor belum bisa dibatalkan.\nTunggu sekitar 1-2 menit sesuai dengan aturan pusat provider.");
+                        }
+                        
+                        // Kembalikan ke state semula dan jadwalkan coba lagi agar tidak hilang dari layar
+                        if(activeOrders[id]) {
+                            activeOrders[id].isCanceling = false; 
+                            // Jadwalkan untuk bisa dicoba batal lagi dalam 30 detik ke depan
+                            activeOrders[id].nextRetry = Math.floor((Date.now() - activeOrders[id].timestamp) / 1000) + 30; 
+                        }
                         renderOrdersUI();
-                        return; 
+                        return; // Hentikan eksekusi, pesanan TIDAK dihapus
                     }
                 } catch(e) {
-                    if(!order.isCanceling){
-                        alert("Koneksi gagal saat membatalkan. Silakan coba lagi.");
+                    if(activeOrders[id]) {
+                        if (tipe !== 'AUTO_CANCEL') alert("Koneksi gagal saat membatalkan. Silakan coba lagi.");
+                        activeOrders[id].isCanceling = false; 
+                        activeOrders[id].nextRetry = Math.floor((Date.now() - activeOrders[id].timestamp) / 1000) + 15;
                     }
-                    if(activeOrders[id]) activeOrders[id].isCanceling = false;
                     renderOrdersUI(); 
                     return; 
                 }
             }
             
+            // Simpan riwayat jika aksi DONE
             if (tipe === 'DONE' && order.phone && order.phone !== "Mencari...") {
                 try { await addDoc(collection(db, "success_numbers"), { phone: order.phone, createdAt: Date.now() }); } catch(e) {}
             }
             
+            // Jika berhasil dibatalkan dari server pusat, BARU HAPUS pesanan dari UI
             delete activeOrders[id];
             saveLocalOrders();
             renderOrdersUI();
 
+            // Jika Ganti, langsung pesan ulang nomor baru otomatis
             if (tipe === 'REPLACE') {
                 beliNomorAPI(order.service, order.country, order.provider);
             } else {
                 setTimeout(updateGlobalBalance, 1000);
             }
         };
+        // ==========================================
 
         window.salinNomorText = (id, text) => { 
             navigator.clipboard.writeText(text); 
