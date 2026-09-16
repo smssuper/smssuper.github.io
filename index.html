@@ -799,13 +799,13 @@
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
                     let remDuration = order.duration - elapsed;
 
-                    // UI Kunci Tombol Batal selama 3,5 menit khusus SMS Code
+                    // UI Kunci Tombol Batal selama 2 Menit (120 Detik)
                     if (order.apiMode === 'SMSCODE' && !order.isCanceling) {
                         let btnCancel = document.getElementById(`btnCancel-${id}`);
                         if (btnCancel) {
-                            if (elapsed < 210) { // Kurang dari 3,5 menit
+                            if (elapsed < 120) { 
                                 btnCancel.disabled = true;
-                                btnCancel.innerHTML = `<i class="fas fa-lock" style="font-size:9px;"></i> ${210 - elapsed}s`;
+                                btnCancel.innerHTML = `<i class="fas fa-lock" style="font-size:9px;"></i> ${120 - elapsed}s`;
                             } else if (btnCancel.disabled) {
                                 btnCancel.disabled = false;
                                 btnCancel.innerHTML = 'BATAL';
@@ -813,8 +813,8 @@
                         }
                     }
 
-                    // FITUR BATAL OTOMATIS (3,5 Menit untuk SMS Code, 2 Menit untuk Layanan Lain)
-                    let autoCancelLimit = (order.apiMode === 'SMSCODE') ? 210 : 120;
+                    // FITUR BATAL OTOMATIS (Setelah 2 Menit/120 Detik)
+                    let autoCancelLimit = 120;
                     
                     if (order.otp === "000000" && elapsed >= autoCancelLimit) {
                         if (!order.isCanceling && (!order.nextRetry || elapsed >= order.nextRetry)) {
@@ -971,7 +971,7 @@
         };
 
         // ==========================================
-        // FUNGSI AKSI TOMBOL
+        // FUNGSI AKSI TOMBOL (KEAMANAN GANDA DITAMBAHKAN)
         // ==========================================
         window.tombolAksiMulti = async (id, tipe) => {
             if (!activeOrders[id]) return;
@@ -1031,15 +1031,22 @@
                         saveLocalOrders();
                         return; 
                     }
+
+                    // KEAMANAN GANDA: Pastikan Worker merespons sukses (menghindari error dihapus dari layar)
+                    if (!text.includes('ACCESS_CANCEL') && !text.includes('STATUS_OK') && !text.includes('SUCCESS') && status !== 6) {
+                         if(status === 8 && !text.includes('ACCESS_CANCEL')) {
+                             throw new Error("Gagal cancel di server: " + text);
+                         }
+                    }
                 } catch(e) {
                     if(activeOrders[id]) {
-                        if (tipe !== 'AUTO_CANCEL') alert("Koneksi gagal saat membatalkan. Silakan coba lagi.");
+                        if (tipe !== 'AUTO_CANCEL') alert("Gagal membatalkan di server pusat. Pesanan tidak dihapus dari layar.");
                         activeOrders[id].isCanceling = false; 
                         activeOrders[id].nextRetry = Math.floor((Date.now() - activeOrders[id].timestamp) / 1000) + 15;
                     }
                     renderOrdersUI(); 
                     saveLocalOrders();
-                    return; 
+                    return; // BERHENTI DI SINI, JANGAN HAPUS DARI LAYAR
                 }
             }
             
@@ -1047,6 +1054,7 @@
                 try { await addDoc(collection(db, "success_numbers"), { phone: order.phone, createdAt: Date.now() }); } catch(e) {}
             }
             
+            // JIKA SAMPAI DI SINI, ARTINYA SERVER PUSAT SUDAH BENAR-BENAR MEMBATALKAN/MENYELESAIKAN PESANAN
             delete activeOrders[id];
             saveLocalOrders();
             renderOrdersUI();
