@@ -784,7 +784,7 @@
         setInterval(updateGlobalBalance, 5000);
 
         // ==========================================
-        // PERBAIKAN: BATAL OTOMATIS & PENGUKUR WAKTU 
+        // PENYESUAIAN LOGIKA BATAL OTOMATIS BARU
         // ==========================================
         function startGlobalTimers() {
             if(globalCountdownTimer) clearInterval(globalCountdownTimer);
@@ -792,14 +792,19 @@
                 const now = Date.now();
                 let hasChanges = false;
                 
-                const activeIds = Object.keys(activeOrders);
+                // Urutkan ID pesanan berdasarkan waktu (terlama ke terbaru)
+                const activeIds = Object.keys(activeOrders).sort((a, b) => activeOrders[a].timestamp - activeOrders[b].timestamp);
+                const totalOrders = activeIds.length;
+                
+                // Pesanan yang paling akhir / terbaru dimasukkan ke variabel lastOrderId
+                const lastOrderId = totalOrders > 0 ? activeIds[totalOrders - 1] : null;
 
                 activeIds.forEach(id => {
                     let order = activeOrders[id];
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
                     let remDuration = order.duration - elapsed;
 
-                    // UI Kunci Tombol Batal selama 2 Menit (120 Detik)
+                    // UI Kunci Tombol Batal selama 2 Menit (120 Detik) untuk SMSCODE
                     if (order.apiMode === 'SMSCODE' && !order.isCanceling) {
                         let btnCancel = document.getElementById(`btnCancel-${id}`);
                         if (btnCancel) {
@@ -813,10 +818,14 @@
                         }
                     }
 
-                    // FITUR BATAL OTOMATIS (Setelah 2 Menit/120 Detik)
+                    // FITUR BATAL OTOMATIS:
+                    // 1. Hanya aktif jika jumlah orderan LEBIH DARI 1 (totalOrders > 1).
+                    // 2. Orderan TERAKHIR (id === lastOrderId) TIDAK AKAN dibatalkan otomatis.
+                    // 3. Hanya orderan sebelum orderan terakhir yang otomatis dibatal setelah 2 Menit (120 Detik).
                     let autoCancelLimit = 120;
-                    
-                    if (order.otp === "000000" && elapsed >= autoCancelLimit) {
+                    let isLastOrder = (id === lastOrderId);
+
+                    if (totalOrders > 1 && !isLastOrder && order.otp === "000000" && elapsed >= autoCancelLimit) {
                         if (!order.isCanceling && (!order.nextRetry || elapsed >= order.nextRetry)) {
                             activeOrders[id].isCanceling = true;
                             
@@ -944,7 +953,6 @@
             }
             
             if (newId && newPhone) {
-                // Tentukan durasi berdasar Mode API (SMSCODE = 25 Menit)
                 let currentApi = window.currentApiMode;
                 let durasiPesanan = currentApi === 'SMSCODE' ? 1500 : 1200;
 
@@ -970,9 +978,6 @@
             btnPesan.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right:6px;"></i> PESAN';
         };
 
-        // ==========================================
-        // FUNGSI AKSI TOMBOL (KEAMANAN GANDA DITAMBAHKAN)
-        // ==========================================
         window.tombolAksiMulti = async (id, tipe) => {
             if (!activeOrders[id]) return;
             const order = activeOrders[id];
@@ -1032,7 +1037,6 @@
                         return; 
                     }
 
-                    // KEAMANAN GANDA: Pastikan Worker merespons sukses (menghindari error dihapus dari layar)
                     if (!text.includes('ACCESS_CANCEL') && !text.includes('STATUS_OK') && !text.includes('SUCCESS') && status !== 6) {
                          if(status === 8 && !text.includes('ACCESS_CANCEL')) {
                              throw new Error("Gagal cancel di server: " + text);
@@ -1046,7 +1050,7 @@
                     }
                     renderOrdersUI(); 
                     saveLocalOrders();
-                    return; // BERHENTI DI SINI, JANGAN HAPUS DARI LAYAR
+                    return; 
                 }
             }
             
@@ -1054,7 +1058,6 @@
                 try { await addDoc(collection(db, "success_numbers"), { phone: order.phone, createdAt: Date.now() }); } catch(e) {}
             }
             
-            // JIKA SAMPAI DI SINI, ARTINYA SERVER PUSAT SUDAH BENAR-BENAR MEMBATALKAN/MENYELESAIKAN PESANAN
             delete activeOrders[id];
             saveLocalOrders();
             renderOrdersUI();
@@ -1202,7 +1205,7 @@
         window.hapusDatabaseLink = async (e) => { 
             if(e) e.stopPropagation(); 
             if (masterLinkIds.length === 0) return; 
-            for (const id of masterLinkIds) { await deleteDoc(doc(db, "random_links", id)); } 
+            for (const id of masterLinkIds) { await deleteDoc(doc(db, "random_links"), { url: link, createdAt: Date.now() }); } 
             toggleMenu(); 
         };
         
