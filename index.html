@@ -783,20 +783,15 @@
         updateGlobalBalance();
         setInterval(updateGlobalBalance, 5000);
 
-        // ==========================================
-        // PENYESUAIAN LOGIKA BATAL OTOMATIS BARU
-        // ==========================================
         function startGlobalTimers() {
             if(globalCountdownTimer) clearInterval(globalCountdownTimer);
             globalCountdownTimer = setInterval(() => {
                 const now = Date.now();
                 let hasChanges = false;
                 
-                // Urutkan ID pesanan berdasarkan waktu (terlama ke terbaru)
                 const activeIds = Object.keys(activeOrders).sort((a, b) => activeOrders[a].timestamp - activeOrders[b].timestamp);
                 const totalOrders = activeIds.length;
                 
-                // Pesanan yang paling akhir / terbaru dimasukkan ke variabel lastOrderId
                 const lastOrderId = totalOrders > 0 ? activeIds[totalOrders - 1] : null;
 
                 activeIds.forEach(id => {
@@ -804,7 +799,6 @@
                     let elapsed = Math.floor((now - order.timestamp) / 1000);
                     let remDuration = order.duration - elapsed;
 
-                    // UI Kunci Tombol Batal selama 2 Menit (120 Detik) untuk SMSCODE
                     if (order.apiMode === 'SMSCODE' && !order.isCanceling) {
                         let btnCancel = document.getElementById(`btnCancel-${id}`);
                         if (btnCancel) {
@@ -818,10 +812,6 @@
                         }
                     }
 
-                    // FITUR BATAL OTOMATIS:
-                    // 1. Hanya aktif jika jumlah orderan LEBIH DARI 1 (totalOrders > 1).
-                    // 2. Orderan TERAKHIR (id === lastOrderId) TIDAK AKAN dibatalkan otomatis.
-                    // 3. Hanya orderan sebelum orderan terakhir yang otomatis dibatal setelah 2 Menit (120 Detik).
                     let autoCancelLimit = 120;
                     let isLastOrder = (id === lastOrderId);
 
@@ -838,19 +828,16 @@
                         }
                     }
 
-                    // Sedang proses API
                     if (order.isCanceling) {
                         let elClock = document.getElementById(`clock-${id}`);
                         if (elClock && !elClock.innerText.includes("Batal")) elClock.innerText = "Batal...";
                         return;
                     }
 
-                    // Waktu Habis (misal 25 menit)
                     if (remDuration <= 0) {
                         delete activeOrders[id]; 
                         hasChanges = true;
                     } else {
-                        // Tampilkan Hitung Mundur
                         let elClock = document.getElementById(`clock-${id}`);
                         if (elClock) {
                             let m = Math.floor(remDuration / 60), s = remDuration % 60;
@@ -914,7 +901,6 @@
             } else if (window.currentApiMode === 'SMSCODE') {
                 kodeLayanan = '470'; 
                 countryCode = 7;
-                provider = 'any'; 
             }
 
             let displayName = "Otomatis (Paling Murah)";
@@ -936,6 +922,9 @@
             try {
                 let params = `action=getNumber&service=${s}&country=${c}`;
                 if (providerSelected !== 'any') params += `&operator=${providerSelected}`;
+                if (window.currentApiMode === 'SMSCODE') {
+                    params += `&max_price=1000&maxPrice=1000&min_price=500&minPrice=500`;
+                }
                 
                 const text = await callHeroApi(params);
                 
