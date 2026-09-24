@@ -212,7 +212,7 @@
                         <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Layanan & Operator</label>
                         <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: stretch;">
                             
-                            <!-- Dropdown Harga (Hanya muncul di SMS CODE) -->
+                            <!-- Dropdown Harga (Di Sebelah Kiri Operator) -->
                             <div style="position: relative; flex: 1; display: none;" id="containerHarga">
                                 <select id="pilihHarga" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="">≥ Rp 504</option>
@@ -226,6 +226,7 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
 
+                            <!-- Dropdown Operator -->
                             <div style="position: relative; flex: 1;">
                                 <select id="pilihProvider" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="any">Otomatis</option>
@@ -237,6 +238,7 @@
                                 </select>
                                 <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
+
                             <button style="background:var(--secondary); color:white; border:none; padding:0 12px; border-radius:10px; font-weight:800; font-size:10px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s; display: flex; align-items: center; justify-content: center; white-space: nowrap;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
                                 <i class="fas fa-shopping-cart" style="margin-right:4px;"></i> PESAN
                             </button>
@@ -303,7 +305,7 @@
 
     <div class="sticky-area">
         <div class="main-card">
-            <div style="display:flex; justify-content: space-between; margin-bottom: 5px; padding: 0 5px;">
+            <div style="display:flex; justify- space-between; margin-bottom: 5px; padding: 0 5px;">
                 <span style="font-size: 9px; color: var(--gray); font-weight: 800;" id="linkCounter">Link: 0</span>
                 <span style="font-size: 9px; color: var(--gray); font-weight: 800;" id="emailCounter">Gmail: 0</span>
             </div>
@@ -414,18 +416,19 @@
             if (window.currentApiMode === 'OTPCEPAT') {
                 titleEl.innerText = 'OTP CEPAT';
                 titleEl.style.color = '#e74c3c'; 
-                if(containerHarga) containerHarga.style.display = 'none';
+                if (containerHarga) containerHarga.style.display = 'none';
             } else if (window.currentApiMode === 'SMSCODE') {
                 titleEl.innerText = 'SMS CODE';
                 titleEl.style.color = '#8e44ad'; 
-                if(containerHarga) containerHarga.style.display = 'block';
+                if (containerHarga) containerHarga.style.display = 'block';
             } else {
                 titleEl.innerText = 'SMS HERO';
                 titleEl.style.color = 'var(--secondary)';
-                if(containerHarga) containerHarga.style.display = 'none';
+                if (containerHarga) containerHarga.style.display = 'none';
             }
         }
         
+        // Panggil penyesuaian UI secara langsung saat halaman siap
         updateTitleUI();
 
         window.toggleApiServer = () => {
