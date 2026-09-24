@@ -909,7 +909,9 @@
         }
 
         window.prosesPesanLayanan = () => {
-            let provider = document.getElementById('pilihProvider').value;
+            const providerEl = document.getElementById('pilihProvider');
+            let provider = providerEl ? providerEl.value : 'any';
+            
             let kodeLayanan = 'ka';
             let countryCode = 6;
             
@@ -925,18 +927,24 @@
             }
 
             let displayName = "Otomatis (Paling Murah)";
-            if (provider !== 'any') {
-                displayName = document.getElementById('pilihProvider').options[document.getElementById('pilihProvider').selectedIndex].text;
+            if (provider !== 'any' && providerEl) {
+                displayName = providerEl.options[providerEl.selectedIndex].text;
             }
 
-            document.getElementById('orderIdText').innerText = `Shopee (${displayName})`;
+            const orderIdTextEl = document.getElementById('orderIdText');
+            if (orderIdTextEl) {
+                orderIdTextEl.innerText = `Shopee (${displayName})`;
+            }
+            
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
-            btnPesan.disabled = true;
-            btnPesan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROSES...';
+            if (btnPesan) {
+                btnPesan.disabled = true;
+                btnPesan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROSES...';
+            }
             
             let newId = null, newPhone = null, cancelCd = 0;
 
@@ -945,8 +953,9 @@
                 if (providerSelected !== 'any') params += `&operator=${providerSelected}`;
                 
                 if (window.currentApiMode === 'SMSCODE') {
-                    let harga = document.getElementById('pilihHarga').value;
-                    if(harga) {
+                    const hargaEl = document.getElementById('pilihHarga');
+                    let harga = hargaEl ? hargaEl.value : "";
+                    if (harga) {
                         params += `&max_price=${harga}&maxPrice=${harga}&min_price=${harga}&minPrice=${harga}`;
                     } else {
                         params += `&min_price=504&minPrice=504`;
@@ -957,9 +966,15 @@
                 
                 if (text.includes("ACCESS_NUMBER")) {
                     const parts = text.split(":"); 
-                    newId = parts[1]; newPhone = parts[2];
-                    cancelCd = 0;
-                } else if(text.includes("cloudflare") || text.includes("<html")) {
+                    
+                    if (parts.length >= 3) {
+                        newId = parts[1].trim(); 
+                        newPhone = parts[2].trim();
+                        cancelCd = 0;
+                    } else {
+                        alert("Gagal: Format balasan dari server API tidak lengkap.");
+                    }
+                } else if (text.includes("cloudflare") || text.includes("<html")) {
                     alert("Gagal: Worker Cloudflare Anda belum disetel kodenya dengan benar.");
                 } else { 
                     alert("Gagal: Stok Kosong / Saldo Habis / Layanan tidak valid.\nRespons server: " + text); 
@@ -975,9 +990,11 @@
                 activeOrders[newId] = {
                     id: newId,
                     phone: newPhone,
-                    service: s, country: c, provider: providerSelected,
+                    service: s, 
+                    country: c, 
+                    provider: providerSelected,
                     apiMode: currentApi,
-                    displayName: document.getElementById('orderIdText').innerText,
+                    displayName: document.getElementById('orderIdText') ? document.getElementById('orderIdText').innerText : "Layanan",
                     timestamp: Date.now(),
                     duration: durasiPesanan, 
                     cancelCd: cancelCd,
@@ -990,8 +1007,10 @@
                 renderOrdersUI();
             }
 
-            btnPesan.disabled = false;
-            btnPesan.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right:4px;"></i> PESAN';
+            if (btnPesan) {
+                btnPesan.disabled = false;
+                btnPesan.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right:4px;"></i> PESAN';
+            }
         };
 
         window.tombolAksiMulti = async (id, tipe) => {
