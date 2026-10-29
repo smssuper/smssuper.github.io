@@ -212,7 +212,7 @@
                         <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Layanan & Operator</label>
                         <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: stretch;">
                             
-                            <!-- Dropdown Operator (Dropdown Harga sudah dihapus dari sini) -->
+                            <!-- Dropdown Operator -->
                             <div style="position: relative; flex: 1;">
                                 <select id="pilihProvider" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="any">Otomatis</option>
@@ -221,6 +221,17 @@
                                     <option value="indosat">Indosat</option>
                                     <option value="three">Tri (3)</option>
                                     <option value="smartfren">Smartfren</option>
+                                </select>
+                                <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
+                            </div>
+
+                            <!-- Dropdown Harga (Khusus SMSCODE) -->
+                            <div style="position: relative; flex: 1; display: none;" id="containerHarga">
+                                <select id="pilihHarga" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
+                                    <option value="600">Rp 600</option>
+                                    <option value="750" selected>Rp 750</option>
+                                    <option value="900">Rp 900</option>
+                                    <option value="1200">Rp 1200</option>
                                 </select>
                                 <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
@@ -398,15 +409,19 @@
         const titleEl = document.getElementById('headerBrandTitle');
         
         function updateTitleUI() {
+            const containerHarga = document.getElementById('containerHarga');
             if (window.currentApiMode === 'OTPCEPAT') {
                 titleEl.innerText = 'OTP CEPAT';
                 titleEl.style.color = '#e74c3c'; 
+                if(containerHarga) containerHarga.style.display = 'none';
             } else if (window.currentApiMode === 'SMSCODE') {
                 titleEl.innerText = 'SMS CODE';
                 titleEl.style.color = '#8e44ad'; 
+                if(containerHarga) containerHarga.style.display = 'block';
             } else {
                 titleEl.innerText = 'SMS HERO';
                 titleEl.style.color = 'var(--secondary)';
+                if(containerHarga) containerHarga.style.display = 'none';
             }
         }
         
@@ -935,8 +950,10 @@
                 if (providerSelected !== 'any') params += `&operator=${providerSelected}`;
                 
                 if (window.currentApiMode === 'SMSCODE') {
-                    // Filter harga selalu dikunci (otomatis) ke 750 (opsi baris ke-4 Anda sebelumnya)
-                    let harga = "750"; 
+                    // Ambil harga dinamis dari dropdown yang dipilih user
+                    const dropdownHarga = document.getElementById('pilihHarga');
+                    let harga = dropdownHarga ? dropdownHarga.value : "750"; // Default 750 jika gagal ambil
+                    
                     params += `&max_price=${harga}&maxPrice=${harga}&min_price=${harga}&minPrice=${harga}`;
                 }
                 
