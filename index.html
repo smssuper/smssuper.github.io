@@ -427,57 +427,75 @@
             }
         };
 
-        // PERBAIKAN HTML KODE: MENGGUNAKAN TRY-CATCH UNTUK MENGHINDARI "UNEXPECTED TOKEN"
+        // KODE PERBAIKAN 1: LOAD HARGA REALTIME
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
             if (!selectHarga) return;
             
-            selectHarga.innerHTML = '<option value="">Memuat...</option>';
+            selectHarga.innerHTML = '<option value="">Memuat Harga...</option>';
             selectHarga.disabled = true;
 
             const providerEl = document.getElementById('pilihProvider');
             const provider = providerEl ? providerEl.value : 'any';
             
             try {
-                const text = await callHeroApi(`action=getPrices&serviceName=shopee&country=7&operatorFilter=${provider}`);
+                let operatorParam = provider === 'any' ? '' : `&operator=${provider}&operatorFilter=${provider}`;
+                
+                // Panggil layanan SMS CODE
+                const text = await callHeroApi(`action=getPrices&serviceName=shopee&service=470&country=7${operatorParam}`);
                 
                 let res;
                 try {
-                    res = JSON.parse(text); // Jika ini gagal, berarti Cloudflare mengirim pesan error tulisan
+                    res = JSON.parse(text);
                 } catch(e) {
                     selectHarga.innerHTML = `<option value="">Error API: Coba lagi</option>`;
                     console.log("Error JSON dari server:", text);
                     return;
                 }
                 
-                if (res.success && Array.isArray(res.data)) {
-                    let products = res.data;
-                    let bestProducts = {};
-                    
+                let products = [];
+                if (res.data && Array.isArray(res.data)) {
+                    products = res.data;
+                } else if (Array.isArray(res)) {
+                    products = res;
+                } else if (res.success && Array.isArray(res.prices)) {
+                    products = res.prices;
+                } else if (typeof res === 'object') {
+                    products = [res]; 
+                }
+
+                let bestProducts = {};
+                
+                if (products.length > 0) {
                     for(let p of products) {
-                        if (!bestProducts[p.price] || bestProducts[p.price].available < p.available) {
-                            bestProducts[p.price] = p;
+                        let pId = p.catalog_product_id || p.id || p.service || '470';
+                        let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
+                        let pStock = parseInt(p.available || p.stock || p.count || p.qty || 0);
+
+                        if (pPrice > 0 && pStock > 0) {
+                            if (!bestProducts[pPrice] || bestProducts[pPrice].stock < pStock) {
+                                bestProducts[pPrice] = { id: pId, price: pPrice, stock: pStock };
+                            }
                         }
                     }
+                }
 
-                    let sortedPrices = Object.keys(bestProducts).map(Number).sort((a,b) => a - b);
-                    
-                    selectHarga.innerHTML = '';
-                    if (sortedPrices.length === 0) {
-                        selectHarga.innerHTML = '<option value="">Kosong</option>';
-                    } else {
-                        sortedPrices.forEach(price => {
-                            let p = bestProducts[price];
-                            selectHarga.innerHTML += `<option value="${p.catalog_product_id}_${p.price}">Rp ${p.price.toLocaleString('id-ID')} (${p.available} stok)</option>`;
-                        });
-                        selectHarga.disabled = false;
-                    }
+                let sortedPrices = Object.keys(bestProducts).map(Number).sort((a,b) => a - b);
+                
+                selectHarga.innerHTML = '';
+                if (sortedPrices.length === 0) {
+                    selectHarga.innerHTML = '<option value="">Harga / Stok Kosong</option>';
                 } else {
-                    selectHarga.innerHTML = `<option value="">${res.error || 'Gagal API'}</option>`;
+                    sortedPrices.forEach(price => {
+                        let p = bestProducts[price];
+                        selectHarga.innerHTML += `<option value="${p.id}_${p.price}">Rp ${p.price.toLocaleString('id-ID')} (${p.stock} stok)</option>`;
+                    });
+                    selectHarga.disabled = false;
                 }
             } catch (e) {
                 selectHarga.innerHTML = '<option value="">Error Jaringan</option>';
+                console.error("Gagal loadRealtimePrices:", e);
             }
         };
         
@@ -991,6 +1009,7 @@
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
+        // KODE PERBAIKAN 2: SISIPKAN OPERATOR SAAT PESAN
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
             
@@ -1019,7 +1038,9 @@
             let newId = null, newPhone = null, cancelCd = 0;
 
             try {
-                let params = `action=getNumber&service=${finalCatalogId}&country=${c}`;
+                // Perbaikan Parameter GetNumber
+                let operatorParam = (providerSelected && providerSelected !== 'any') ? `&operator=${providerSelected}` : '';
+                let params = `action=getNumber&service=${finalCatalogId}&country=${c}${operatorParam}`;
                 
                 const text = await callHeroApi(params);
                 
