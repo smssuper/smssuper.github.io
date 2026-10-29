@@ -429,7 +429,7 @@
             }
         };
 
-        // KODE HTML FINAL: HANYA MENERIMA DAN MENAMPILKAN APA KATA CLOUDFLARE WORKER
+        // PERBAIKAN FINAL: MENERIMA DATA DARI WORKER DAN MENAMPILKANNYA SAJA
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -442,28 +442,18 @@
             const provider = providerEl ? providerEl.value : 'any';
             
             try {
-                // Biarkan Cloudflare Worker yang mengerjakan semuanya!
+                // Worker akan melakukan semua filternya dengan tepat
                 const text = await callHeroApi(`action=getPrices&serviceName=shopee&country=7&operatorFilter=${provider}`);
                 const res = JSON.parse(text);
                 
                 if (res.data && res.data.success && res.data.data) {
                     let products = res.data.data;
                     
-                    let bestProducts = {};
-                    for(let p of products) {
-                        if (!bestProducts[p.price] || bestProducts[p.price].available < p.available) {
-                            bestProducts[p.price] = p;
-                        }
-                    }
-
-                    let sortedPrices = Object.keys(bestProducts).map(Number).sort((a,b) => a - b);
-                    
                     selectHarga.innerHTML = '';
-                    if (sortedPrices.length === 0) {
+                    if (products.length === 0) {
                         selectHarga.innerHTML = '<option value="">Kosong</option>';
                     } else {
-                        sortedPrices.forEach(price => {
-                            let p = bestProducts[price];
+                        products.forEach(p => {
                             selectHarga.innerHTML += `<option value="${p.catalog_product_id}_${p.price}">Rp ${p.price.toLocaleString('id-ID')} (${p.available} stok)</option>`;
                         });
                         selectHarga.disabled = false;
