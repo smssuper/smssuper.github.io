@@ -429,7 +429,7 @@
             }
         };
 
-        // KODE MEMUAT HARGA DAN STOK YANG SUDAH DIPERBAIKI (Membaca p.quantity)
+        // KODE MEMUAT HARGA DAN STOK
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -472,8 +472,6 @@
                     for(let p of products) {
                         let pId = p.catalog_product_id || p.id || p.service || '470';
                         let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
-                        
-                        // FIX: Membaca parameter "quantity" untuk stok
                         let pStock = parseInt(p.available || p.stock || p.count || p.qty || p.quantity || 0);
 
                         if (pPrice > 0 && pStock > 0) {
@@ -1012,7 +1010,7 @@
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
-        // KODE EKSEKUSI PEMBELIAN NOMOR YANG SUDAH MENYISIPKAN OPERATOR
+        // KODE EKSEKUSI PEMBELIAN NOMOR
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
             
@@ -1041,7 +1039,6 @@
             let newId = null, newPhone = null, cancelCd = 0;
 
             try {
-                // FIX: Menyiapkan parameter operator ke API via Worker Cloudflare
                 let operatorParam = (providerSelected && providerSelected !== 'any') ? `&operator=${providerSelected}` : '';
                 let params = `action=getNumber&service=${finalCatalogId}&country=${c}${operatorParam}`;
                 
