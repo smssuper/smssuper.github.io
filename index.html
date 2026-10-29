@@ -212,7 +212,6 @@
                         <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Layanan & Operator</label>
                         <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: stretch;">
                             
-                            <!-- Dropdown Operator -> Akan memicu load harga real-time -->
                             <div style="position: relative; flex: 1;">
                                 <select id="pilihProvider" onchange="handleProviderChange()" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="any">Otomatis</option>
@@ -225,7 +224,6 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
 
-                            <!-- Dropdown Harga Dinamis (Muncul otomatis di SMS CODE, memuat Stok Real-Time) -->
                             <div style="position: relative; flex: 1; display: none;" id="containerHarga">
                                 <select id="pilihHarga" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="">Harga...</option>
@@ -415,7 +413,6 @@
                 titleEl.innerText = 'SMS CODE';
                 titleEl.style.color = '#8e44ad'; 
                 if(containerHarga) containerHarga.style.display = 'block';
-                // Trigger load harga real-time
                 window.loadRealtimePrices();
             } else {
                 titleEl.innerText = 'SMS HERO';
@@ -430,7 +427,7 @@
             }
         };
 
-        // PERBAIKAN LOGIKA PENGAMBILAN HARGA DARI API
+        // PERBAIKAN: MENGAMBIL HARGA MURNI DARI API TANPA CAMPURAN
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -443,48 +440,30 @@
             const provider = providerEl ? providerEl.value : 'any';
             
             try {
-                // Memanggil endpoint getPrices di Worker untuk mencari nama "shopee" di negara Indonesia (7)
-                const text = await callHeroApi("action=getPrices&serviceName=shopee&country=7");
+                // Minta ke Cloudflare Worker untuk mengirim filter operator
+                const text = await callHeroApi(`action=getPrices&serviceName=shopee&country=7&operatorFilter=${provider}`);
                 const res = JSON.parse(text);
                 
                 if (res.data && res.data.success && res.data.data) {
                     let products = res.data.data;
-
-                    // 1. Saring berdasarkan nama operator (Telkomsel, Indosat, dll)
-                    if (provider !== 'any') {
-                        let opFiltered = products.filter(p => {
-                            if (!p.operator_name) return false;
-                            let opName = p.operator_name.toLowerCase();
-                            if (provider === 'three') return opName.includes('three') || opName.includes('tri');
-                            if (provider === 'xl') return opName.includes('xl') || opName.includes('axis');
-                            return opName.includes(provider);
-                        });
-
-                        // 2. Gabungkan dengan produk "Otomatis" (operator_name null) karena produk tsb juga bisa untuk semua operator
-                        let anyFiltered = products.filter(p => !p.operator_name || p.operator_name.trim() === "");
-                        
-                        products = [...opFiltered, ...anyFiltered];
-                    }
                     
-                    // 3. Hapus duplikat data agar rapi di dropdown
-                    let uniqueProducts = [];
-                    let seenIds = new Set();
+                    // Filter produk agar unik berdasarkan harga (ambil stok tertinggi)
+                    let bestProducts = {};
                     for(let p of products) {
-                        if(!seenIds.has(p.catalog_product_id)) {
-                            seenIds.add(p.catalog_product_id);
-                            uniqueProducts.push(p);
+                        if (!bestProducts[p.price] || bestProducts[p.price].available < p.available) {
+                            bestProducts[p.price] = p;
                         }
                     }
 
-                    // 4. Urutkan berdasarkan harga termurah
-                    uniqueProducts.sort((a,b) => a.price - b.price);
+                    // Urutkan harga
+                    let sortedPrices = Object.keys(bestProducts).map(Number).sort((a,b) => a - b);
                     
                     selectHarga.innerHTML = '';
-                    if (uniqueProducts.length === 0) {
+                    if (sortedPrices.length === 0) {
                         selectHarga.innerHTML = '<option value="">Kosong</option>';
                     } else {
-                        uniqueProducts.forEach(p => {
-                            // FORMAT PENTING: Menyimpan "ID-Produk_Harga" agar saat pesan bisa akurat
+                        sortedPrices.forEach(price => {
+                            let p = bestProducts[price];
                             selectHarga.innerHTML += `<option value="${p.catalog_product_id}_${p.price}">Rp ${p.price.toLocaleString('id-ID')} (${p.available} stok)</option>`;
                         });
                         selectHarga.disabled = false;
@@ -1007,25 +986,24 @@
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
-        // PERBAIKAN: MEMESAN SESUAI ID KATALOG & HARGA YANG DIPILIH DARI DROPDOWN
+        // PERBAIKAN: MEMESAN SESUAI ID KATALOG YANG MEMILIKI HARGA YANG DIPILIH
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
             
-            const dropdownHarga = document.getElementById('pilihHarga');
             let finalCatalogId = s; 
-            let maxPriceStr = "";
 
-            if (window.currentApiMode === 'SMSCODE' && dropdownHarga) {
-                if (!dropdownHarga.value || dropdownHarga.disabled) {
-                    alert("Gagal: Harga belum tersedia atau stok kosong saat ini.");
-                    return;
-                }
-                
-                // Memecah format "ID-Produk_Harga" yang disetting pada select sebelumnya
-                let valParts = dropdownHarga.value.split('_');
-                if(valParts.length === 2) {
-                    finalCatalogId = valParts[0]; // Menggunakan ID produk (Shopee) spesifik yang harganya Anda pilih
-                    maxPriceStr = valParts[1]; // Batas harga
+            if (window.currentApiMode === 'SMSCODE') {
+                const dropdownHarga = document.getElementById('pilihHarga');
+                if (dropdownHarga) {
+                    if (!dropdownHarga.value || dropdownHarga.disabled) {
+                        alert("Gagal: Harga belum tersedia atau stok kosong saat ini.");
+                        return;
+                    }
+                    
+                    let valParts = dropdownHarga.value.split('_');
+                    if(valParts.length === 2) {
+                        finalCatalogId = valParts[0]; 
+                    }
                 }
             }
 
@@ -1037,13 +1015,7 @@
             let newId = null, newPhone = null, cancelCd = 0;
 
             try {
-                // Mengirim finalCatalogId (ID produk yang spesifik) ke API
                 let params = `action=getNumber&service=${finalCatalogId}&country=${c}`;
-                if (providerSelected !== 'any') params += `&operator=${providerSelected}`;
-                
-                if (window.currentApiMode === 'SMSCODE' && maxPriceStr) {
-                    params += `&max_price=${maxPriceStr}&maxPrice=${maxPriceStr}`;
-                }
                 
                 const text = await callHeroApi(params);
                 
