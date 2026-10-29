@@ -225,7 +225,7 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
 
-                            <!-- Dropdown Harga Dinamis (Muncul otomatis di SMS CODE) -->
+                            <!-- Dropdown Harga Dinamis -->
                             <div style="position: relative; flex: 1; display: none;" id="containerHarga">
                                 <select id="pilihHarga" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="">Harga...</option>
@@ -429,7 +429,7 @@
             }
         };
 
-        // PERBAIKAN FINAL: MENERIMA DATA DARI WORKER YANG SUDAH DIFILTER DENGAN BENAR
+        // KODE HTML FINAL: HANYA MENERIMA DAN MENAMPILKAN APA KATA CLOUDFLARE WORKER
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -442,7 +442,7 @@
             const provider = providerEl ? providerEl.value : 'any';
             
             try {
-                // Memanggil endpoint di Cloudflare Worker untuk melakukan filternya
+                // Biarkan Cloudflare Worker yang mengerjakan semuanya!
                 const text = await callHeroApi(`action=getPrices&serviceName=shopee&country=7&operatorFilter=${provider}`);
                 const res = JSON.parse(text);
                 
