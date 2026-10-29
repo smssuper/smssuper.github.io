@@ -398,7 +398,6 @@
         
         const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
         
-        // PENTING: Pastikan URL Worker SMS CODE di bawah ini benar milik Anda
         const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
         const OTPCEPAT_WORKER_URL = "https://otpcepat-proxy.you-zainul.workers.dev/"; 
         const SMSCODE_WORKER_URL = "https://smscode-proxy.you-zainul.workers.dev/";
@@ -429,7 +428,6 @@
             }
         };
 
-        // KODE MEMUAT HARGA DAN STOK
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -1010,7 +1008,6 @@
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
-        // KODE EKSEKUSI PEMBELIAN NOMOR
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
             
