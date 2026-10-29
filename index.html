@@ -397,6 +397,8 @@
         window.currentApiMode = localStorage.getItem('savedApiMode') || 'HERO'; 
         
         const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
+        
+        // PENTING: Pastikan URL Worker SMS CODE di bawah ini benar milik Anda
         const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
         const OTPCEPAT_WORKER_URL = "https://otpcepat-proxy.you-zainul.workers.dev/"; 
         const SMSCODE_WORKER_URL = "https://smscode-proxy.you-zainul.workers.dev/";
@@ -427,7 +429,7 @@
             }
         };
 
-        // KODE PERBAIKAN 1: LOAD HARGA REALTIME
+        // KODE MEMUAT HARGA DAN STOK YANG SUDAH DIPERBAIKI (Membaca p.quantity)
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -442,7 +444,6 @@
             try {
                 let operatorParam = provider === 'any' ? '' : `&operator=${provider}&operatorFilter=${provider}`;
                 
-                // Panggil layanan SMS CODE
                 const text = await callHeroApi(`action=getPrices&serviceName=shopee&service=470&country=7${operatorParam}`);
                 
                 let res;
@@ -471,7 +472,9 @@
                     for(let p of products) {
                         let pId = p.catalog_product_id || p.id || p.service || '470';
                         let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
-                        let pStock = parseInt(p.available || p.stock || p.count || p.qty || 0);
+                        
+                        // FIX: Membaca parameter "quantity" untuk stok
+                        let pStock = parseInt(p.available || p.stock || p.count || p.qty || p.quantity || 0);
 
                         if (pPrice > 0 && pStock > 0) {
                             if (!bestProducts[pPrice] || bestProducts[pPrice].stock < pStock) {
@@ -1009,7 +1012,7 @@
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
-        // KODE PERBAIKAN 2: SISIPKAN OPERATOR SAAT PESAN
+        // KODE EKSEKUSI PEMBELIAN NOMOR YANG SUDAH MENYISIPKAN OPERATOR
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
             
@@ -1038,7 +1041,7 @@
             let newId = null, newPhone = null, cancelCd = 0;
 
             try {
-                // Perbaikan Parameter GetNumber
+                // FIX: Menyiapkan parameter operator ke API via Worker Cloudflare
                 let operatorParam = (providerSelected && providerSelected !== 'any') ? `&operator=${providerSelected}` : '';
                 let params = `action=getNumber&service=${finalCatalogId}&country=${c}${operatorParam}`;
                 
