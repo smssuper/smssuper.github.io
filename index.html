@@ -429,26 +429,27 @@
             }
         };
 
+        // PERBAIKAN HTML KODE: MENGELOLA ERROR RESPONSE SECARA BERSIH
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
             if (!selectHarga) return;
             
-            selectHarga.innerHTML = '<option value="">Loading...</option>';
+            selectHarga.innerHTML = '<option value="">Memuat...</option>';
             selectHarga.disabled = true;
 
             const providerEl = document.getElementById('pilihProvider');
             const provider = providerEl ? providerEl.value : 'any';
             
             try {
-                // Semua sortir sekarang dikerjakan Worker secara murni
                 const text = await callHeroApi(`action=getPrices&serviceName=shopee&country=7&operatorFilter=${provider}`);
                 const res = JSON.parse(text);
                 
-                if (res.success && res.data) {
+                // Menerima data bersih dari Worker dan menampilkannya tanpa diacak-acak
+                if (res.success && Array.isArray(res.data)) {
                     let products = res.data;
-                    
                     let bestProducts = {};
+                    
                     for(let p of products) {
                         if (!bestProducts[p.price] || bestProducts[p.price].available < p.available) {
                             bestProducts[p.price] = p;
@@ -459,7 +460,7 @@
                     
                     selectHarga.innerHTML = '';
                     if (sortedPrices.length === 0) {
-                        selectHarga.innerHTML = '<option value="">Kosong</option>';
+                        selectHarga.innerHTML = '<option value="">Stok Kosong</option>';
                     } else {
                         sortedPrices.forEach(price => {
                             let p = bestProducts[price];
@@ -468,10 +469,10 @@
                         selectHarga.disabled = false;
                     }
                 } else {
-                    selectHarga.innerHTML = '<option value="">Error API</option>';
+                    selectHarga.innerHTML = `<option value="">${res.error || 'Gagal API'}</option>`;
                 }
             } catch (e) {
-                selectHarga.innerHTML = '<option value="">Gagal Load</option>';
+                selectHarga.innerHTML = '<option value="">Error Jaringan</option>';
             }
         };
         
