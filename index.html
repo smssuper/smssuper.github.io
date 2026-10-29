@@ -430,6 +430,7 @@
             }
         };
 
+        // PERBAIKAN LOGIKA PENGAMBILAN HARGA DARI API
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -448,20 +449,27 @@
                 
                 if (res.data && res.data.success && res.data.data) {
                     let products = res.data.data;
-                    
-                    // Saring berdasarkan nama operator
+                    let filteredProducts = products;
+
+                    // Saring berdasarkan nama operator jika bukan "Otomatis"
                     if (provider !== 'any') {
-                        products = products.filter(p => {
+                        filteredProducts = products.filter(p => {
                             if (!p.operator_name) return false;
                             let opName = p.operator_name.toLowerCase();
                             if (provider === 'three') return opName.includes('three') || opName.includes('tri');
                             if (provider === 'xl') return opName.includes('xl') || opName.includes('axis');
                             return opName.includes(provider);
                         });
+
+                        // JIKA HARGA KHUSUS OPERATOR TERSEBUT TIDAK ADA DI DATABASE SMSCODE
+                        // Maka sistem akan mengambil harga 'Umum/Otomatis' sebagai ganti
+                        if (filteredProducts.length === 0) {
+                            filteredProducts = products.filter(p => !p.operator_name || p.operator_name === "");
+                        }
                     }
                     
                     // Ekstrak harga unik & urutkan dari terkecil
-                    let prices = [...new Set(products.map(p => p.price))].sort((a,b) => a - b);
+                    let prices = [...new Set(filteredProducts.map(p => p.price))].sort((a,b) => a - b);
                     
                     selectHarga.innerHTML = '';
                     if (prices.length === 0) {
