@@ -427,6 +427,7 @@
             }
         };
 
+        // PERBAIKAN HTML KODE: MENGGUNAKAN TRY-CATCH UNTUK MENGHINDARI "UNEXPECTED TOKEN"
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -440,7 +441,15 @@
             
             try {
                 const text = await callHeroApi(`action=getPrices&serviceName=shopee&country=7&operatorFilter=${provider}`);
-                const res = JSON.parse(text);
+                
+                let res;
+                try {
+                    res = JSON.parse(text); // Jika ini gagal, berarti Cloudflare mengirim pesan error tulisan
+                } catch(e) {
+                    selectHarga.innerHTML = `<option value="">Error API: Coba lagi</option>`;
+                    console.log("Error JSON dari server:", text);
+                    return;
+                }
                 
                 if (res.success && Array.isArray(res.data)) {
                     let products = res.data;
@@ -465,11 +474,10 @@
                         selectHarga.disabled = false;
                     }
                 } else {
-                    let errorMsg = res.error || 'Error API';
-                    selectHarga.innerHTML = `<option value="">${errorMsg}</option>`;
+                    selectHarga.innerHTML = `<option value="">${res.error || 'Gagal API'}</option>`;
                 }
             } catch (e) {
-                selectHarga.innerHTML = '<option value="">Gagal Load</option>';
+                selectHarga.innerHTML = '<option value="">Error Jaringan</option>';
             }
         };
         
