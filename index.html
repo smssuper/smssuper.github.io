@@ -212,7 +212,6 @@
                         <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Layanan & Operator</label>
                         <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: stretch;">
                             
-                            <!-- Dropdown Operator -> Akan memicu load harga real-time -->
                             <div style="position: relative; flex: 1;">
                                 <select id="pilihProvider" onchange="handleProviderChange()" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="any">Otomatis</option>
@@ -225,7 +224,6 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
 
-                            <!-- Dropdown Harga Dinamis -->
                             <div style="position: relative; flex: 1; display: none;" id="containerHarga">
                                 <select id="pilihHarga" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="">Harga...</option>
@@ -429,7 +427,6 @@
             }
         };
 
-        // PERBAIKAN HTML KODE: MENGELOLA ERROR RESPONSE SECARA BERSIH
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -445,7 +442,6 @@
                 const text = await callHeroApi(`action=getPrices&serviceName=shopee&country=7&operatorFilter=${provider}`);
                 const res = JSON.parse(text);
                 
-                // Menerima data bersih dari Worker dan menampilkannya tanpa diacak-acak
                 if (res.success && Array.isArray(res.data)) {
                     let products = res.data;
                     let bestProducts = {};
@@ -460,7 +456,7 @@
                     
                     selectHarga.innerHTML = '';
                     if (sortedPrices.length === 0) {
-                        selectHarga.innerHTML = '<option value="">Stok Kosong</option>';
+                        selectHarga.innerHTML = '<option value="">Kosong</option>';
                     } else {
                         sortedPrices.forEach(price => {
                             let p = bestProducts[price];
@@ -469,10 +465,11 @@
                         selectHarga.disabled = false;
                     }
                 } else {
-                    selectHarga.innerHTML = `<option value="">${res.error || 'Gagal API'}</option>`;
+                    let errorMsg = res.error || 'Error API';
+                    selectHarga.innerHTML = `<option value="">${errorMsg}</option>`;
                 }
             } catch (e) {
-                selectHarga.innerHTML = '<option value="">Error Jaringan</option>';
+                selectHarga.innerHTML = '<option value="">Gagal Load</option>';
             }
         };
         
