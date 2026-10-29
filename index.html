@@ -212,9 +212,9 @@
                         <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Layanan & Operator</label>
                         <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: stretch;">
                             
-                            <!-- Dropdown Operator -->
+                            <!-- Dropdown Operator -> Akan memicu load harga real-time -->
                             <div style="position: relative; flex: 1;">
-                                <select id="pilihProvider" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
+                                <select id="pilihProvider" onchange="handleProviderChange()" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="any">Otomatis</option>
                                     <option value="telkomsel">Telkomsel</option>
                                     <option value="xl">XL / Axis</option>
@@ -225,13 +225,10 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
 
-                            <!-- Dropdown Harga (Khusus SMSCODE) -->
+                            <!-- Dropdown Harga Dinamis (Muncul otomatis di SMS CODE) -->
                             <div style="position: relative; flex: 1; display: none;" id="containerHarga">
                                 <select id="pilihHarga" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
-                                    <option value="600">Rp 600</option>
-                                    <option value="750" selected>Rp 750</option>
-                                    <option value="900">Rp 900</option>
-                                    <option value="1200">Rp 1200</option>
+                                    <option value="">Harga...</option>
                                 </select>
                                 <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
@@ -418,14 +415,71 @@
                 titleEl.innerText = 'SMS CODE';
                 titleEl.style.color = '#8e44ad'; 
                 if(containerHarga) containerHarga.style.display = 'block';
+                // Trigger load harga real-time
+                window.loadRealtimePrices();
             } else {
                 titleEl.innerText = 'SMS HERO';
                 titleEl.style.color = 'var(--secondary)';
                 if(containerHarga) containerHarga.style.display = 'none';
             }
         }
+
+        window.handleProviderChange = () => {
+            if (window.currentApiMode === 'SMSCODE') {
+                window.loadRealtimePrices();
+            }
+        };
+
+        window.loadRealtimePrices = async () => {
+            if (window.currentApiMode !== 'SMSCODE') return;
+            const selectHarga = document.getElementById('pilihHarga');
+            if (!selectHarga) return;
+            
+            selectHarga.innerHTML = '<option value="">Loading...</option>';
+            selectHarga.disabled = true;
+
+            const providerEl = document.getElementById('pilihProvider');
+            const provider = providerEl ? providerEl.value : 'any';
+            
+            try {
+                // Memanggil endpoint getPrices untuk Shopee (470) Indonesia (7)
+                const text = await callHeroApi("action=getPrices&service=470&country=7");
+                const res = JSON.parse(text);
+                
+                if (res.data && res.data.success && res.data.data) {
+                    let products = res.data.data;
+                    
+                    // Saring berdasarkan nama operator
+                    if (provider !== 'any') {
+                        products = products.filter(p => {
+                            if (!p.operator_name) return false;
+                            let opName = p.operator_name.toLowerCase();
+                            if (provider === 'three') return opName.includes('three') || opName.includes('tri');
+                            if (provider === 'xl') return opName.includes('xl') || opName.includes('axis');
+                            return opName.includes(provider);
+                        });
+                    }
+                    
+                    // Ekstrak harga unik & urutkan dari terkecil
+                    let prices = [...new Set(products.map(p => p.price))].sort((a,b) => a - b);
+                    
+                    selectHarga.innerHTML = '';
+                    if (prices.length === 0) {
+                        selectHarga.innerHTML = '<option value="">Kosong</option>';
+                    } else {
+                        prices.forEach(price => {
+                            selectHarga.innerHTML += `<option value="${price}">Rp ${price}</option>`;
+                        });
+                        selectHarga.disabled = false;
+                    }
+                } else {
+                    selectHarga.innerHTML = '<option value="">Error API</option>';
+                }
+            } catch (e) {
+                selectHarga.innerHTML = '<option value="">Gagal Load</option>';
+            }
+        };
         
-        // Panggil penyesuaian UI secara langsung saat halaman siap
         updateTitleUI();
 
         window.toggleApiServer = () => {
@@ -938,6 +992,16 @@
 
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
+            
+            // CEK HARGA DULU SEBELUM MENEKAN PESAN
+            const dropdownHarga = document.getElementById('pilihHarga');
+            if (window.currentApiMode === 'SMSCODE' && dropdownHarga) {
+                if (!dropdownHarga.value || dropdownHarga.disabled) {
+                    alert("Gagal: Harga belum tersedia atau stok kosong saat ini.");
+                    return;
+                }
+            }
+
             if (btnPesan) {
                 btnPesan.disabled = true;
                 btnPesan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROSES...';
@@ -949,12 +1013,9 @@
                 let params = `action=getNumber&service=${s}&country=${c}`;
                 if (providerSelected !== 'any') params += `&operator=${providerSelected}`;
                 
-                if (window.currentApiMode === 'SMSCODE') {
-                    // Ambil harga dinamis dari dropdown yang dipilih user
-                    const dropdownHarga = document.getElementById('pilihHarga');
-                    let harga = dropdownHarga ? dropdownHarga.value : "750"; // Default 750 jika gagal ambil
-                    
-                    params += `&max_price=${harga}&maxPrice=${harga}&min_price=${harga}&minPrice=${harga}`;
+                if (window.currentApiMode === 'SMSCODE' && dropdownHarga) {
+                    let harga = dropdownHarga.value; 
+                    params += `&max_price=${harga}&maxPrice=${harga}`;
                 }
                 
                 const text = await callHeroApi(params);
