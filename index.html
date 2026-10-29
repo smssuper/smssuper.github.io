@@ -212,6 +212,7 @@
                         <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Layanan & Operator</label>
                         <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: stretch;">
                             
+                            <!-- Dropdown Operator -> Akan memicu load harga real-time -->
                             <div style="position: relative; flex: 1;">
                                 <select id="pilihProvider" onchange="handleProviderChange()" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="any">Otomatis</option>
@@ -224,6 +225,7 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
 
+                            <!-- Dropdown Harga Dinamis (Muncul otomatis di SMS CODE) -->
                             <div style="position: relative; flex: 1; display: none;" id="containerHarga">
                                 <select id="pilihHarga" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
                                     <option value="">Harga...</option>
@@ -427,7 +429,7 @@
             }
         };
 
-        // PERBAIKAN: MENGAMBIL HARGA MURNI DARI API TANPA CAMPURAN
+        // PERBAIKAN FINAL: MENERIMA DATA DARI WORKER YANG SUDAH DIFILTER DENGAN BENAR
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
@@ -440,14 +442,13 @@
             const provider = providerEl ? providerEl.value : 'any';
             
             try {
-                // Minta ke Cloudflare Worker untuk mengirim filter operator
+                // Memanggil endpoint di Cloudflare Worker untuk melakukan filternya
                 const text = await callHeroApi(`action=getPrices&serviceName=shopee&country=7&operatorFilter=${provider}`);
                 const res = JSON.parse(text);
                 
                 if (res.data && res.data.success && res.data.data) {
                     let products = res.data.data;
                     
-                    // Filter produk agar unik berdasarkan harga (ambil stok tertinggi)
                     let bestProducts = {};
                     for(let p of products) {
                         if (!bestProducts[p.price] || bestProducts[p.price].available < p.available) {
@@ -455,7 +456,6 @@
                         }
                     }
 
-                    // Urutkan harga
                     let sortedPrices = Object.keys(bestProducts).map(Number).sort((a,b) => a - b);
                     
                     selectHarga.innerHTML = '';
@@ -986,7 +986,6 @@
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
-        // PERBAIKAN: MEMESAN SESUAI ID KATALOG YANG MEMILIKI HARGA YANG DIPILIH
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
             
