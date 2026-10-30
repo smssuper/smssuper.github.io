@@ -167,58 +167,6 @@
         .success-table th { background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: var(--gray); font-weight: 800; border-bottom: 1px solid #edf2f7; position: sticky; top: 0; z-index: 10; } 
         .success-table td { padding: 12px; font-size: 13px; font-weight: 700; color: var(--dark); border-bottom: 1px solid #edf2f7; }
         .success-table tr:last-child td { border-bottom: none; }
-
-        /* --- CUSTOM DROPWDOWN / SELECT MODEREN & MINIMALIS --- */
-        .select-group {
-            display: flex; gap: 8px; margin-bottom: 14px; align-items: stretch; height: 46px;
-        }
-        .custom-dropdown-container {
-            position: relative; flex: 1; height: 100%;
-        }
-        .dropdown-trigger {
-            width: 100%; height: 100%; padding: 0 32px 0 14px; 
-            border-radius: 12px; border: 1.5px solid #cbd5e1; 
-            background: #ffffff; font-size: 13px; font-weight: 600; 
-            color: #334155; display: flex; align-items: center; justify-content: space-between;
-            cursor: pointer; transition: all 0.2s ease; box-sizing: border-box;
-            user-select: none;
-        }
-        .dropdown-trigger:hover { border-color: #94a3b8; }
-        .dropdown-trigger.active {
-            border-color: var(--secondary);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
-        }
-        .dropdown-trigger.active i { transform: rotate(180deg); color: var(--secondary); }
-        .dropdown-trigger i { color: #94a3b8; font-size: 12px; transition: transform 0.3s ease; }
-
-        .dropdown-menu-custom {
-            position: absolute; top: calc(100% + 6px); left: 0; width: 100%;
-            background: #ffffff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-            border: 1px solid #e2e8f0; z-index: 3000; max-height: 220px; overflow-y: auto;
-            display: none; padding: 6px; box-sizing: border-box;
-        }
-        .dropdown-menu-custom.show { display: block; animation: fadeInDropdown 0.2s ease; }
-        @keyframes fadeInDropdown {
-            from { opacity: 0; transform: translateY(-6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .dropdown-item-custom {
-            padding: 10px 12px; font-size: 12px; font-weight: 600; color: #334155;
-            border-radius: 8px; cursor: pointer; transition: 0.15s;
-        }
-        .dropdown-item-custom:hover { background: #f1f5f9; color: var(--secondary); }
-        .dropdown-item-custom.selected { background: #e0f2fe; color: #0284c7; font-weight: 700; }
-
-        .btn-pesan-modern {
-            background: var(--secondary); color: white; border: none; 
-            padding: 0 18px; border-radius: 12px; font-weight: 800; font-size: 11px; 
-            letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.25); 
-            transition: 0.2s; display: flex; align-items: center; justify-content: center; 
-            white-space: nowrap; height: 100%;
-        }
-        .btn-pesan-modern:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(52,152,219,0.35); }
-        .btn-pesan-modern:active { transform: translateY(1px); box-shadow: 0 2px 6px rgba(52,152,219,0.2); }
-        .btn-pesan-modern:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; transform: none; }
     </style>
 </head>
 <body>
@@ -261,50 +209,34 @@
                 <div class="slide-content">
                     
                     <div id="box-pesan-atas">
-                        <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:8px; display:block; letter-spacing: 0.5px;">Pilih Layanan & Operator</label>
+                        <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Layanan & Operator</label>
                         
-                        <!-- Custom Dropdown Minimalis & Profesional -->
-                        <div class="select-group">
-                            
-                            <!-- Dropdown Provider / Operator -->
-                            <div class="custom-dropdown-container" id="providerDropdownContainer">
-                                <div class="dropdown-trigger" onclick="toggleCustomDropdown('provider')">
-                                    <span id="providerTriggerText">Otomatis</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                                <div class="dropdown-menu-custom" id="providerMenu">
-                                    <div class="dropdown-item-custom selected" onclick="selectProvider('any', 'Otomatis')">Otomatis</div>
-                                    <div class="dropdown-item-custom" onclick="selectProvider('telkomsel', 'Telkomsel')">Telkomsel</div>
-                                    <div class="dropdown-item-custom" onclick="selectProvider('xl', 'XL / Axis')">XL / Axis</div>
-                                    <div class="dropdown-item-custom" onclick="selectProvider('indosat', 'Indosat')">Indosat</div>
-                                    <div class="dropdown-item-custom" onclick="selectProvider('three', 'Tri (3)')">Tri (3)</div>
-                                    <div class="dropdown-item-custom" onclick="selectProvider('smartfren', 'Smartfren')">Smartfren</div>
-                                </div>
+                        <!-- DIKEMBALIKAN KE TAMPILAN AWAL (SELECT BAWAAN BROWSER) -->
+                        <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: stretch;">
+                            <div style="position: relative; flex: 1;">
+                                <select id="pilihProvider" onchange="handleProviderChange()" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
+                                    <option value="any">Otomatis</option>
+                                    <option value="telkomsel">Telkomsel</option>
+                                    <option value="xl">XL / Axis</option>
+                                    <option value="indosat">Indosat</option>
+                                    <option value="three">Tri (3)</option>
+                                    <option value="smartfren">Smartfren</option>
+                                </select>
+                                <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
-                            <select id="pilihProvider" style="display:none;" value="any">
-                                <option value="any">Otomatis</option>
-                                <option value="telkomsel">Telkomsel</option>
-                                <option value="xl">XL / Axis</option>
-                                <option value="indosat">Indosat</option>
-                                <option value="three">Tri (3)</option>
-                                <option value="smartfren">Smartfren</option>
-                            </select>
 
-                            <!-- Dropdown Harga -->
-                            <div class="custom-dropdown-container" id="hargaDropdownContainer" style="display: none;">
-                                <div class="dropdown-trigger" onclick="toggleCustomDropdown('harga')">
-                                    <span id="hargaTriggerText">Harga...</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                                <div class="dropdown-menu-custom" id="hargaMenu"></div>
+                            <div style="position: relative; flex: 1; display: none;" id="containerHarga">
+                                <select id="pilihHarga" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
+                                    <option value="">Harga...</option>
+                                </select>
+                                <i class="fas fa-caret-down" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 11px;"></i>
                             </div>
-                            <select id="pilihHarga" style="display:none;"><option value="">Harga...</option></select>
 
-                            <!-- Tombol Pesan -->
-                            <button class="btn-pesan-modern" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
-                                <i class="fas fa-shopping-cart" style="margin-right:6px; font-size:13px;"></i> PESAN
+                            <button style="background:var(--secondary); color:white; border:none; padding:0 12px; border-radius:10px; font-weight:800; font-size:10px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s; display: flex; align-items: center; justify-content: center; white-space: nowrap;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
+                                <i class="fas fa-shopping-cart" style="margin-right:4px;"></i> PESAN
                             </button>
                         </div>
+                        <!-- AKHIR TAMPILAN AWAL -->
 
                         <span id="orderIdText" style="display:none;">Shopee</span>
                         <div id="activeOrdersContainer" style="display:none;">
@@ -466,6 +398,7 @@
         let globalCountdownTimer = null;
 
         window.currentApiMode = localStorage.getItem('savedApiMode') || 'HERO'; 
+        
         const SMS_HERO_API_KEY = "8db496349eAAb893A4472A2Ad7cf91f0"; 
         
         const PRIVATE_WORKER_URL = "https://herosms-proxy.you-zainul.workers.dev/";
@@ -475,7 +408,7 @@
         const titleEl = document.getElementById('headerBrandTitle');
         
         function updateTitleUI() {
-            const containerHarga = document.getElementById('hargaDropdownContainer');
+            const containerHarga = document.getElementById('containerHarga');
             if (window.currentApiMode === 'OTPCEPAT') {
                 titleEl.innerText = 'OTP CEPAT';
                 titleEl.style.color = '#e74c3c'; 
@@ -498,68 +431,12 @@
             }
         };
 
-        // --- LOGIKA CUSTOM DROPDOWN ---
-        window.toggleCustomDropdown = (type) => {
-            const menu = document.getElementById(`${type}Menu`);
-            const trigger = menu.previousElementSibling;
-            
-            document.querySelectorAll('.dropdown-menu-custom').forEach(m => {
-                if(m !== menu) m.classList.remove('show');
-            });
-            document.querySelectorAll('.dropdown-trigger').forEach(t => {
-                if(t !== trigger) t.classList.remove('active');
-            });
-
-            menu.classList.toggle('show');
-            trigger.classList.toggle('active');
-        };
-
-        window.addEventListener('click', (e) => {
-            if (!e.target.closest('.custom-dropdown-container')) {
-                document.querySelectorAll('.dropdown-menu-custom').forEach(m => m.classList.remove('show'));
-                document.querySelectorAll('.dropdown-trigger').forEach(t => t.classList.remove('active'));
-            }
-        });
-
-        window.selectProvider = (value, label) => {
-            document.getElementById('pilihProvider').value = value;
-            document.getElementById('providerTriggerText').innerText = label;
-            
-            const menu = document.getElementById('providerMenu');
-            menu.querySelectorAll('.dropdown-item-custom').forEach(item => {
-                if(item.innerText === label) item.classList.add('selected');
-                else item.classList.remove('selected');
-            });
-            
-            menu.classList.remove('show');
-            document.getElementById('providerDropdownContainer').querySelector('.dropdown-trigger').classList.remove('active');
-            
-            window.handleProviderChange();
-        };
-
-        window.selectHargaItem = (value, label) => {
-            document.getElementById('pilihHarga').value = value;
-            document.getElementById('hargaTriggerText').innerText = label;
-            
-            const menu = document.getElementById('hargaMenu');
-            menu.querySelectorAll('.dropdown-item-custom').forEach(item => {
-                if(item.getAttribute('data-val') === value) item.classList.add('selected');
-                else item.classList.remove('selected');
-            });
-
-            menu.classList.remove('show');
-            document.getElementById('hargaDropdownContainer').querySelector('.dropdown-trigger').classList.remove('active');
-        };
-
-        // KODE MEMUAT HARGA DAN STOK
         window.loadRealtimePrices = async () => {
             if (window.currentApiMode !== 'SMSCODE') return;
             const selectHarga = document.getElementById('pilihHarga');
-            const hargaMenu = document.getElementById('hargaMenu');
-            const hargaTrigger = document.getElementById('hargaTriggerText');
             if (!selectHarga) return;
             
-            hargaTrigger.innerText = "Memuat Harga...";
+            selectHarga.innerHTML = '<option value="">Memuat Harga...</option>';
             selectHarga.disabled = true;
 
             const providerEl = document.getElementById('pilihProvider');
@@ -574,7 +451,7 @@
                 try {
                     res = JSON.parse(text);
                 } catch(e) {
-                    hargaTrigger.innerText = "Error API: Coba lagi";
+                    selectHarga.innerHTML = `<option value="">Error API: Coba lagi</option>`;
                     console.log("Error JSON dari server:", text);
                     return;
                 }
@@ -589,8 +466,8 @@
                 
                 if (products.length > 0) {
                     for(let p of products) {
-                        let pId = p.id || p.catalog_product_id || '470';
-                        let pProductId = p.product_id || ''; // Simpan ID Spesifik
+                        let pId = p.catalog_product_id || p.id || '470';
+                        let pProductId = p.id || ''; // Simpan ID Spesifik dari pusat
                         let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
                         let pStock = parseInt(p.stock || p.available || p.count || p.qty || p.quantity || 0);
 
@@ -605,36 +482,22 @@
                 let sortedPrices = Object.keys(bestProducts).map(Number).sort((a,b) => a - b);
                 
                 selectHarga.innerHTML = '';
-                hargaMenu.innerHTML = '';
 
                 if (sortedPrices.length === 0) {
-                    hargaTrigger.innerText = "Harga / Stok Kosong";
                     selectHarga.innerHTML = '<option value="">Kosong</option>';
                 } else {
                     sortedPrices.forEach((price, idx) => {
                         let p = bestProducts[price];
-                        // PERBAIKAN: Menambahkan product_id ke valStr agar dikirim saat PESAN
+                        // Sisipkan product_id agar saat diklik PESAN bisa ditarget spesifik
                         let valStr = `${p.id}_${p.price}_${p.product_id}`; 
                         let labelStr = `Rp ${p.price.toLocaleString('id-ID')} (${p.stock} stok)`;
                         
                         selectHarga.innerHTML += `<option value="${valStr}">${labelStr}</option>`;
-                        
-                        let itemDiv = document.createElement('div');
-                        itemDiv.className = `dropdown-item-custom ${idx === 0 ? 'selected' : ''}`;
-                        itemDiv.setAttribute('data-val', valStr);
-                        itemDiv.innerText = labelStr;
-                        itemDiv.onclick = () => selectHargaItem(valStr, labelStr);
-                        hargaMenu.appendChild(itemDiv);
-
-                        if(idx === 0) {
-                            selectHarga.value = valStr;
-                            hargaTrigger.innerText = labelStr;
-                        }
                     });
                     selectHarga.disabled = false;
                 }
             } catch (e) {
-                hargaTrigger.innerText = "Error Jaringan";
+                selectHarga.innerHTML = '<option value="">Error Jaringan</option>';
                 console.error("Gagal loadRealtimePrices:", e);
             }
         };
@@ -1111,12 +974,11 @@
             beliNomorAPI(kodeLayanan, countryCode, provider);
         };
 
-        // KODE EKSEKUSI PEMBELIAN NOMOR (PERBAIKAN MENGIRIM HARGA)
         window.beliNomorAPI = async (s, c, providerSelected) => {
             const btnPesan = document.getElementById('btnPesanSkrg');
             
             let finalCatalogId = s; 
-            let maxPriceParam = ''; // Parameter baru untuk mengunci harga
+            let maxPriceParam = ''; 
 
             if (window.currentApiMode === 'SMSCODE') {
                 const dropdownHarga = document.getElementById('pilihHarga');
@@ -1129,10 +991,11 @@
                     let valParts = dropdownHarga.value.split('_');
                     if(valParts.length >= 2) {
                         finalCatalogId = valParts[0]; 
-                        maxPriceParam = `&maxPrice=${valParts[1]}`; // Tambahkan batas harga ke link worker
+                        maxPriceParam = `&maxPrice=${valParts[1]}`; 
                     }
-                    if(valParts.length >= 3 && valParts[2] !== "undefined") {
-                        maxPriceParam += `&product_id=${valParts[2]}`; // Tambahkan spesifik produk ID
+                    // MENGIRIMKAN PRODUCT_ID SPESIFIK KE WORKER
+                    if(valParts.length >= 3 && valParts[2] !== "undefined" && valParts[2] !== "") {
+                        maxPriceParam += `&product_id=${valParts[2]}`;
                     }
                 }
             }
@@ -1146,15 +1009,12 @@
 
             try {
                 let operatorParam = (providerSelected && providerSelected !== 'any') ? `&operator=${providerSelected}` : '';
-                
-                // PERBAIKAN: Sertakan maxPriceParam yang membawa harga spesifik ke dalam URL Worker
                 let params = `action=getNumber&service=${finalCatalogId}&country=${c}${operatorParam}${maxPriceParam}`;
                 
                 const text = await callHeroApi(params);
                 
                 if (text.includes("ACCESS_NUMBER")) {
                     const parts = text.split(":"); 
-                    
                     if (parts.length >= 3) {
                         newId = parts[1].trim(); 
                         newPhone = parts[2].trim();
@@ -1197,7 +1057,7 @@
 
             if (btnPesan) {
                 btnPesan.disabled = false;
-                btnPesan.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right:6px; font-size:13px;"></i> PESAN';
+                btnPesan.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right:4px;"></i> PESAN';
             }
         };
 
@@ -1247,9 +1107,7 @@
                     const text = await callHeroApi(`action=setStatus&id=${id}&status=${status}`); 
                     
                     if ((tipe === 'CANCEL' || tipe === 'AUTO_CANCEL' || tipe === 'REPLACE') && text.includes('EARLY_CANCEL_DENIED')) {
-                        if (tipe !== 'AUTO_CANCEL') {
-                            alert("Nomor belum bisa dibatalkan.\nTunggu sekitar 1-2 menit sesuai dengan aturan pusat provider.");
-                        }
+                        if (tipe !== 'AUTO_CANCEL') alert("Nomor belum bisa dibatalkan.\nTunggu sekitar 1-2 menit sesuai dengan aturan pusat provider.");
                         
                         if(activeOrders[id]) {
                             activeOrders[id].isCanceling = false; 
@@ -1261,9 +1119,7 @@
                     }
 
                     if (!text.includes('ACCESS_CANCEL') && !text.includes('STATUS_OK') && !text.includes('SUCCESS') && status !== 6) {
-                         if(status === 8 && !text.includes('ACCESS_CANCEL')) {
-                             throw new Error("Gagal cancel di server: " + text);
-                         }
+                         if(status === 8 && !text.includes('ACCESS_CANCEL')) throw new Error("Gagal cancel di server: " + text);
                     }
                 } catch(e) {
                     if(activeOrders[id]) {
