@@ -211,7 +211,7 @@
                     <div id="box-pesan-atas">
                         <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Layanan & Operator</label>
                         
-                        <!-- DIKEMBALIKAN KE TAMPILAN AWAL (SELECT BAWAAN BROWSER) -->
+                        <!-- DIKEMBALIKAN KE TAMPILAN AWAL (SELECT NATIVE) -->
                         <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: stretch;">
                             <div style="position: relative; flex: 1;">
                                 <select id="pilihProvider" onchange="handleProviderChange()" style="width:100%; height:100%; padding:10px 22px 10px 10px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-size:12px; font-weight:700; outline:none; color:var(--dark); appearance: none; cursor:pointer; box-sizing: border-box;">
@@ -467,13 +467,12 @@
                 if (products.length > 0) {
                     for(let p of products) {
                         let pId = p.catalog_product_id || p.id || '470';
-                        let pProductId = p.id || ''; // Simpan ID Spesifik dari pusat
                         let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
                         let pStock = parseInt(p.stock || p.available || p.count || p.qty || p.quantity || 0);
 
                         if (pPrice > 0 && pStock > 0) {
                             if (!bestProducts[pPrice] || bestProducts[pPrice].stock < pStock) {
-                                bestProducts[pPrice] = { id: pId, product_id: pProductId, price: pPrice, stock: pStock };
+                                bestProducts[pPrice] = { id: pId, price: pPrice, stock: pStock };
                             }
                         }
                     }
@@ -488,8 +487,7 @@
                 } else {
                     sortedPrices.forEach((price, idx) => {
                         let p = bestProducts[price];
-                        // Sisipkan product_id agar saat diklik PESAN bisa ditarget spesifik
-                        let valStr = `${p.id}_${p.price}_${p.product_id}`; 
+                        let valStr = `${p.id}_${p.price}`; 
                         let labelStr = `Rp ${p.price.toLocaleString('id-ID')} (${p.stock} stok)`;
                         
                         selectHarga.innerHTML += `<option value="${valStr}">${labelStr}</option>`;
@@ -992,10 +990,6 @@
                     if(valParts.length >= 2) {
                         finalCatalogId = valParts[0]; 
                         maxPriceParam = `&maxPrice=${valParts[1]}`; 
-                    }
-                    // MENGIRIMKAN PRODUCT_ID SPESIFIK KE WORKER
-                    if(valParts.length >= 3 && valParts[2] !== "undefined" && valParts[2] !== "") {
-                        maxPriceParam += `&product_id=${valParts[2]}`;
                     }
                 }
             }
