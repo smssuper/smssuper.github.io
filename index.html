@@ -249,7 +249,7 @@
                     <div id="successTableContainer" class="success-table-container" style="display:none;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding: 0 5px;">
                             <h4 style="font-size: 12px; color: var(--dark); margin:0; font-weight: 800;">Riwayat Sukses</h4>
-                            <span style="font-size:10px; color:var(--danger); font-weight:800; cursor:pointer;" onclick="clearSuccessHistory()"><i class="fas fa-trash-alt"></i> HAPUS</span>
+                            <span style="font-size:10px; color:var(--danger); font-weight:800; cursor:pointer;" onclick="clearSuccessHistory()"><i class="fas fa-trash-alt"></i> HAPUS SEMUA</span>
                         </div>
                         <table class="success-table">
                             <thead>
@@ -468,7 +468,7 @@
                 if (products.length > 0) {
                     for(let p of products) {
                         let pId = p.catalog_product_id || p.id || '470';
-                        let pProductId = p.id || ''; // Tangkap product_id presisi
+                        let pProductId = p.id || ''; 
                         let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
                         let pStock = parseInt(p.stock || p.available || p.count || p.qty || p.available_count || p.quantity || 0);
 
@@ -570,7 +570,12 @@
                 tr.innerHTML = `
                     <td style="color: var(--gray); font-weight: 800;">${index}</td>
                     <td>${item.phone}</td>
-                    <td style="color: var(--success);"><i class="fas fa-check-circle" style="margin-right: 4px;"></i> Sukses</td>
+                    <td>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="color: var(--success);"><i class="fas fa-check-circle" style="margin-right: 4px;"></i> Sukses</span>
+                            <i class="fas fa-trash-alt" style="color: var(--danger); cursor: pointer; font-size: 13px;" onclick="hapusSatuSukses('${docSnap.id}')" title="Hapus Nomor"></i>
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(tr);
                 index++;
@@ -580,6 +585,16 @@
         window.clearSuccessHistory = async () => {
             if(!confirm("Yakin ingin menghapus semua riwayat sukses?")) return;
             for(const id of successNumberIds) { await deleteDoc(doc(db, "success_numbers", id)); }
+        };
+
+        window.hapusSatuSukses = async (id) => {
+            if(!confirm("Yakin ingin menghapus nomor ini dari riwayat?")) return;
+            try {
+                await deleteDoc(doc(db, "success_numbers", id));
+            } catch(e) {
+                alert("Gagal menghapus riwayat.");
+                console.error(e);
+            }
         };
 
         onSnapshot(collection(db, "random_links"), (snapshot) => {
