@@ -570,10 +570,14 @@
                 tr.innerHTML = `
                     <td style="color: var(--gray); font-weight: 800;">${index}</td>
                     <td>${item.phone}</td>
-                    <td>
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                            <span style="color: var(--success);"><i class="fas fa-check-circle" style="margin-right: 4px;"></i> Sukses</span>
-                            <i class="fas fa-trash-alt" style="color: var(--danger); cursor: pointer; font-size: 13px; padding: 5px;" onclick="hapusSatuSukses('${docSnap.id}')" title="Hapus Nomor"></i>
+                    <td style="padding-right: 5px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="color: var(--success); display: flex; align-items: center; white-space: nowrap;">
+                                <i class="fas fa-check-circle" style="margin-right: 4px;"></i> Sukses
+                            </div>
+                            <div style="color: var(--danger); cursor: pointer; padding: 5px 10px; display: flex; align-items: center; justify-content: center;" onclick="hapusSatuSukses('${docSnap.id}')" title="Hapus Nomor">
+                                <i class="fas fa-trash-alt" style="font-size: 14px;"></i>
+                            </div>
                         </div>
                     </td>
                 `;
