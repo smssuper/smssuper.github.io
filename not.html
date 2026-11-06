@@ -36,7 +36,7 @@
         .filter-controls input { flex: 1; min-width: 150px; padding: 10px 14px; font-size: 0.95rem; border: 1px solid var(--border); border-radius: 8px; outline: none; box-sizing: border-box; }
         .filter-controls button { flex: none; width: auto; background-color: var(--text-muted); padding: 10px 16px; }
 
-        .table-container { border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; width: 100%; }
+        .table-container { border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; width: 100%; position: relative; }
         table { width: 100%; min-width: 650px; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
         th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; }
         th { background-color: #f8fafc; color: var(--text-muted); font-weight: 500; }
@@ -44,8 +44,28 @@
         tbody tr:hover { background-color: #f1f5f9; }
         tbody tr.terpilih { background-color: #e2e8f0; border-left: 4px solid var(--primary); }
         
-        .data-kosong { text-align: center; color: var(--text-muted); padding: 24px !important; font-style: italic; }
-        .aksi-kolom { display: flex; gap: 10px; align-items: center; }
+        /* 
+         * FIX: Sticky Column untuk Kolom Aksi
+         * Membuat kolom Aksi menempel di sebelah kanan saat discroll di HP 
+         */
+        th:last-child, td:last-child {
+            position: sticky;
+            right: 0;
+            background-color: var(--bg-card);
+            box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.05); /* Memberi bayangan sebagai pembatas */
+            z-index: 1;
+        }
+        th:last-child {
+            background-color: #f8fafc;
+            z-index: 2;
+        }
+        /* Menyesuaikan warna background sticky column saat baris disorot/dipilih */
+        tbody tr:hover td:last-child { background-color: #f1f5f9; }
+        tbody tr.terpilih td:last-child { background-color: #e2e8f0; }
+        /* Membatalkan sticky untuk teks Data Kosong agar posisinya di tengah sempurna */
+        td.data-kosong { position: static; text-align: center; color: var(--text-muted); padding: 24px !important; font-style: italic; box-shadow: none; }
+        
+        .aksi-kolom { display: flex; gap: 10px; align-items: center; justify-content: center; }
         .ikon-aksi { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background-color: #f1f5f9; color: var(--text-muted); cursor: pointer; border: 1px solid transparent; }
         .ikon-aksi.aktif-selesai { background-color: #dcfce7; color: var(--success); border-color: var(--success); }
         .ikon-aksi.aktif-gagal { background-color: #fee2e2; color: var(--danger); border-color: var(--danger); }
@@ -122,7 +142,7 @@
                         <th>Email</th>
                         <th>Jam</th>
                         <th>Keterangan</th>
-                        <th>Aksi</th>
+                        <th style="text-align:center;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="daftarData">
@@ -217,11 +237,16 @@
                 // Tampilkan berdasarkan tanggal
                 dataDitampilkan = dataDitampilkan.filter(d => d.tanggal === filterTanggal);
             } else {
-                // Jika "Semua Data", urutkan berdasarkan tanggal dan jam terbaru
+                // FIX: Pengurutan data yang lebih tahan terhadap error (jika format jam/tanggal ada yang kosong)
                 dataDitampilkan.sort((a, b) => {
-                    const dateA = new Date(a.tanggal + 'T' + (a.jam || '00:00'));
-                    const dateB = new Date(b.tanggal + 'T' + (b.jam || '00:00'));
-                    return dateB - dateA;
+                    const tglA = a.tanggal || '1970-01-01';
+                    const tglB = b.tanggal || '1970-01-01';
+                    const jamA = a.jam || '00:00';
+                    const jamB = b.jam || '00:00';
+                    
+                    const timeA = new Date(`${tglA}T${jamA}:00`).getTime() || 0;
+                    const timeB = new Date(`${tglB}T${jamB}:00`).getTime() || 0;
+                    return timeB - timeA;
                 });
             }
 
@@ -245,10 +270,10 @@
                     <td>${data.keterangan || '-'}</td>
                     <td>
                         <div class="aksi-kolom">
-                            <div class="ikon-aksi ${classSelesai}" onclick="ubahStatus('${data.id}', 'selesai', event)">
+                            <div class="ikon-aksi ${classSelesai}" onclick="ubahStatus('${data.id}', 'selesai', event)" title="Tandai Selesai">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             </div>
-                            <div class="ikon-aksi ${classGagal}" onclick="ubahStatus('${data.id}', 'gagal', event)">
+                            <div class="ikon-aksi ${classGagal}" onclick="ubahStatus('${data.id}', 'gagal', event)" title="Tandai Gagal/Batal">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </div>
                         </div>
