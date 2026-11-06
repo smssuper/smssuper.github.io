@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tambahkan Content Security Policy agar WebView Android mengizinkan Firebase -->
     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline';">
     <title>Aplikasi Catatan Pengerjaan</title>
     <style>
@@ -14,9 +13,10 @@
         .container { background-color: var(--bg-card); width: 100%; max-width: 800px; padding: 24px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); box-sizing: border-box; }
         h2 { font-size: 1.25rem; font-weight: 600; color: var(--primary); margin: 0 0 24px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); text-align: center; }
         
-        /* Layout Form Berjejer */
+        /* Layout Form Berjejer Kiri-Kanan */
         .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
-        .form-group { display: flex; flex-direction: column; flex: 1; }
+        /* min-width: 0 ditambahkan agar kolom mau mengecil sejajar di HP tanpa overflow */
+        .form-group { display: flex; flex-direction: column; flex: 1; min-width: 0; } 
         
         .form-group label { font-size: 0.875rem; font-weight: 500; margin-bottom: 6px; color: var(--primary); }
         .form-group input { padding: 10px 14px; font-size: 0.95rem; border: 1px solid var(--border); border-radius: 8px; outline: none; box-sizing: border-box; width: 100%; }
@@ -32,9 +32,10 @@
         
         .filter-group { display: flex; flex-direction: column; margin-bottom: 24px; padding-top: 16px; border-top: 1px dashed var(--border); }
         .filter-group label { font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; color: var(--primary); }
-        .filter-controls { display: flex; gap: 10px; flex-wrap: wrap; }
-        .filter-controls input { flex: 1; min-width: 150px; padding: 10px 14px; font-size: 0.95rem; border: 1px solid var(--border); border-radius: 8px; outline: none; box-sizing: border-box; }
-        .filter-controls button { flex: none; width: auto; background-color: var(--text-muted); padding: 10px 16px; }
+        /* flex-wrap: nowrap memastikan tombol dan input bersebelahan */
+        .filter-controls { display: flex; gap: 10px; flex-wrap: nowrap; } 
+        .filter-controls input { flex: 1; min-width: 0; padding: 10px 14px; font-size: 0.95rem; border: 1px solid var(--border); border-radius: 8px; outline: none; box-sizing: border-box; }
+        .filter-controls button { flex: none; width: auto; white-space: nowrap; background-color: var(--text-muted); padding: 10px 16px; }
 
         .table-container { border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; width: 100%; position: relative; }
         table { width: 100%; min-width: 650px; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
@@ -44,25 +45,11 @@
         tbody tr:hover { background-color: #f1f5f9; }
         tbody tr.terpilih { background-color: #e2e8f0; border-left: 4px solid var(--primary); }
         
-        /* 
-         * FIX: Sticky Column untuk Kolom Aksi
-         * Membuat kolom Aksi menempel di sebelah kanan saat discroll di HP 
-         */
-        th:last-child, td:last-child {
-            position: sticky;
-            right: 0;
-            background-color: var(--bg-card);
-            box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.05); /* Memberi bayangan sebagai pembatas */
-            z-index: 1;
-        }
-        th:last-child {
-            background-color: #f8fafc;
-            z-index: 2;
-        }
-        /* Menyesuaikan warna background sticky column saat baris disorot/dipilih */
+        /* Sticky Column untuk Kolom Aksi */
+        th:last-child, td:last-child { position: sticky; right: 0; background-color: var(--bg-card); box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.05); z-index: 1; }
+        th:last-child { background-color: #f8fafc; z-index: 2; }
         tbody tr:hover td:last-child { background-color: #f1f5f9; }
         tbody tr.terpilih td:last-child { background-color: #e2e8f0; }
-        /* Membatalkan sticky untuk teks Data Kosong agar posisinya di tengah sempurna */
         td.data-kosong { position: static; text-align: center; color: var(--text-muted); padding: 24px !important; font-style: italic; box-shadow: none; }
         
         .aksi-kolom { display: flex; gap: 10px; align-items: center; justify-content: center; }
@@ -82,10 +69,8 @@
 
         /* Responsif untuk Mobile */
         @media (max-width: 600px) {
-            .form-row { flex-direction: column; gap: 0; margin-bottom: 0; }
-            .form-group { margin-bottom: 16px; }
-            .filter-controls { flex-direction: column; }
-            .filter-controls button { width: 100%; }
+            /* Hapus paksaan turun ke bawah, biarkan sejajar kiri-kanan tapi perkecil jaraknya */
+            .form-row { gap: 10px; } 
             .container { padding: 16px; }
         }
     </style>
@@ -95,7 +80,7 @@
     <div class="container">
         <h2>CATATAN PENGERJAAN</h2>
 
-        <!-- FORM INPUT (Disesuaikan Baris dan Kolomnya) -->
+        <!-- FORM INPUT -->
         <div class="form-row">
             <div class="form-group"><label>Tanggal</label><input type="date" id="inputTanggal"></div>
             <div class="form-group"><label>Jam</label><input type="time" id="inputJam"></div>
@@ -105,8 +90,7 @@
             <div class="form-group"><label>Email</label><input type="email" id="inputEmail" placeholder="nama@email.com"></div>
             <div class="form-group">
                 <label>Keterangan</label>
-                <!-- Datalist memungkinkan input manual DAN dropdown -->
-                <input list="opsiKeterangan" id="inputKeterangan" placeholder="Pilih atau ketik manual...">
+                <input list="opsiKeterangan" id="inputKeterangan" placeholder="Ketik atau pilih...">
                 <datalist id="opsiKeterangan">
                     <option value="Proses Pengerjaan">
                     <option value="Perbaikan / Revisi">
@@ -172,7 +156,6 @@
         let daftarCatatan = [];
         let idTerpilih = null; 
 
-        // Set tanggal default ke hari ini saat aplikasi dimuat
         document.addEventListener("DOMContentLoaded", () => {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('inputTanggal').value = today;
@@ -230,14 +213,11 @@
             tbody.innerHTML = ''; 
             const filterTanggal = document.getElementById('filterTanggal').value;
 
-            // Copy array agar data asli tidak terpengaruh saat disortir
             let dataDitampilkan = [...daftarCatatan];
 
             if (filterTanggal) {
-                // Tampilkan berdasarkan tanggal
                 dataDitampilkan = dataDitampilkan.filter(d => d.tanggal === filterTanggal);
             } else {
-                // FIX: Pengurutan data yang lebih tahan terhadap error (jika format jam/tanggal ada yang kosong)
                 dataDitampilkan.sort((a, b) => {
                     const tglA = a.tanggal || '1970-01-01';
                     const tglB = b.tanggal || '1970-01-01';
