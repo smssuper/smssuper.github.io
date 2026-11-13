@@ -495,7 +495,7 @@
             const selectHarga = document.getElementById('pilihHarga');
             if (!selectHarga) return;
             
-            selectHarga.innerHTML = '<option value="">Memuat...</option>';
+            selectHarga.innerHTML = '<option value="">Memuat Harga...</option>';
             selectHarga.disabled = true;
 
             const providerEl = document.getElementById('pilihProvider');
@@ -506,28 +506,32 @@
             
             try {
                 let operatorParam = provider === 'any' ? '' : `&operator=${provider}&operatorFilter=${provider}`;
-                
                 const text = await callHeroApi(`action=getPrices&serviceName=shopee&service=470&country=${countryCode}${operatorParam}`);
                 
                 let res;
                 try {
                     res = JSON.parse(text);
                 } catch(e) {
-                    selectHarga.innerHTML = `<option value="">Error API</option>`;
+                    selectHarga.innerHTML = `<option value="">API Error/Bukan JSON</option>`;
+                    return;
+                }
+
+                // TAMPILKAN PESAN ERROR DARI WORKER JIKA ADA (Mencegah blank kosong tanpa alasan)
+                if (res.success === false && res.error) {
+                    selectHarga.innerHTML = `<option value="">${res.error}</option>`;
                     return;
                 }
                 
                 let products = [];
                 if (res.data && Array.isArray(res.data)) products = res.data;
                 else if (Array.isArray(res)) products = res;
-                else if (res.success && Array.isArray(res.prices)) products = res.prices;
-                else if (typeof res === 'object') products = [res]; 
-
+                
                 selectHarga.innerHTML = '';
 
                 if (products.length === 0) {
-                    selectHarga.innerHTML = '<option value="">Kosong</option>';
+                    selectHarga.innerHTML = '<option value="">Stok Sedang Kosong</option>';
                 } else {
+                    // Jangan difilter cuma termurah, tampilkan semua sesuai instruksi, lalu urutkan
                     products.sort((a,b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
                     
                     let hasValidStock = false;
@@ -535,25 +539,28 @@
                         let pId = p.id || '470';
                         let pProductId = p.product_id || p.id || ''; 
                         let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
-                        let pStock = parseInt(p.stock || p.available || p.count || p.qty || p.quantity || 0);
+                        
+                        // PENTING: Ekstrak paksa angka dari stok untuk API yang memberikan format string seperti ">50"
+                        let rawStockStr = String(p.stock || p.available || p.count || p.qty || p.quantity || 0);
+                        let pStock = parseInt(rawStockStr.replace(/[^0-9]/g, '')) || 0;
 
                         if (pPrice > 0 && pStock > 0) {
                             hasValidStock = true;
                             let valStr = `${pId}_${pPrice}_${pProductId}`; 
-                            let labelStr = `Rp ${pPrice.toLocaleString('id-ID')} (${pStock})`;
+                            let labelStr = `Rp ${pPrice.toLocaleString('id-ID')} (Stok: ${rawStockStr})`;
                             
                             selectHarga.innerHTML += `<option value="${valStr}">${labelStr}</option>`;
                         }
                     });
                     
                     if (!hasValidStock) {
-                        selectHarga.innerHTML = '<option value="">Kosong</option>';
+                        selectHarga.innerHTML = '<option value="">Semua Stok Habis</option>';
                     } else {
                         selectHarga.disabled = false;
                     }
                 }
             } catch (e) {
-                selectHarga.innerHTML = '<option value="">Error Net</option>';
+                selectHarga.innerHTML = '<option value="">Koneksi Terputus</option>';
             }
         };
         
