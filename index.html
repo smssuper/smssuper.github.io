@@ -449,15 +449,13 @@
             if(!negaraEl || !providerEl) return;
 
             const selectedCountry = negaraEl.value;
-            providerEl.innerHTML = ''; // Kosongkan operator
+            providerEl.innerHTML = ''; 
             
-            // Masukkan operator sesuai negara
             const ops = window.operatorMancanegara[selectedCountry] || window.operatorMancanegara["6"];
             ops.forEach(op => {
                 providerEl.innerHTML += `<option value="${op.val}">${op.text}</option>`;
             });
 
-            // Langsung load harga setelah ganti negara
             window.loadRealtimePrices();
         };
         
@@ -503,7 +501,6 @@
             const providerEl = document.getElementById('pilihProvider');
             const provider = providerEl ? providerEl.value : 'any';
             
-            // Ambil ID Negara yang dipilih, default ke 6 (Indo) jika tidak ditemukan
             const negaraEl = document.getElementById('pilihNegara');
             const countryCode = negaraEl ? negaraEl.value : '6'; 
             
@@ -526,38 +523,34 @@
                 else if (res.success && Array.isArray(res.prices)) products = res.prices;
                 else if (typeof res === 'object') products = [res]; 
 
-                let bestProducts = {};
-                
-                if (products.length > 0) {
-                    for(let p of products) {
+                selectHarga.innerHTML = '';
+
+                if (products.length === 0) {
+                    selectHarga.innerHTML = '<option value="">Kosong</option>';
+                } else {
+                    products.sort((a,b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+                    
+                    let hasValidStock = false;
+                    products.forEach((p) => {
                         let pId = p.id || '470';
-                        let pProductId = p.product_id || ''; 
+                        let pProductId = p.product_id || p.id || ''; 
                         let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
                         let pStock = parseInt(p.stock || p.available || p.count || p.qty || p.quantity || 0);
 
                         if (pPrice > 0 && pStock > 0) {
-                            if (!bestProducts[pPrice] || bestProducts[pPrice].stock < pStock) {
-                                bestProducts[pPrice] = { id: pId, product_id: pProductId, price: pPrice, stock: pStock };
-                            }
+                            hasValidStock = true;
+                            let valStr = `${pId}_${pPrice}_${pProductId}`; 
+                            let labelStr = `Rp ${pPrice.toLocaleString('id-ID')} (${pStock})`;
+                            
+                            selectHarga.innerHTML += `<option value="${valStr}">${labelStr}</option>`;
                         }
-                    }
-                }
-
-                let sortedPrices = Object.keys(bestProducts).map(Number).sort((a,b) => a - b);
-                
-                selectHarga.innerHTML = '';
-
-                if (sortedPrices.length === 0) {
-                    selectHarga.innerHTML = '<option value="">Kosong</option>';
-                } else {
-                    sortedPrices.forEach((price) => {
-                        let p = bestProducts[price];
-                        let valStr = `${p.id}_${p.price}_${p.product_id}`; 
-                        let labelStr = `Rp ${p.price.toLocaleString('id-ID')} (${p.stock})`;
-                        
-                        selectHarga.innerHTML += `<option value="${valStr}">${labelStr}</option>`;
                     });
-                    selectHarga.disabled = false;
+                    
+                    if (!hasValidStock) {
+                        selectHarga.innerHTML = '<option value="">Kosong</option>';
+                    } else {
+                        selectHarga.disabled = false;
+                    }
                 }
             } catch (e) {
                 selectHarga.innerHTML = '<option value="">Error Net</option>';
@@ -1081,7 +1074,7 @@
                     if(valParts.length >= 2) {
                         finalCatalogId = valParts[0]; 
                     }
-                    if(valParts.length >= 3 && valParts[2] !== "undefined" && valParts[2] !== "") {
+                    if(valParts.length >= 3 && valParts[2] !== "undefined" && valParts[2] !== "null" && valParts[2] !== "") {
                         maxPriceParam = `&product_id=${valParts[2]}`;
                     }
                 }
