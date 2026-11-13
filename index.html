@@ -214,7 +214,7 @@
                         <!-- CONTAINER SEBARIS -->
                         <div style="display: flex; gap: 4px; margin-bottom: 10px; align-items: stretch; width: 100%;">
                             
-                            <!-- 1. NEGARA (TERUPDATE DENGAN ID BARU: 7, 5, 53) -->
+                            <!-- 1. NEGARA -->
                             <div style="position: relative; flex: 0.8; display: none; min-width: 0;" id="containerNegara">
                                 <select id="pilihNegara" onchange="handleCountryChange()" style="width:100%; height:100%; padding:8px 12px 8px 6px; border-radius:8px; border:1px solid #e2e8f0; background:white; font-size:10px; font-weight:800; outline:none; color:var(--dark); appearance: none; cursor:pointer;">
                                     <option value="7">🇮🇩 IDN</option>
@@ -237,7 +237,7 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 10px;"></i>
                             </div>
 
-                            <!-- 3. HARGA (HANYA MUNCUL DI SMSCODE) -->
+                            <!-- 3. HARGA -->
                             <div style="position: relative; flex: 1.2; display: none; min-width: 0;" id="containerHarga">
                                 <select id="pilihHarga" style="width:100%; height:100%; padding:8px 12px 8px 6px; border-radius:8px; border:1px solid #e2e8f0; background:white; font-size:10px; font-weight:800; outline:none; color:var(--dark); appearance: none; cursor:pointer;">
                                     <option value="">Harga...</option>
@@ -420,16 +420,16 @@
 
         const titleEl = document.getElementById('headerBrandTitle');
 
-        // --- LOGIKA DATABASE OPERATOR NEGARA MENGGUNAKAN ID BARU ---
+        // --- MENU OPERATOR DISESUAIKAN DENGAN NAMA & ID ASLI DARI API ---
         window.operatorMancanegara = {
             "7": [ // Indonesia
                 { val: "any", text: "Otomatis" }, { val: "telkomsel", text: "Telkomsel" }, { val: "xl", text: "XL/Axis" }, { val: "indosat", text: "Indosat" }, { val: "three", text: "Tri (3)" }, { val: "smartfren", text: "Smart" }
             ],
-            "5": [ // Philippines 
-                { val: "any", text: "Otomatis" }, { val: "globe", text: "Globe" }, { val: "smart", text: "Smart" }, { val: "sun", text: "Sun" }, { val: "dito", text: "Dito" }, { val: "tnt", text: "TNT" }
+            "5": [ // Philippines (Hanya yang benar-benar ada di API)
+                { val: "any", text: "Otomatis" }, { val: "globe_telecom", text: "Globe Telecom" }, { val: "smart", text: "Smart Telecom" }, { val: "tm", text: "TM (Globe)" }
             ],
-            "53": [ // Thailand 
-                { val: "any", text: "Otomatis" }, { val: "ais", text: "AIS" }, { val: "dtac", text: "DTAC" }, { val: "truemove", text: "TrueMove" }
+            "53": [ // Thailand (Hanya yang benar-benar ada di API)
+                { val: "any", text: "Otomatis" }, { val: "ais", text: "AIS" }, { val: "cat_mobile", text: "CAT Mobile" }, { val: "dtac", text: "DTAC" }, { val: "truemove", text: "TrueMove H" }
             ]
         };
 
@@ -534,7 +534,7 @@
                     
                     let hasValidStock = false;
                     products.forEach((p) => {
-                        let pId = p.id || '21'; // Shopee ID is 21
+                        let pId = p.id || '21'; 
                         let pProductId = p.product_id || p.id || ''; 
                         let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
                         
