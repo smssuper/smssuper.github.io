@@ -214,12 +214,12 @@
                         <!-- CONTAINER SEBARIS -->
                         <div style="display: flex; gap: 4px; margin-bottom: 10px; align-items: stretch; width: 100%;">
                             
-                            <!-- 1. NEGARA (HANYA MUNCUL DI SMSCODE) -->
+                            <!-- 1. NEGARA (TERUPDATE DENGAN ID BARU: 7, 5, 53) -->
                             <div style="position: relative; flex: 0.8; display: none; min-width: 0;" id="containerNegara">
                                 <select id="pilihNegara" onchange="handleCountryChange()" style="width:100%; height:100%; padding:8px 12px 8px 6px; border-radius:8px; border:1px solid #e2e8f0; background:white; font-size:10px; font-weight:800; outline:none; color:var(--dark); appearance: none; cursor:pointer;">
-                                    <option value="6">🇮🇩 IDN</option>
-                                    <option value="4">🇵🇭 PHL</option>
-                                    <option value="52">🇹🇭 THA</option>
+                                    <option value="7">🇮🇩 IDN</option>
+                                    <option value="5">🇵🇭 PHL</option>
+                                    <option value="53">🇹🇭 THA</option>
                                 </select>
                                 <i class="fas fa-caret-down" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 10px;"></i>
                             </div>
@@ -420,15 +420,15 @@
 
         const titleEl = document.getElementById('headerBrandTitle');
 
-        // --- LOGIKA DATABASE OPERATOR NEGARA ---
+        // --- LOGIKA DATABASE OPERATOR NEGARA MENGGUNAKAN ID BARU ---
         window.operatorMancanegara = {
-            "6": [ // Indonesia
+            "7": [ // Indonesia
                 { val: "any", text: "Otomatis" }, { val: "telkomsel", text: "Telkomsel" }, { val: "xl", text: "XL/Axis" }, { val: "indosat", text: "Indosat" }, { val: "three", text: "Tri (3)" }, { val: "smartfren", text: "Smart" }
             ],
-            "4": [ // Philippines
+            "5": [ // Philippines (Disesuaikan jadi 5)
                 { val: "any", text: "Otomatis" }, { val: "globe", text: "Globe" }, { val: "smart", text: "Smart" }, { val: "sun", text: "Sun" }, { val: "dito", text: "Dito" }, { val: "tnt", text: "TNT" }
             ],
-            "52": [ // Thailand
+            "53": [ // Thailand (Disesuaikan jadi 53)
                 { val: "any", text: "Otomatis" }, { val: "ais", text: "AIS" }, { val: "dtac", text: "DTAC" }, { val: "truemove", text: "TrueMove" }
             ]
         };
@@ -437,7 +437,7 @@
             const providerEl = document.getElementById('pilihProvider');
             if(!providerEl) return;
             providerEl.innerHTML = '';
-            window.operatorMancanegara["6"].forEach(op => {
+            window.operatorMancanegara["7"].forEach(op => {
                 providerEl.innerHTML += `<option value="${op.val}">${op.text}</option>`;
             });
         };
@@ -451,7 +451,7 @@
             const selectedCountry = negaraEl.value;
             providerEl.innerHTML = ''; 
             
-            const ops = window.operatorMancanegara[selectedCountry] || window.operatorMancanegara["6"];
+            const ops = window.operatorMancanegara[selectedCountry] || window.operatorMancanegara["7"];
             ops.forEach(op => {
                 providerEl.innerHTML += `<option value="${op.val}">${op.text}</option>`;
             });
@@ -502,7 +502,7 @@
             const provider = providerEl ? providerEl.value : 'any';
             
             const negaraEl = document.getElementById('pilihNegara');
-            const countryCode = negaraEl ? negaraEl.value : '6'; 
+            const countryCode = negaraEl ? negaraEl.value : '7'; 
             
             try {
                 let operatorParam = provider === 'any' ? '' : `&operator=${provider}&operatorFilter=${provider}`;
@@ -512,11 +512,10 @@
                 try {
                     res = JSON.parse(text);
                 } catch(e) {
-                    selectHarga.innerHTML = `<option value="">API Error/Bukan JSON</option>`;
+                    selectHarga.innerHTML = `<option value="">API Error</option>`;
                     return;
                 }
 
-                // TAMPILKAN PESAN ERROR DARI WORKER JIKA ADA (Mencegah blank kosong tanpa alasan)
                 if (res.success === false && res.error) {
                     selectHarga.innerHTML = `<option value="">${res.error}</option>`;
                     return;
@@ -531,7 +530,6 @@
                 if (products.length === 0) {
                     selectHarga.innerHTML = '<option value="">Stok Sedang Kosong</option>';
                 } else {
-                    // Jangan difilter cuma termurah, tampilkan semua sesuai instruksi, lalu urutkan
                     products.sort((a,b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
                     
                     let hasValidStock = false;
@@ -540,7 +538,6 @@
                         let pProductId = p.product_id || p.id || ''; 
                         let pPrice = parseFloat(p.price || p.cost || p.rate || 0);
                         
-                        // PENTING: Ekstrak paksa angka dari stok untuk API yang memberikan format string seperti ">50"
                         let rawStockStr = String(p.stock || p.available || p.count || p.qty || p.quantity || 0);
                         let pStock = parseInt(rawStockStr.replace(/[^0-9]/g, '')) || 0;
 
@@ -548,7 +545,6 @@
                             hasValidStock = true;
                             let valStr = `${pId}_${pPrice}_${pProductId}`; 
                             let labelStr = `Rp ${pPrice.toLocaleString('id-ID')} (Stok: ${rawStockStr})`;
-                            
                             selectHarga.innerHTML += `<option value="${valStr}">${labelStr}</option>`;
                         }
                     });
@@ -1032,7 +1028,7 @@
             let provider = providerEl ? providerEl.value : 'any';
             
             let kodeLayanan = 'ka';
-            let countryCode = 6;
+            let countryCode = 7;
             
             if (window.currentApiMode === 'HERO') {
                 kodeLayanan = 'ka';
@@ -1043,7 +1039,7 @@
             } else if (window.currentApiMode === 'SMSCODE') {
                 kodeLayanan = '470'; 
                 const negaraEl = document.getElementById('pilihNegara');
-                countryCode = negaraEl ? negaraEl.value : 6;
+                countryCode = negaraEl ? negaraEl.value : 7;
             }
 
             let displayName = "Otomatis";
@@ -1054,8 +1050,8 @@
             const orderIdTextEl = document.getElementById('orderIdText');
             if (orderIdTextEl) {
                 let labelNegara = "ID";
-                if(countryCode == "4") labelNegara = "PH";
-                else if(countryCode == "52") labelNegara = "TH";
+                if(countryCode == "5") labelNegara = "PH";
+                else if(countryCode == "53") labelNegara = "TH";
                 
                 orderIdTextEl.innerText = `Shopee ${labelNegara} (${displayName})`;
             }
