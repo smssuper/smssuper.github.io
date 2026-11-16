@@ -15,7 +15,6 @@
         
         /* Layout Form Berjejer Kiri-Kanan */
         .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
-        /* min-width: 0 ditambahkan agar kolom mau mengecil sejajar di HP tanpa overflow */
         .form-group { display: flex; flex-direction: column; flex: 1; min-width: 0; } 
         
         .form-group label { font-size: 0.875rem; font-weight: 500; margin-bottom: 6px; color: var(--primary); }
@@ -25,6 +24,7 @@
         button { flex: 1; min-width: 80px; padding: 10px 12px; font-size: 0.875rem; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; color: white; transition: 0.2s; }
         button:disabled { background-color: var(--border) !important; color: var(--text-muted) !important; cursor: not-allowed; }
         
+        #btnNomorApp { background-color: #475569; } /* Tombol Nomor */
         #btnSimpan { background-color: var(--primary); }
         #btnEdit { background-color: var(--warning); }
         #btnHapus { background-color: var(--danger); }
@@ -32,7 +32,6 @@
         
         .filter-group { display: flex; flex-direction: column; margin-bottom: 24px; padding-top: 16px; border-top: 1px dashed var(--border); }
         .filter-group label { font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; color: var(--primary); }
-        /* flex-wrap: nowrap memastikan tombol dan input bersebelahan */
         .filter-controls { display: flex; gap: 10px; flex-wrap: nowrap; } 
         .filter-controls input { flex: 1; min-width: 0; padding: 10px 14px; font-size: 0.95rem; border: 1px solid var(--border); border-radius: 8px; outline: none; box-sizing: border-box; }
         .filter-controls button { flex: none; width: auto; white-space: nowrap; background-color: var(--text-muted); padding: 10px 16px; }
@@ -45,11 +44,11 @@
         tbody tr:hover { background-color: #f1f5f9; }
         tbody tr.terpilih { background-color: #e2e8f0; border-left: 4px solid var(--primary); }
         
-        /* Sticky Column untuk Kolom Aksi */
-        th:last-child, td:last-child { position: sticky; right: 0; background-color: var(--bg-card); box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.05); z-index: 1; }
-        th:last-child { background-color: #f8fafc; z-index: 2; }
-        tbody tr:hover td:last-child { background-color: #f1f5f9; }
-        tbody tr.terpilih td:last-child { background-color: #e2e8f0; }
+        /* Sticky Column untuk Kolom Aksi di Tabel Utama */
+        .table-container th:last-child, .table-container td:last-child { position: sticky; right: 0; background-color: var(--bg-card); box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.05); z-index: 1; }
+        .table-container th:last-child { background-color: #f8fafc; z-index: 2; }
+        .table-container tbody tr:hover td:last-child { background-color: #f1f5f9; }
+        .table-container tbody tr.terpilih td:last-child { background-color: #e2e8f0; }
         td.data-kosong { position: static; text-align: center; color: var(--text-muted); padding: 24px !important; font-style: italic; box-shadow: none; }
         
         .aksi-kolom { display: flex; gap: 10px; align-items: center; justify-content: center; }
@@ -57,9 +56,10 @@
         .ikon-aksi.aktif-selesai { background-color: #dcfce7; color: var(--success); border-color: var(--success); }
         .ikon-aksi.aktif-gagal { background-color: #fee2e2; color: var(--danger); border-color: var(--danger); }
         
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; z-index: 1000; transition: 0.2s; }
+        /* Modal General */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; z-index: 1000; transition: 0.2s; backdrop-filter: blur(2px); }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-box { background: white; width: 90%; max-width: 350px; padding: 24px; border-radius: 12px; text-align: center; }
+        .modal-box { background: white; width: 90%; max-width: 350px; padding: 24px; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .modal-box h3 { margin: 0 0 12px 0; color: var(--primary); }
         .modal-box p { margin: 0 0 24px 0; color: var(--text-muted); font-size: 0.95rem; }
         .modal-actions { display: flex; gap: 12px; justify-content: center; }
@@ -67,9 +67,20 @@
         .btn-modal-ok { background-color: var(--primary); color: white; }
         .btn-modal-batal { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); }
 
-        /* Responsif untuk Mobile */
+        /* Khusus Modal Nomor */
+        .modal-nomor-box { max-width: 550px; text-align: left; }
+        .modal-nomor-box table { min-width: 100%; margin-top: 10px; }
+        .modal-nomor-box th, .modal-nomor-box td { padding: 10px 12px; }
+        .modal-nomor-box th:last-child, .modal-nomor-box td:last-child { position: static; box-shadow: none; background: transparent; }
+        
+        .select-status { padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; width: 100%; background-color: #fff; cursor: pointer; }
+        
+        /* Warna Baris Status Nomor */
+        tr.status-hijau { background-color: #dcfce7 !important; }
+        tr.status-merah { background-color: #fee2e2 !important; }
+        tr.status-putih { background-color: #ffffff !important; }
+
         @media (max-width: 600px) {
-            /* Hapus paksaan turun ke bawah, biarkan sejajar kiri-kanan tapi perkecil jaraknya */
             .form-row { gap: 10px; } 
             .container { padding: 16px; }
         }
@@ -101,6 +112,7 @@
         </div>
 
         <div class="action-buttons">
+            <button id="btnNomorApp" onclick="bukaModalNomor()">Nomor</button>
             <button id="btnSimpan" onclick="simpanData()">Simpan</button>
             <button id="btnEdit" onclick="editData()" disabled>Edit</button>
             <button id="btnHapus" onclick="konfirmasiHapus()" disabled>Hapus</button>
@@ -116,7 +128,7 @@
             </div>
         </div>
 
-        <!-- TABEL DATA -->
+        <!-- TABEL DATA CATATAN -->
         <div class="table-container">
             <table>
                 <thead>
@@ -136,7 +148,7 @@
         </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- MODAL PERINGATAN UMUM -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-box">
             <h3 id="modalTitle">Peringatan</h3><p id="modalMessage">Pesan</p>
@@ -147,14 +159,53 @@
         </div>
     </div>
 
+    <!-- MODAL KELOLA NOMOR -->
+    <div id="modalNomor" class="modal-overlay">
+        <div class="modal-box modal-nomor-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); margin-bottom: 16px; padding-bottom: 12px;">
+                <h3 style="margin:0; font-size:1.1rem;">Kelola Nomor</h3>
+                <span onclick="tutupModalNomor()" style="cursor:pointer; font-size:1.2rem; font-weight:bold; color:var(--text-muted);">&times;</span>
+            </div>
+            
+            <div class="form-row" style="align-items:flex-end;">
+                <div class="form-group" style="flex: 2;">
+                    <label>Tambah / Edit Nomor</label>
+                    <input type="text" id="inputNomorBaru" placeholder="Masukkan angka...">
+                </div>
+                <button id="btnTambahNomor" onclick="simpanNomor()" style="background-color:var(--primary); flex: 1;">Tambah</button>
+                <button id="btnSimpanEditNomor" onclick="simpanEditNomor()" style="background-color:var(--warning); flex: 1; display:none;">Update</button>
+                <button id="btnBatalEditNomor" onclick="batalEditNomor()" style="background-color:transparent; color:var(--text-muted); border:1px solid var(--border); display:none;">Batal</button>
+            </div>
+            
+            <div style="max-height: 350px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Nomor</th>
+                            <th style="width: 45%;">Status</th>
+                            <th style="width: 30%; text-align:center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="daftarNomorList">
+                        <tr><td colspan="3" class="data-kosong">Memuat nomor...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Script -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <script>
         let db;
         let catatanRef;
+        let nomorRef;
         let daftarCatatan = [];
+        let daftarDataNomor = [];
         let idTerpilih = null; 
+        let idEditNomor = null;
 
         document.addEventListener("DOMContentLoaded", () => {
             const today = new Date().toISOString().split('T')[0];
@@ -162,6 +213,7 @@
             document.getElementById('filterTanggal').value = today;
         });
 
+        // FUNGSI MODAL ALERT
         function tampilkanModal(judul, pesan, tipe, callback = null) {
             document.getElementById('modalTitle').innerText = judul;
             document.getElementById('modalMessage').innerText = pesan;
@@ -181,6 +233,7 @@
             setTimeout(() => { document.getElementById('modalBtnOk').style.backgroundColor = 'var(--primary)'; }, 300);
         }
 
+        // INIT FIREBASE
         try {
             const firebaseConfig = {
                 databaseURL: "https://catatanproyek-adcff-default-rtdb.asia-southeast1.firebasedatabase.app/"
@@ -188,7 +241,9 @@
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
             catatanRef = db.ref('catatan');
+            nomorRef = db.ref('daftar_nomor'); // Referensi Baru untuk Nomor
 
+            // Listener Catatan
             catatanRef.on('value', (snapshot) => {
                 daftarCatatan = [];
                 snapshot.forEach((childSnapshot) => {
@@ -199,10 +254,22 @@
                 tampilkanModal("Error Database", "Gagal membaca database: " + errorObject.name, "alert");
             });
 
+            // Listener Nomor
+            nomorRef.on('value', (snapshot) => {
+                daftarDataNomor = [];
+                snapshot.forEach((childSnapshot) => {
+                    daftarDataNomor.push({ id: childSnapshot.key, ...childSnapshot.val() });
+                });
+                renderDaftarNomor();
+            });
+
         } catch (error) {
             tampilkanModal("Error Sistem", "Firebase gagal dimuat di perangkat ini: " + error.message, "alert");
         }
 
+        // ============================================
+        // LOGIKA APLIKASI CATATAN (Asli)
+        // ============================================
         function resetFilter() {
             document.getElementById('filterTanggal').value = '';
             renderTabel();
@@ -212,18 +279,14 @@
             const tbody = document.getElementById('daftarData');
             tbody.innerHTML = ''; 
             const filterTanggal = document.getElementById('filterTanggal').value;
-
             let dataDitampilkan = [...daftarCatatan];
 
             if (filterTanggal) {
                 dataDitampilkan = dataDitampilkan.filter(d => d.tanggal === filterTanggal);
             } else {
                 dataDitampilkan.sort((a, b) => {
-                    const tglA = a.tanggal || '1970-01-01';
-                    const tglB = b.tanggal || '1970-01-01';
-                    const jamA = a.jam || '00:00';
-                    const jamB = b.jam || '00:00';
-                    
+                    const tglA = a.tanggal || '1970-01-01'; const tglB = b.tanggal || '1970-01-01';
+                    const jamA = a.jam || '00:00'; const jamB = b.jam || '00:00';
                     const timeA = new Date(`${tglA}T${jamA}:00`).getTime() || 0;
                     const timeB = new Date(`${tglB}T${jamB}:00`).getTime() || 0;
                     return timeB - timeA;
@@ -277,18 +340,14 @@
         }
 
         function simpanData() {
-            if(!db) {
-                tampilkanModal("Gagal", "Sistem database belum siap.", "alert");
-                return;
-            }
+            if(!db) { tampilkanModal("Gagal", "Sistem database belum siap.", "alert"); return; }
             const tanggal = document.getElementById('inputTanggal').value;
             const email = document.getElementById('inputEmail').value;
             const keterangan = document.getElementById('inputKeterangan').value;
             const jam = document.getElementById('inputJam').value;
             
             if (!tanggal || !email || !keterangan || !jam) {
-                tampilkanModal("Belum Lengkap", "Harap isi semua kolom termasuk keterangan.", "alert");
-                return;
+                tampilkanModal("Belum Lengkap", "Harap isi semua kolom termasuk keterangan.", "alert"); return;
             }
             document.getElementById('btnSimpan').innerText = "Memproses...";
             const refBaru = db.ref('catatan').push();
@@ -326,10 +385,8 @@
             const jam = document.getElementById('inputJam').value;
             
             if (!tanggal || !email || !keterangan || !jam) {
-                tampilkanModal("Belum Lengkap", "Harap isi semua kolom.", "alert");
-                return;
+                tampilkanModal("Belum Lengkap", "Harap isi semua kolom.", "alert"); return;
             }
-            
             document.getElementById('btnEdit').innerText = "Memproses...";
             db.ref('catatan/' + idTerpilih).update({ tanggal, email, keterangan, jam }).then(() => {
                 document.getElementById('btnEdit').innerText = "Edit";
@@ -359,6 +416,102 @@
             document.getElementById('btnHapus').disabled = true;
             document.getElementById('btnBatal').style.display = 'none';
             renderTabel();
+        }
+
+        // ============================================
+        // LOGIKA APLIKASI KELOLA NOMOR (Fitur Baru)
+        // ============================================
+        function bukaModalNomor() {
+            document.getElementById('modalNomor').classList.add('active');
+        }
+
+        function tutupModalNomor() {
+            document.getElementById('modalNomor').classList.remove('active');
+            batalEditNomor();
+        }
+
+        function simpanNomor() {
+            const val = document.getElementById('inputNomorBaru').value.trim();
+            if(!val) { alert('Nomor tidak boleh kosong!'); return; }
+            if(!db) return;
+            
+            // Tambah dengan status default "belum"
+            nomorRef.push({ nomor: val, status: 'belum' }).then(() => {
+                document.getElementById('inputNomorBaru').value = '';
+            });
+        }
+
+        function editNomor(id, nomor) {
+            idEditNomor = id;
+            document.getElementById('inputNomorBaru').value = nomor;
+            document.getElementById('btnTambahNomor').style.display = 'none';
+            document.getElementById('btnSimpanEditNomor').style.display = 'block';
+            document.getElementById('btnBatalEditNomor').style.display = 'block';
+        }
+
+        function simpanEditNomor() {
+            const val = document.getElementById('inputNomorBaru').value.trim();
+            if(!val || !idEditNomor) return;
+            nomorRef.child(idEditNomor).update({ nomor: val }).then(() => {
+                batalEditNomor();
+            });
+        }
+
+        function batalEditNomor() {
+            idEditNomor = null;
+            document.getElementById('inputNomorBaru').value = '';
+            document.getElementById('btnTambahNomor').style.display = 'block';
+            document.getElementById('btnSimpanEditNomor').style.display = 'none';
+            document.getElementById('btnBatalEditNomor').style.display = 'none';
+        }
+
+        function hapusNomor(id) {
+            if(confirm("Apakah Anda yakin ingin menghapus nomor ini?")) {
+                nomorRef.child(id).remove();
+            }
+        }
+
+        function ubahStatusNomor(id, event) {
+            const statusBaru = event.target.value;
+            nomorRef.child(id).update({ status: statusBaru });
+        }
+
+        function renderDaftarNomor() {
+            const tbody = document.getElementById('daftarNomorList');
+            tbody.innerHTML = '';
+            
+            if(daftarDataNomor.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="data-kosong">Belum ada daftar nomor.</td></tr>';
+                return;
+            }
+
+            daftarDataNomor.forEach((item) => {
+                let kelasStatus = '';
+                if(item.status === 'sudah') kelasStatus = 'status-hijau';
+                else if(item.status === 'copot') kelasStatus = 'status-merah';
+                else kelasStatus = 'status-putih';
+
+                const tr = document.createElement('tr');
+                tr.className = kelasStatus;
+                
+                tr.innerHTML = `
+                    <td style="font-weight:600;">${item.nomor}</td>
+                    <td>
+                        <select onchange="ubahStatusNomor('${item.id}', event)" class="select-status">
+                            <option value="belum" ${item.status === 'belum' ? 'selected' : ''}>No belum digunakan</option>
+                            <option value="sudah" ${item.status === 'sudah' ? 'selected' : ''}>No sudah digunakan</option>
+                            <option value="copot" ${item.status === 'copot' ? 'selected' : ''}>No sudah dicopot</option>
+                        </select>
+                    </td>
+                    <td style="text-align:center;">
+                        <div style="display:flex; gap:6px; justify-content:center;">
+                            <button onclick="editNomor('${item.id}', '${item.nomor}')" style="min-width:auto; padding:6px 10px; background:var(--warning); font-size:12px;">Edit</button>
+                            <button onclick="hapusNomor('${item.id}')" style="min-width:auto; padding:6px 10px; background:var(--danger); font-size:12px;">Hapus</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
     </script>
 </body>
