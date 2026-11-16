@@ -69,12 +69,17 @@
 
         /* Khusus Modal Nomor */
         .modal-nomor-box { max-width: 550px; text-align: left; }
-        .modal-nomor-box table { min-width: 100%; margin-top: 10px; }
-        .modal-nomor-box th, .modal-nomor-box td { padding: 10px 12px; }
-        .modal-nomor-box th:last-child, .modal-nomor-box td:last-child { position: static; box-shadow: none; background: transparent; }
+        .modal-tabel-wrapper { max-height: 350px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; width: 100%; }
+        .modal-nomor-box table { min-width: 500px; /* Minimal lebar tabel agar bisa digeser (scroll) */ margin-top: 0; border: none; }
+        .modal-nomor-box th, .modal-nomor-box td { padding: 10px 14px; white-space: nowrap; }
         
-        .select-status { padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; width: 100%; background-color: #fff; cursor: pointer; }
+        .select-status { padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; min-width: 170px; background-color: #fff; cursor: pointer; }
         
+        /* Tombol Aksi Icon pada Daftar Nomor */
+        .btn-aksi-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; min-width: auto; padding: 0; }
+        .btn-aksi-edit { background-color: var(--warning); color: white; }
+        .btn-aksi-hapus { background-color: var(--danger); color: white; }
+
         /* Warna Baris Status Nomor */
         tr.status-hijau { background-color: #dcfce7 !important; }
         tr.status-merah { background-color: #fee2e2 !important; }
@@ -177,13 +182,14 @@
                 <button id="btnBatalEditNomor" onclick="batalEditNomor()" style="background-color:transparent; color:var(--text-muted); border:1px solid var(--border); display:none;">Batal</button>
             </div>
             
-            <div style="max-height: 350px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+            <!-- Membungkus tabel dengan class baru agar bisa di-scroll X & Y -->
+            <div class="modal-tabel-wrapper">
                 <table>
                     <thead>
                         <tr>
                             <th style="width: 25%;">Nomor</th>
-                            <th style="width: 45%;">Status</th>
-                            <th style="width: 30%; text-align:center;">Aksi</th>
+                            <th style="width: 50%;">Status</th>
+                            <th style="width: 25%; text-align:center;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="daftarNomorList">
@@ -241,9 +247,8 @@
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
             catatanRef = db.ref('catatan');
-            nomorRef = db.ref('daftar_nomor'); // Referensi Baru untuk Nomor
+            nomorRef = db.ref('daftar_nomor');
 
-            // Listener Catatan
             catatanRef.on('value', (snapshot) => {
                 daftarCatatan = [];
                 snapshot.forEach((childSnapshot) => {
@@ -254,7 +259,6 @@
                 tampilkanModal("Error Database", "Gagal membaca database: " + errorObject.name, "alert");
             });
 
-            // Listener Nomor
             nomorRef.on('value', (snapshot) => {
                 daftarDataNomor = [];
                 snapshot.forEach((childSnapshot) => {
@@ -268,7 +272,7 @@
         }
 
         // ============================================
-        // LOGIKA APLIKASI CATATAN (Asli)
+        // LOGIKA APLIKASI CATATAN
         // ============================================
         function resetFilter() {
             document.getElementById('filterTanggal').value = '';
@@ -419,7 +423,7 @@
         }
 
         // ============================================
-        // LOGIKA APLIKASI KELOLA NOMOR (Fitur Baru)
+        // LOGIKA APLIKASI KELOLA NOMOR
         // ============================================
         function bukaModalNomor() {
             document.getElementById('modalNomor').classList.add('active');
@@ -435,7 +439,6 @@
             if(!val) { alert('Nomor tidak boleh kosong!'); return; }
             if(!db) return;
             
-            // Tambah dengan status default "belum"
             nomorRef.push({ nomor: val, status: 'belum' }).then(() => {
                 document.getElementById('inputNomorBaru').value = '';
             });
@@ -504,9 +507,13 @@
                         </select>
                     </td>
                     <td style="text-align:center;">
-                        <div style="display:flex; gap:6px; justify-content:center;">
-                            <button onclick="editNomor('${item.id}', '${item.nomor}')" style="min-width:auto; padding:6px 10px; background:var(--warning); font-size:12px;">Edit</button>
-                            <button onclick="hapusNomor('${item.id}')" style="min-width:auto; padding:6px 10px; background:var(--danger); font-size:12px;">Hapus</button>
+                        <div style="display:flex; gap:8px; justify-content:center;">
+                            <button onclick="editNomor('${item.id}', '${item.nomor}')" class="btn-aksi-icon btn-aksi-edit" title="Edit">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button onclick="hapusNomor('${item.id}')" class="btn-aksi-icon btn-aksi-hapus" title="Hapus">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
                         </div>
                     </td>
                 `;
