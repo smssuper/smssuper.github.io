@@ -180,12 +180,11 @@
                 <button onclick="toggleApiServer()" style="background: var(--warning); color: white; border: none; padding: 4px 6px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s;" title="Ganti Layanan API"><i class="fas fa-exchange-alt"></i></button>
             </div>
         </div>
-        
-        <!-- MULAI: Tampilan Deteksi IP Pengganti Tombol Copy Tengah -->
+
+        <!-- Tampilan Deteksi IP Pengganti Tombol Copy -->
         <div id="ipBadge" style="position: absolute; left: 50%; transform: translateX(-50%); cursor: default; border-radius: 12px; background: #333333; color: white; display: flex; align-items: center; justify-content: center; padding: 6px 10px; font-size: 10px; font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.3s ease; white-space: nowrap;">
             <i class="fas fa-wifi" style="margin-right: 5px;"></i> <span id="ip-display">Cek IP...</span>
         </div>
-        <!-- SELESAI: Tampilan Deteksi IP -->
 
         <div class="balance"><i class="fas fa-wallet"></i> <span id="balanceDisplay">...</span></div>
     </div>
@@ -317,7 +316,7 @@
 
     <div class="sticky-area">
         <div class="main-card">
-            <div style="display:flex; justify-content: space-between; margin-bottom: 5px; padding: 0 5px;">
+            <div style="display:flex; justify- space-between; margin-bottom: 5px; padding: 0 5px;">
                 <span style="font-size: 9px; color: var(--gray); font-weight: 800;" id="linkCounter">Link: 0</span>
                 <span style="font-size: 9px; color: var(--gray); font-weight: 800;" id="emailCounter">Gmail: 0</span>
             </div>
@@ -1390,7 +1389,7 @@
         startGlobalPolling();
         renderOrdersUI();
     </script>
-    
+
     <!-- SCRIPT DETEKSI IP OTOMATIS -->
     <script>
         let ipAwal = null;
