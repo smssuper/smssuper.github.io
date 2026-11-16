@@ -81,9 +81,10 @@
         .btn-aksi-hapus { background-color: var(--danger); color: white; }
 
         /* Warna Baris Status Nomor */
-        tr.status-hijau { background-color: #dcfce7 !important; }
-        tr.status-merah { background-color: #fee2e2 !important; }
-        tr.status-putih { background-color: #ffffff !important; }
+        tr.status-hijau { background-color: #dcfce7 !important; } /* Sudah digunakan */
+        tr.status-merah { background-color: #fee2e2 !important; } /* Sudah dicopot */
+        tr.status-kuning { background-color: #fef08a !important; } /* Belum dicopot */
+        tr.status-putih { background-color: #ffffff !important; } /* Belum digunakan */
 
         @media (max-width: 600px) {
             .form-row { gap: 10px; } 
@@ -182,7 +183,6 @@
                 <button id="btnBatalEditNomor" onclick="batalEditNomor()" style="background-color:transparent; color:var(--text-muted); border:1px solid var(--border); display:none;">Batal</button>
             </div>
             
-            <!-- Membungkus tabel dengan class baru agar bisa di-scroll X & Y -->
             <div class="modal-tabel-wrapper">
                 <table>
                     <thead>
@@ -492,6 +492,7 @@
                 let kelasStatus = '';
                 if(item.status === 'sudah') kelasStatus = 'status-hijau';
                 else if(item.status === 'copot') kelasStatus = 'status-merah';
+                else if(item.status === 'belum_copot') kelasStatus = 'status-kuning';
                 else kelasStatus = 'status-putih';
 
                 const tr = document.createElement('tr');
@@ -503,6 +504,7 @@
                         <select onchange="ubahStatusNomor('${item.id}', event)" class="select-status">
                             <option value="belum" ${item.status === 'belum' ? 'selected' : ''}>No belum digunakan</option>
                             <option value="sudah" ${item.status === 'sudah' ? 'selected' : ''}>No sudah digunakan</option>
+                            <option value="belum_copot" ${item.status === 'belum_copot' ? 'selected' : ''}>No belum di copot</option>
                             <option value="copot" ${item.status === 'copot' ? 'selected' : ''}>No sudah dicopot</option>
                         </select>
                     </td>
