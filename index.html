@@ -181,13 +181,11 @@
             </div>
         </div>
 
-        <!-- Tampilan Deteksi IP Pengganti Tombol Copy & Tanda Lingkaran Baru -->
+        <!-- Tampilan Deteksi IP -->
         <div style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; white-space: nowrap; z-index: 10;">
             <div id="ipBadge" style="cursor: default; border-radius: 12px; background: #333333; color: white; display: flex; align-items: center; justify-content: center; padding: 6px 10px; font-size: 10px; font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.3s ease; flex-shrink: 0;">
-                <!-- Ikon wifi sudah dihapus sesuai permintaan -->
                 <span id="ip-display">Cek IP...</span>
             </div>
-            <!-- Lingkaran Baru di Samping Kanan Deteksi IP dengan properti paksa untuk Webview App -->
             <div id="ipCircle" style="width: 14px; height: 14px; min-width: 14px; min-height: 14px; border-radius: 50%; background: #333333; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.3s ease; margin-left: 8px; flex-shrink: 0; display: block;"></div>
         </div>
 
@@ -219,10 +217,7 @@
                     <div id="box-pesan-atas">
                         <label style="font-size:10px; font-weight:800; color:var(--gray); text-transform:uppercase; margin-bottom:6px; display:block;">Pilih Layanan & Operator</label>
                         
-                        <!-- CONTAINER SEBARIS -->
                         <div style="display: flex; gap: 4px; margin-bottom: 10px; align-items: stretch; width: 100%;">
-                            
-                            <!-- 1. NEGARA -->
                             <div style="position: relative; flex: 0.8; display: none; min-width: 0;" id="containerNegara">
                                 <select id="pilihNegara" onchange="handleCountryChange()" style="width:100%; height:100%; padding:8px 12px 8px 6px; border-radius:8px; border:1px solid #e2e8f0; background:white; font-size:10px; font-weight:800; outline:none; color:var(--dark); appearance: none; cursor:pointer;">
                                     <option value="7">🇮🇩 IDN</option>
@@ -232,7 +227,6 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 10px;"></i>
                             </div>
 
-                            <!-- 2. PROVIDER / OPERATOR -->
                             <div style="position: relative; flex: 1.2; min-width: 0;">
                                 <select id="pilihProvider" onchange="handleProviderChange()" style="width:100%; height:100%; padding:8px 12px 8px 6px; border-radius:8px; border:1px solid #e2e8f0; background:white; font-size:10px; font-weight:800; outline:none; color:var(--dark); appearance: none; cursor:pointer;">
                                     <option value="any">Otomatis</option>
@@ -245,7 +239,6 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 10px;"></i>
                             </div>
 
-                            <!-- 3. HARGA -->
                             <div style="position: relative; flex: 1.2; display: none; min-width: 0;" id="containerHarga">
                                 <select id="pilihHarga" style="width:100%; height:100%; padding:8px 12px 8px 6px; border-radius:8px; border:1px solid #e2e8f0; background:white; font-size:10px; font-weight:800; outline:none; color:var(--dark); appearance: none; cursor:pointer;">
                                     <option value="">Harga...</option>
@@ -253,7 +246,6 @@
                                 <i class="fas fa-caret-down" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 10px;"></i>
                             </div>
 
-                            <!-- 4. TOMBOL PESAN -->
                             <button style="background:var(--secondary); color:white; border:none; padding:0 10px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3); transition: 0.2s; display: flex; align-items: center; justify-content: center; white-space: nowrap; flex-shrink: 0;" onclick="prosesPesanLayanan()" id="btnPesanSkrg">
                                 <i class="fas fa-shopping-cart"></i>
                             </button>
@@ -266,6 +258,7 @@
                         </div>
                     </div>
 
+                    <!-- SUCCESS TABLE CONTAINER -->
                     <div id="successTableContainer" class="success-table-container" style="display:none;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding: 0 5px;">
                             <h4 style="font-size: 12px; color: var(--dark); margin:0; font-weight: 800;">Riwayat Sukses</h4>
@@ -409,7 +402,8 @@
         let emailHistory = []; 
         let userPassword = "Belum diatur";
         
-        let successNumberIds = []; 
+        // VARIABEL LOKAL UNTUK RIWAYAT SUKSES (TIDAK LAGI SINKRON DARI CLOUD)
+        let localSuccessHistory = JSON.parse(localStorage.getItem('mySuccessHistory')) || []; 
         let masterLinks = [];
         let masterLinkIds = [];
         let isDraggingLinks = false;
@@ -428,15 +422,14 @@
 
         const titleEl = document.getElementById('headerBrandTitle');
 
-        // --- MENU OPERATOR DISESUAIKAN DENGAN NAMA & ID ASLI DARI API ---
         window.operatorMancanegara = {
-            "7": [ // Indonesia
+            "7": [ 
                 { val: "any", text: "Otomatis" }, { val: "telkomsel", text: "Telkomsel" }, { val: "xl", text: "XL/Axis" }, { val: "indosat", text: "Indosat" }, { val: "three", text: "Tri (3)" }, { val: "smartfren", text: "Smart" }
             ],
-            "5": [ // Philippines (Hanya yang benar-benar ada di API)
+            "5": [ 
                 { val: "any", text: "Otomatis" }, { val: "globe_telecom", text: "Globe Telecom" }, { val: "smart", text: "Smart Telecom" }, { val: "tm", text: "TM (Globe)" }
             ],
-            "53": [ // Thailand (Hanya yang benar-benar ada di API)
+            "53": [ 
                 { val: "any", text: "Otomatis" }, { val: "ais", text: "AIS" }, { val: "cat_mobile", text: "CAT Mobile" }, { val: "dtac", text: "DTAC" }, { val: "truemove", text: "TrueMove H" }
             ]
         };
@@ -618,53 +611,53 @@
             if(emailQueue.length <= 1) btnNext.classList.add('disabled'); else btnNext.classList.remove('disabled');
         }
 
-        const successCol = collection(db, "success_numbers");
-        const qSuccess = query(successCol, orderBy("createdAt", "asc"));
-        onSnapshot(qSuccess, (snapshot) => {
+        // ==========================================
+        // SISTEM RIWAYAT SUKSES LOKAL (Spesifik Perangkat HP)
+        // ==========================================
+        function renderSuccessHistoryUI() {
             const container = document.getElementById('successTableContainer');
             const tbody = document.getElementById('successTableBody');
-            if (snapshot.empty) { container.style.display = 'none'; successNumberIds = []; return; }
+            
+            if (localSuccessHistory.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
             
             container.style.display = 'block';
             tbody.innerHTML = '';
-            successNumberIds = [];
-            let index = 1;
-            snapshot.forEach((docSnap) => {
-                const item = docSnap.data();
-                successNumberIds.push(docSnap.id);
+            
+            localSuccessHistory.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="color: var(--gray); font-weight: 800;">${index}</td>
+                    <td style="color: var(--gray); font-weight: 800;">${index + 1}</td>
                     <td>${item.phone}</td>
                     <td style="padding-right: 5px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <div style="color: var(--success); display: flex; align-items: center; white-space: nowrap;">
                                 <i class="fas fa-check-circle" style="margin-right: 4px;"></i> Sukses
                             </div>
-                            <div style="color: var(--danger); cursor: pointer; padding: 5px 10px; display: flex; align-items: center; justify-content: center;" onclick="hapusSatuSukses('${docSnap.id}')" title="Hapus Nomor">
+                            <div style="color: var(--danger); cursor: pointer; padding: 5px 10px; display: flex; align-items: center; justify-content: center;" onclick="hapusSatuSukses('${item.id}')" title="Hapus Nomor">
                                 <i class="fas fa-trash-alt" style="font-size: 14px;"></i>
                             </div>
                         </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
-                index++;
             });
-        });
-        
-        window.clearSuccessHistory = async () => {
-            if(!confirm("Yakin ingin menghapus semua riwayat sukses?")) return;
-            for(const id of successNumberIds) { await deleteDoc(doc(db, "success_numbers", id)); }
+        }
+
+        window.clearSuccessHistory = () => {
+            if(!confirm("Yakin ingin menghapus semua riwayat sukses di perangkat ini?")) return;
+            localSuccessHistory = [];
+            localStorage.setItem('mySuccessHistory', JSON.stringify(localSuccessHistory));
+            renderSuccessHistoryUI();
         };
 
-        window.hapusSatuSukses = async (id) => {
+        window.hapusSatuSukses = (id) => {
             if(!confirm("Yakin ingin menghapus nomor ini dari riwayat?")) return;
-            try {
-                await deleteDoc(doc(db, "success_numbers", id));
-            } catch(e) {
-                alert("Gagal menghapus riwayat.");
-                console.error(e);
-            }
+            localSuccessHistory = localSuccessHistory.filter(item => item.id !== id);
+            localStorage.setItem('mySuccessHistory', JSON.stringify(localSuccessHistory));
+            renderSuccessHistoryUI();
         };
 
         onSnapshot(collection(db, "random_links"), (snapshot) => {
@@ -1228,8 +1221,16 @@
                 }
             }
             
+            // SIMPAN RIWAYAT KE PENYIMPANAN LOKAL SAAT TOMBOL DONE DIKLIK
             if (tipe === 'DONE' && order.phone && order.phone !== "Mencari...") {
-                try { await addDoc(collection(db, "success_numbers"), { phone: order.phone, createdAt: Date.now() }); } catch(e) {}
+                const newItem = {
+                    id: 'succ_' + Date.now(),
+                    phone: order.phone,
+                    createdAt: Date.now()
+                };
+                localSuccessHistory.push(newItem);
+                localStorage.setItem('mySuccessHistory', JSON.stringify(localSuccessHistory));
+                renderSuccessHistoryUI();
             }
             
             delete activeOrders[id];
@@ -1393,11 +1394,13 @@
         startGlobalTimers();
         startGlobalPolling();
         renderOrdersUI();
+        
+        // Panggil fungsi render riwayat sukses lokal saat web baru dibuka
+        renderSuccessHistoryUI();
     </script>
 
     <!-- SCRIPT DETEKSI IP OTOMATIS -->
     <script>
-        // Gunakan localStorage untuk menyimpan IP Bawaan agar tidak reset saat halaman di-refresh
         let ipAwal = localStorage.getItem('ip_bawaan_asli');
         
         async function jalankanDeteksiIP() {
@@ -1412,7 +1415,6 @@
                 const data = await response.json();
                 const currentIP = data.ip;
 
-                // Jika belum ada IP bawaan tersimpan di browser, simpan IP yang pertama kali terdeteksi
                 if (!ipAwal) {
                     ipAwal = currentIP;
                     localStorage.setItem('ip_bawaan_asli', currentIP);
@@ -1420,12 +1422,10 @@
 
                 ipDisplay.innerText = currentIP;
 
-                // Jika IP saat ini sama dengan IP bawaan asli (Artinya VPN Mati / Original)
                 if (currentIP === ipAwal) {
                     ipBadge.style.backgroundColor = "#e74c3c"; // Merah
                     if(ipCircle) ipCircle.style.backgroundColor = "#e74c3c"; 
                 } else {
-                    // Jika IP saat ini berbeda dari IP bawaan (Artinya VPN Aktif / IP Baru)
                     ipBadge.style.backgroundColor = "#2ecc71"; // Hijau
                     if(ipCircle) ipCircle.style.backgroundColor = "#2ecc71"; 
                 }
@@ -1436,7 +1436,6 @@
             }
         }
 
-        // Langsung jalankan dan ulangi tiap 3 detik
         jalankanDeteksiIP();
         setInterval(jalankanDeteksiIP, 3000);
     </script>
