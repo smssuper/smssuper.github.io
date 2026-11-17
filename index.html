@@ -184,7 +184,8 @@
         <!-- Tampilan Deteksi IP Pengganti Tombol Copy & Tanda Lingkaran Baru -->
         <div style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; white-space: nowrap; z-index: 10;">
             <div id="ipBadge" style="cursor: default; border-radius: 12px; background: #333333; color: white; display: flex; align-items: center; justify-content: center; padding: 6px 10px; font-size: 10px; font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.3s ease; flex-shrink: 0;">
-                <i class="fas fa-wifi" style="margin-right: 5px;"></i> <span id="ip-display">Cek IP...</span>
+                <!-- Ikon wifi sudah dihapus sesuai permintaan -->
+                <span id="ip-display">Cek IP...</span>
             </div>
             <!-- Lingkaran Baru di Samping Kanan Deteksi IP dengan properti paksa untuk Webview App -->
             <div id="ipCircle" style="width: 14px; height: 14px; min-width: 14px; min-height: 14px; border-radius: 50%; background: #333333; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.3s ease; margin-left: 8px; flex-shrink: 0; display: block;"></div>
@@ -1396,7 +1397,8 @@
 
     <!-- SCRIPT DETEKSI IP OTOMATIS -->
     <script>
-        let ipAwal = null;
+        // Gunakan localStorage untuk menyimpan IP Bawaan agar tidak reset saat halaman di-refresh
+        let ipAwal = localStorage.getItem('ip_bawaan_asli');
         
         async function jalankanDeteksiIP() {
             const ipDisplay = document.getElementById('ip-display');
@@ -1410,17 +1412,21 @@
                 const data = await response.json();
                 const currentIP = data.ip;
 
+                // Jika belum ada IP bawaan tersimpan di browser, simpan IP yang pertama kali terdeteksi
                 if (!ipAwal) {
                     ipAwal = currentIP;
+                    localStorage.setItem('ip_bawaan_asli', currentIP);
                 }
 
                 ipDisplay.innerText = currentIP;
 
+                // Jika IP saat ini sama dengan IP bawaan asli (Artinya VPN Mati / Original)
                 if (currentIP === ipAwal) {
-                    ipBadge.style.backgroundColor = "#e74c3c"; // Merah (Belum ganti IP)
+                    ipBadge.style.backgroundColor = "#e74c3c"; // Merah
                     if(ipCircle) ipCircle.style.backgroundColor = "#e74c3c"; 
                 } else {
-                    ipBadge.style.backgroundColor = "#2ecc71"; // Hijau (IP Berubah/Aman)
+                    // Jika IP saat ini berbeda dari IP bawaan (Artinya VPN Aktif / IP Baru)
+                    ipBadge.style.backgroundColor = "#2ecc71"; // Hijau
                     if(ipCircle) ipCircle.style.backgroundColor = "#2ecc71"; 
                 }
 
