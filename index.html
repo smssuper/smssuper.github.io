@@ -98,7 +98,12 @@
             border:1px solid #edf2f7; box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
         }
         
-        #successTableContainer { flex: 1; overflow-y: auto; margin-top: 10px; padding-bottom: 10px; padding-right: 5px; }
+        /* Modifikasi Container Tabel Sukses agar fixed/sticky */
+        #successTableContainer { flex: 1; display: flex; flex-direction: column; overflow: hidden; margin-top: 10px; padding-bottom: 10px; }
+        
+        .page-btn { background: #f1f5f9; color: var(--gray); border: none; padding: 6px 0; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s; flex: 1; text-align: center; }
+        .page-btn.active-page { background: var(--success); color: white; box-shadow: 0 2px 8px rgba(46,204,113,0.3); }
+
         #slide-links .slide-content { overflow-y: auto; padding: 15px; } 
         #slide-not .slide-content { padding: 0; overflow: hidden; }
         #ordersWrapper { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; scrollbar-width: none; padding: 2px 2px 5px 2px; }
@@ -181,7 +186,6 @@
             </div>
         </div>
 
-        <!-- Tampilan Deteksi IP -->
         <div style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; white-space: nowrap; z-index: 10;">
             <div id="ipBadge" style="cursor: default; border-radius: 12px; background: #333333; color: white; display: flex; align-items: center; justify-content: center; padding: 6px 10px; font-size: 10px; font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.3s ease; flex-shrink: 0;">
                 <span id="ip-display">Cek IP...</span>
@@ -258,23 +262,40 @@
                         </div>
                     </div>
 
-                    <!-- SUCCESS TABLE CONTAINER -->
-                    <div id="successTableContainer" class="success-table-container" style="display:none;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding: 0 5px;">
-                            <h4 style="font-size: 12px; color: var(--dark); margin:0; font-weight: 800;">Riwayat Sukses</h4>
+                    <!-- TABEL SUKSES DENGAN SISTEM HALAMAN (PAGINATION) FIXED -->
+                    <div id="successTableContainer">
+                        
+                        <!-- Tombol Halaman (Fixed) -->
+                        <div style="display:flex; gap:6px; margin-bottom:10px; padding:0 5px; flex-shrink: 0;">
+                            <button id="btnPage1" class="page-btn active-page" onclick="changeSuccessPage(1)">1</button>
+                            <button id="btnPage2" class="page-btn" onclick="changeSuccessPage(2)">2</button>
+                            <button id="btnPage3" class="page-btn" onclick="changeSuccessPage(3)">3</button>
+                            <button id="btnPage4" class="page-btn" onclick="changeSuccessPage(4)">4</button>
+                            <button id="btnPage5" class="page-btn" onclick="changeSuccessPage(5)">5</button>
+                        </div>
+                        
+                        <!-- Header Judul (Fixed) -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding: 0 5px; flex-shrink: 0;">
+                            <h4 style="font-size: 12px; color: var(--dark); margin:0; font-weight: 800;">Riwayat Sukses <span id="lblPageActive" style="color: var(--secondary); font-size: 11px;">(Tab 1)</span></h4>
                             <span style="font-size:10px; color:var(--danger); font-weight:800; cursor:pointer;" onclick="clearSuccessHistory()"><i class="fas fa-trash-alt"></i> HAPUS SEMUA</span>
                         </div>
-                        <table class="success-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 15%;">No</th>
-                                    <th>Nomor HP</th>
-                                    <th style="width: 25%;">Ket</th>
-                                </tr>
-                            </thead>
-                            <tbody id="successTableBody">
-                            </tbody>
-                        </table>
+                        
+                        <!-- Bagian Scroll (Hanya tabel yang ikut scroll ke bawah) -->
+                        <div style="flex: 1; overflow-y: auto; padding-right: 5px;">
+                            <table class="success-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 15%;">No</th>
+                                        <th>Nomor HP</th>
+                                        <th style="width: 25%;">Ket</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="successTableBody">
+                                    <!-- Data akan di-render di sini -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
                     </div>
 
                 </div>
@@ -402,11 +423,14 @@
         let emailHistory = []; 
         let userPassword = "Belum diatur";
         
-        // VARIABEL LOKAL UNTUK RIWAYAT SUKSES (TIDAK LAGI SINKRON DARI CLOUD)
-        let localSuccessHistory = JSON.parse(localStorage.getItem('mySuccessHistory')) || []; 
         let masterLinks = [];
         let masterLinkIds = [];
         let isDraggingLinks = false;
+        
+        // VARIABEL PAGINATION RIWAYAT SUKSES (FIREBASE)
+        let activeSuccessPage = 1;
+        let successUnsubscribe = null;
+        let successNumberIds = [];
         
         let activeOrders = JSON.parse(localStorage.getItem('multiActiveOrders')) || {};
         let globalPollTimer = null;
@@ -612,53 +636,90 @@
         }
 
         // ==========================================
-        // SISTEM RIWAYAT SUKSES LOKAL (Spesifik Perangkat HP)
+        // SISTEM TAB FIREBASE UNTUK RIWAYAT SUKSES
         // ==========================================
-        function renderSuccessHistoryUI() {
-            const container = document.getElementById('successTableContainer');
-            const tbody = document.getElementById('successTableBody');
-            
-            if (localSuccessHistory.length === 0) {
-                container.style.display = 'none';
-                return;
+        window.changeSuccessPage = (page) => {
+            loadSuccessData(page);
+        };
+
+        function loadSuccessData(page) {
+            // Hentikan penarikan data dari tab sebelumnya
+            if (successUnsubscribe) {
+                successUnsubscribe();
             }
             
-            container.style.display = 'block';
-            tbody.innerHTML = '';
+            activeSuccessPage = page;
             
-            localSuccessHistory.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="color: var(--gray); font-weight: 800;">${index + 1}</td>
-                    <td>${item.phone}</td>
-                    <td style="padding-right: 5px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div style="color: var(--success); display: flex; align-items: center; white-space: nowrap;">
-                                <i class="fas fa-check-circle" style="margin-right: 4px;"></i> Sukses
+            // Perbarui warna tombol yang aktif
+            for(let i = 1; i <= 5; i++) {
+                const btn = document.getElementById('btnPage' + i);
+                if(btn) {
+                    if(i === page) btn.classList.add('active-page');
+                    else btn.classList.remove('active-page');
+                }
+            }
+            
+            document.getElementById('lblPageActive').innerText = `(Tab ${page})`;
+
+            // Ambil data dari koleksi Firebase sesuai nomor halaman
+            const colName = "success_numbers_" + page;
+            const successCol = collection(db, colName);
+            const qSuccess = query(successCol, orderBy("createdAt", "asc"));
+            
+            successUnsubscribe = onSnapshot(qSuccess, (snapshot) => {
+                const tbody = document.getElementById('successTableBody');
+                tbody.innerHTML = '';
+                successNumberIds = [];
+                
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color:var(--gray); font-size:11px; font-weight:700;">Belum ada riwayat sukses di tab ini</td></tr>';
+                    return; 
+                }
+                
+                let index = 1;
+                snapshot.forEach((docSnap) => {
+                    const item = docSnap.data();
+                    successNumberIds.push(docSnap.id);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color: var(--gray); font-weight: 800;">${index}</td>
+                        <td>${item.phone}</td>
+                        <td style="padding-right: 5px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div style="color: var(--success); display: flex; align-items: center; white-space: nowrap;">
+                                    <i class="fas fa-check-circle" style="margin-right: 4px;"></i> Sukses
+                                </div>
+                                <div style="color: var(--danger); cursor: pointer; padding: 5px 10px; display: flex; align-items: center; justify-content: center;" onclick="hapusSatuSukses('${docSnap.id}')" title="Hapus Nomor">
+                                    <i class="fas fa-trash-alt" style="font-size: 14px;"></i>
+                                </div>
                             </div>
-                            <div style="color: var(--danger); cursor: pointer; padding: 5px 10px; display: flex; align-items: center; justify-content: center;" onclick="hapusSatuSukses('${item.id}')" title="Hapus Nomor">
-                                <i class="fas fa-trash-alt" style="font-size: 14px;"></i>
-                            </div>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                    index++;
+                });
             });
         }
 
-        window.clearSuccessHistory = () => {
-            if(!confirm("Yakin ingin menghapus semua riwayat sukses di perangkat ini?")) return;
-            localSuccessHistory = [];
-            localStorage.setItem('mySuccessHistory', JSON.stringify(localSuccessHistory));
-            renderSuccessHistoryUI();
+        window.clearSuccessHistory = async () => {
+            if(!confirm(`Yakin ingin menghapus semua riwayat di Tab ${activeSuccessPage}?`)) return;
+            const colName = "success_numbers_" + activeSuccessPage;
+            for(const id of successNumberIds) { 
+                try { await deleteDoc(doc(db, colName, id)); } catch(e){} 
+            }
         };
 
-        window.hapusSatuSukses = (id) => {
+        window.hapusSatuSukses = async (id) => {
             if(!confirm("Yakin ingin menghapus nomor ini dari riwayat?")) return;
-            localSuccessHistory = localSuccessHistory.filter(item => item.id !== id);
-            localStorage.setItem('mySuccessHistory', JSON.stringify(localSuccessHistory));
-            renderSuccessHistoryUI();
+            const colName = "success_numbers_" + activeSuccessPage;
+            try {
+                await deleteDoc(doc(db, colName, id));
+            } catch(e) {
+                alert("Gagal menghapus riwayat.");
+                console.error(e);
+            }
         };
+        // ==========================================
 
         onSnapshot(collection(db, "random_links"), (snapshot) => {
             masterLinks = snapshot.docs.map(doc => doc.data().url);
@@ -1221,16 +1282,14 @@
                 }
             }
             
-            // SIMPAN RIWAYAT KE PENYIMPANAN LOKAL SAAT TOMBOL DONE DIKLIK
+            // SIMPAN DATA KE FIREBASE DI HALAMAN YANG SEDANG AKTIF (1-5)
             if (tipe === 'DONE' && order.phone && order.phone !== "Mencari...") {
-                const newItem = {
-                    id: 'succ_' + Date.now(),
-                    phone: order.phone,
-                    createdAt: Date.now()
-                };
-                localSuccessHistory.push(newItem);
-                localStorage.setItem('mySuccessHistory', JSON.stringify(localSuccessHistory));
-                renderSuccessHistoryUI();
+                const colName = "success_numbers_" + activeSuccessPage;
+                try { 
+                    await addDoc(collection(db, colName), { phone: order.phone, createdAt: Date.now() }); 
+                } catch(e) {
+                    console.error("Gagal simpan Firebase: ", e);
+                }
             }
             
             delete activeOrders[id];
@@ -1395,8 +1454,8 @@
         startGlobalPolling();
         renderOrdersUI();
         
-        // Panggil fungsi render riwayat sukses lokal saat web baru dibuka
-        renderSuccessHistoryUI();
+        // Panggil Tab 1 Pertama Kali Dibuka
+        loadSuccessData(1);
     </script>
 
     <!-- SCRIPT DETEKSI IP OTOMATIS -->
