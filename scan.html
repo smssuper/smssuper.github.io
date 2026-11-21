@@ -6,7 +6,6 @@
     <title>Auto-Sync VA</title>
     
     <script type="module">
-        // Import Firebase SDK (ditambah push dan remove untuk daftar riwayat)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, push, remove } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
@@ -30,6 +29,10 @@
         
         const inputField = document.getElementById('hasilInput');
         const historyList = document.getElementById('historyList');
+        const importInput = document.getElementById('importFileInput');
+
+        // Menyimpan urutan tampilan saat ini (barisan pertama yang tampil di UI)
+        let displayedItems = [];
 
         // Fungsi untuk mengubah warna kolom input menjadi hijau jika terisi
         function updateColor() {
@@ -60,21 +63,29 @@
         // 1b. Membaca daftar riwayat paste dari Firebase secara real-time
         onValue(historyRef, (snapshot) => {
             historyList.innerHTML = "";
-            const items = [];
+            const chronologicalItems = [];
+
             snapshot.forEach((childSnapshot) => {
-                items.push({
+                chronologicalItems.push({
                     key: childSnapshot.key,
                     ...childSnapshot.val()
                 });
             });
 
-            // Urutkan dari yang terbaru di atas, namun nomor urut tetap sesuai urutan masuk
-            items.reverse().forEach((item, index) => {
-                const nomorUrut = items.length - index;
+            // Nomor urut dimulai dari paste paling lama (1, 2, 3, ...)
+            const numberedItems = chronologicalItems.map((item, idx) => ({
+                ...item,
+                noUrut: idx + 1
+            }));
+
+            // Tampilkan dari yang terbaru di atas, nomor urut tetap mengikuti urutan lama -> baru
+            displayedItems = [...numberedItems].reverse();
+
+            displayedItems.forEach((item) => {
                 const card = document.createElement('div');
                 card.className = 'history-card';
                 card.innerHTML = `
-                    <span class="col-no">${nomorUrut}.</span>
+                    <span class="col-no">${item.noUrut}.</span>
                     <span class="col-jam">${item.jam || '-'}</span>
                     <span class="col-nomor" title="Klik untuk copy" onclick="copyDariList('${item.nomor}')">${item.nomor}</span>
                     <button class="btn-del-item" onclick="hapusItem('${item.key}')" title="Hapus">
@@ -92,14 +103,11 @@
         window.autoPaste = async function() {
             try {
                 const text = await navigator.clipboard.readText();
-                // Hanya ambil angka (bersihkan dari spasi/karakter lain)
                 const cleanText = text.replace(/\D/g, ''); 
                 
                 if (cleanText.length >= 10) {
                     inputField.value = cleanText;
-                    // Simpan ke Firebase utama
                     set(dataRef, { nomor: cleanText }); 
-                    // Simpan ke daftar riwayat paste
                     push(historyRef, {
                         nomor: cleanText,
                         jam: getCurrentTime()
@@ -111,7 +119,7 @@
             }
         };
 
-        // 3. Logika Copy (Tanpa notifikasi/alert)
+        // 3. Logika Copy input utama
         window.copyNomor = function() {
             if (inputField.value !== "") {
                 navigator.clipboard.writeText(inputField.value);
@@ -123,17 +131,93 @@
             navigator.clipboard.writeText(nomor);
         };
 
-        // 4. Logika Hapus Input Utama (Hapus UI dan Firebase)
+        // Copy VA: copy daftar barisan pertama lalu hapus baris tersebut dari daftar
+        window.copyVAFirst = function() {
+            if (displayedItems.length > 0) {
+                const firstItem = displayedItems[0];
+                navigator.clipboard.writeText(firstItem.nomor);
+                remove(ref(db, 'riwayat_va/' + firstItem.key));
+            }
+        };
+
+        // 4. Logika Hapus Input Utama
         window.hapusInput = function() {
             inputField.value = "";
             set(dataRef, { nomor: "" });
             updateColor();
         };
 
+        // Hapus seluruh daftar riwayat
+        window.hapusAll = function() {
+            remove(historyRef);
+        };
+
         // 5. Logika Hapus Kartu dari Daftar
         window.hapusItem = function(key) {
             remove(ref(db, 'riwayat_va/' + key));
         };
+
+        // 6. Download daftar VA ke file .txt (urutan nomor urut 1 ke atas)
+        window.downloadTxt = function() {
+            const orderedForExport = [...displayedItems].reverse();
+            if (orderedForExport.length === 0) return;
+
+            const lines = orderedForExport.map((item) => {
+                const jamStr = item.jam ? `[${item.jam}] ` : '';
+                return `${item.noUrut}. ${jamStr}${item.nomor}`;
+            });
+            const content = lines.join('\n');
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'daftar-va.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        // 7. Import file .txt ke daftar VA
+        window.triggerImport = function() {
+            importInput.value = "";
+            importInput.click();
+        };
+
+        importInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rawText = e.target.result || "";
+                const lines = rawText.split(/\r?\n/);
+
+                lines.forEach((line) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return;
+
+                    // Ambil jam jika ada format [HH:MM:SS]
+                    const jamMatch = trimmed.match(/\[(\d{2}:\d{2}:\d{2})\]/);
+                    const jam = jamMatch ? jamMatch[1] : getCurrentTime();
+
+                    // Buang awalan nomor urut (misal "1. ") dan jam "[HH:MM:SS]" agar nomor VA bersih
+                    const withoutPrefix = trimmed
+                        .replace(/^\d+\.\s*/, '')
+                        .replace(/^\[\d{2}:\d{2}:\d{2}\]\s*/, '');
+                    const cleanNomor = withoutPrefix.replace(/\D/g, '');
+
+                    if (cleanNomor.length >= 10) {
+                        push(historyRef, {
+                            nomor: cleanNomor,
+                            jam: jam
+                        });
+                    }
+                });
+            };
+            reader.readAsText(file);
+        });
     </script>
     
     <style>
@@ -142,13 +226,13 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            padding: 10px 15px 30px 15px; /* Digeser dekat dengan garis tepi atas */
+            padding: 10px 15px 30px 15px;
             background: #f4f4f9; 
             margin: 0;
         }
         .container { 
             background: white; 
-            padding: 15px; /* Padding dikurangi agar lebih rapat ke atas */
+            padding: 15px; 
             border-radius: 15px; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
             width: 100%; 
@@ -157,7 +241,7 @@
             box-sizing: border-box;
         }
         
-        input { 
+        input[type="text"] { 
             box-sizing: border-box; 
             width: 100%; 
             padding: 15px; 
@@ -174,7 +258,6 @@
             outline: none;
         }
         
-        /* Style saat kolom terisi nomor (warna hijau tebal) */
         .input-terisi {
             border: 4px solid #00C853 !important; 
             background-color: #eafaf1 !important; 
@@ -184,28 +267,56 @@
         
         .button-group { 
             display: flex; 
-            gap: 12px; 
+            gap: 8px; 
             width: 100%;
         }
         .button-group button { 
             flex: 1; 
-            padding: 14px; 
+            padding: 11px 6px; 
             border: none; 
             border-radius: 8px; 
             color: white; 
             font-weight: bold; 
             cursor: pointer; 
-            font-size: 16px;
+            font-size: 13px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .file-actions button {
+            flex: 1;
+            padding: 9px 10px;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
             transition: 0.2s;
         }
+        .file-actions button:hover {
+            background-color: #e9ecef;
+        }
         
+        .btn-copy-va { background-color: #009688; }
+        .btn-copy-va:hover { background-color: #00796b; }
+
         .btn-copy { background-color: #2196F3; } 
         .btn-copy:hover { background-color: #0b7dda; }
+
+        .btn-hapus-all { background-color: #9e2a2b; }
+        .btn-hapus-all:hover { background-color: #7a1c1d; }
         
         .btn-hapus { background-color: #f44336; } 
         .btn-hapus:hover { background-color: #da190b; }
 
-        /* Bagian Daftar Hasil Paste */
         .history-wrapper {
             width: 100%;
             max-width: 400px;
@@ -285,8 +396,16 @@
         <input type="text" id="hasilInput" placeholder="Tekan di sini..." onclick="autoPaste()" readonly>
         
         <div class="button-group">
+            <button class="btn-copy-va" onclick="copyVAFirst()">Copy VA</button>
             <button class="btn-copy" onclick="copyNomor()">Copy</button>
+            <button class="btn-hapus-all" onclick="hapusAll()">Hapus All</button>
             <button class="btn-hapus" onclick="hapusInput()">Hapus</button>
+        </div>
+
+        <div class="file-actions">
+            <button type="button" onclick="downloadTxt()">Download TXT</button>
+            <button type="button" onclick="triggerImport()">Import TXT</button>
+            <input type="file" id="importFileInput" accept=".txt,text/plain" style="display: none;">
         </div>
     </div>
 
